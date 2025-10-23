@@ -22,9 +22,9 @@ HusWindow {
         anchors.centerIn: parent
         source: 'qrc:/images/logo.svg'
     }
-    captionBar.topCallback: (checked) => {
-                                HusApi.setWindowStaysOnTopHint(root, checked);
-                            }
+    captionBar.topCallback: function(checked){
+        HusApi.setWindowStaysOnTopHint(root, checked);
+    }
     Component.onCompleted: {
         setSpecialEffect(HusWindow.Win_MicaAlt)
     }
