@@ -24,9 +24,11 @@ qt_add_qml_module(appEasyLabel
     URI EasyLabel
     VERSION 1.0
     QML_FILES
-    Main.qml
-    QML_FILES Projetc.qml
-    QML_FILES NewProjectPopup.qml
+    qml/Main.qml
+    qml/Projetc.qml
+    qml/NewProjectPopup.qml
+    qml/component/PopupStandardWindow.qml
+    qml/component/DirSelectInput.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
