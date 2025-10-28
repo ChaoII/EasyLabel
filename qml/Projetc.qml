@@ -190,7 +190,7 @@ Item {
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
                             onClicked: {
-                                QmlGlobalHelper.openFolderDialog("图像目录", _imagePath)
+                                QmlGlobalHelper.openFolderDialog("图像目录", imagePath)
                             }
                         }
                     }
@@ -210,7 +210,7 @@ Item {
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
                             onClicked: {
-                                QmlGlobalHelper.openFolderDialog("图像目录", _resultPath)
+                                QmlGlobalHelper.openFolderDialog("图像目录", resultPath)
                             }
                         }
                     }

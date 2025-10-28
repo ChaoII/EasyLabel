@@ -26,57 +26,63 @@ PopupStandardWindow{
     property bool _showOrder: false
     property int _annotationType: ProjectPopup.AnnotationType.Detection
     title: mode === ProjectPopup.DialogMode.Edit ? qsTr("编辑项目") : qsTr("新建项目")
-    contentDelegate: Item{
-        anchors.fill: parent
-        HusMenu {
-            id: menu
-            Layout.fillHeight: true
-            showEdge:true
-            defaultMenuWidth: 200
-            height: parent.height
-            initModel: [
-                {key:"Detection", label: qsTr('目标检测'), value: ProjectPopup.AnnotationType.Detection },
-                {key:"RotatedBox", label: qsTr('旋转框检测'), value: ProjectPopup.AnnotationType.RotatedBox }
-            ]
-            onClickMenu: function(deep, key, keyPath, data) {
-                if(data.value===ProjectPopup.AnnotationType.Detection){
-                    detailLoader.sourceComponent = detectionDetail
-                }else{
-                    detailLoader.sourceComponent = rotatedBoxDetail
-                }
-            }
-
-            Component.onCompleted: {
-                switch(_annotationType){
-                case ProjectPopup.AnnotationType.Detection:{
-                    gotoMenu("Detection")
-                    break
-                }
-                case ProjectPopup.AnnotationType.RotatedBox:{
-                    gotoMenu("RotatedBox")
-                    break
-                }
-                default:
-                    gotoMenu("Detection")
-                }
-            }
-        }
-        Loader{
-            id: detailLoader
-            anchors.left: menu.right
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            sourceComponent:_annotationType === ProjectPopup.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
-        }
-    }
-
-    Component{
+    contentDelegate: contentComponent
+        Component{
         id: rotatedBoxDetail
         HusRectangle{
             anchors.fill: parent
             color: "red"
         }
+    }
+
+    Component{
+        id:contentComponent
+        Item{
+            id: _content
+            anchors.fill: parent
+            HusMenu {
+                id: _menu
+                Layout.fillHeight: true
+                showEdge:true
+                defaultMenuWidth: 200
+                height: parent.height
+                initModel: [
+                    {key:"Detection", label: qsTr('目标检测'), value: ProjectPopup.AnnotationType.Detection },
+                    {key:"RotatedBox", label: qsTr('旋转框检测'), value: ProjectPopup.AnnotationType.RotatedBox }
+                ]
+                onClickMenu: function(deep, key, keyPath, data) {
+                    if(data.value===ProjectPopup.AnnotationType.Detection){
+                        detailLoader.sourceComponent = detectionDetail
+                    }else{
+                        detailLoader.sourceComponent = rotatedBoxDetail
+                    }
+                }
+
+                Component.onCompleted: {
+                    switch(_annotationType){
+                    case ProjectPopup.AnnotationType.Detection:{
+                        gotoMenu("Detection")
+                        break
+                    }
+                    case ProjectPopup.AnnotationType.RotatedBox:{
+                        gotoMenu("RotatedBox")
+                        break
+                    }
+                    default:
+                        gotoMenu("Detection")
+                    }
+                }
+            }
+            Loader{
+                id: detailLoader
+                anchors.left: _menu.right
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                sourceComponent:_annotationType === ProjectPopup.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
+            }
+        }
+
     }
 
     Component{
@@ -143,7 +149,7 @@ PopupStandardWindow{
                         text:"目标外标注："
                     }
                     HusSwitch{
-                        enabled: _outOfTarget
+                        checked: _outOfTarget
                     }
                 }
                 RowLayout{
@@ -153,7 +159,7 @@ PopupStandardWindow{
                         text:"显示标注顺序"
                     }
                     HusSwitch{
-                        enabled: _showOrder
+                        checked: _showOrder
                     }
                 }
             }
@@ -180,6 +186,13 @@ PopupStandardWindow{
         _outOfTarget = data.outOfTarget || false
         _showOrder = data.showOrder || false
         _annotationType = data.annotationType || ProjectPopup.AnnotationType.Detection
+        console.log(contentItem)
+        // 通过 contentItem 访问
+        if (contentItem && contentItem._content) {
+            console.log("Menu accessed:", contentItem._menu);
+            // 调用菜单方法
+            contentItem._menu.gotoMenu("Detection");
+        }
     }
 
     function _resetForm() {
