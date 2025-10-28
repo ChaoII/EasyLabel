@@ -17,32 +17,26 @@ Item {
     HusInput {
         id: textInput
         anchors.left:parent.left
-        anchors.right:parent.right
-        rightPadding: iconBtn.width + 10
+        anchors.right:iconBtn.left
+        radiusBg.topRight: 0
+        radiusBg.bottomRight: 0
         placeholderText: "请选择文件夹"
-        // 右侧搜索区域
-        HusIconButton {
-            id: iconBtn
-            width: 30
-            animationEnabled: false
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.margins: 2
-            iconSource: HusIcon.FolderOpenOutlined
-            colorBorder: "transparent"
-            onClicked: {
-                folderDialog.open()
-            }
-        }
-
-        HusRectangle{
-            width:1
-            height: parent.height
-            anchors.right: iconBtn.left
-            border.color: parent.colorBorder
+    }
+    HusIconButton {
+        id: iconBtn
+        width: 30
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        type: HusButton.Type_Primary
+        radiusBg.topLeft: 0
+        radiusBg.bottomLeft: 0
+        iconSource: HusIcon.FolderOpenOutlined
+        onClicked: {
+            folderDialog.open()
         }
     }
+
 
     Platform.FolderDialog {
         id: folderDialog

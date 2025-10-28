@@ -26,7 +26,7 @@ HusPopup {
         HusCaptionButton {
             id: btnClose
             anchors.right: parent.right
-            radiusBg: popup.radiusBg * 0.5
+            radiusBg.all: popup.radiusBg.all * 0.5
             colorText: colorIcon
             iconSource: HusIcon.CloseOutlined
             onClicked: popup.close();
@@ -67,24 +67,20 @@ HusPopup {
             height: 1
         }
 
-
         RowLayout{
             id: btnLayout
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: 10
-
             Item{
                 Layout.fillWidth: true
             }
-
             HusButton {
                 id: btnCancel
                 text: "取消"
                 type: HusButton.Type_Outlined
             }
-
             HusButton {
                 id: btnEnsure
                 text: "确认"

@@ -3,14 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import HuskarUI.Basic
 
-// var typeColorConfig={
-//     detection:"red",
-// }
 
 Item {
-
-
-
     anchors.margins: 10
     anchors.fill: parent
     RowLayout{
@@ -23,7 +17,7 @@ Item {
             type: HusButton.Type_Primary
             text: "创建项目"
             onClicked: {
-                popup.open()
+                popup.openProjectInfo()
             }
         }
         Item{
@@ -61,7 +55,6 @@ Item {
     HusPagination{
         id: pagination
         anchors.bottom: parent.bottom
-
         currentPageIndex: 0
         total: 50
         pageSizeModel: [
@@ -71,73 +64,69 @@ Item {
             { label: qsTr('40条每页'), value: 40 }
         ]
     }
-    enum AnnotationType {
-        Detection = 0
-    }
-
-
-
-
-
-
 
     ListModel{
-
         id:listModel
         ListElement{
-            _title:"我是猪"
-            _imagePath:"/user/local/bin/images"
-            _resultPath:"/user/local/bin/results"
-            _type: "Detection"
-            _createTime:"2025-10-26 12:08:23"
+            projectName:"我是猪"
+            imagePath:"/user/local/bin/images"
+            resultPath:"/user/local/bin/results"
+            annotationType: 0
+            createTime:"2025-10-26 12:08:23"
+            outOfTarget:false
+            showOrder:false
         }
         ListElement{
-            _title:"我是猪"
-            _imagePath:"/user/local/bin/images"
-            _resultPath:"/user/local/bin/results"
-            _type: "Detection"
-            _createTime:"2025-10-26 12:08:23"
+            projectName:"我是猪"
+            imagePath:"/user/local/bin/images"
+            resultPath:"/user/local/bin/results"
+            annotationType: 0
+            createTime:"2025-10-26 12:08:23"
+            outOfTarget:false
+            showOrder:false
         }
         ListElement{
-            _title:"我是猪"
-            _imagePath:"/user/local/bin/images"
-            _resultPath:"/user/local/bin/results/user/local/bin/results"
-            _type: "Detection"
-            _createTime:"2025-10-26 12:08:23"
+            projectName:"我是猪"
+            imagePath:"/user/local/bin/images"
+            resultPath:"/user/local/bin/results/user/local/bin/results"
+            annotationType: 0
+            createTime:"2025-10-26 12:08:23"
+            outOfTarget:false
+            showOrder:false
         }
         ListElement{
-            _title:"我是猪"
-            _imagePath:"/user/local/bin/images"
-            _resultPath:"/user/local/bin/results"
-            _type: "Detection"
-            _createTime:"2025-10-26 12:08:23"
+            projectName:"我是猪"
+            imagePath:"/user/local/bin/images"
+            resultPath:"/user/local/bin/results"
+            annotationType: 1
+            createTime:"2025-10-26 12:08:23"
+            outOfTarget:true
+            showOrder:false
         }
     }
 
     Component{
         id:cardDetegate
-
-
-
-
         HusCard{
             id:_card
-            required property string _title
-            required property string _imagePath
-            required property string _resultPath
-            required property string _type
-            required property string _createTime
+            required property var modelData
+            required property string projectName
+            required property string imagePath
+            required property string resultPath
+            required property string annotationType
+            required property string createTime
             property int fontSize: 12
-            readonly property var typeColorConfig:{
-                "Detection":"red",
+            readonly property var annotationTagColor:{
+                0:"red",
+                1:"blue",
+                2:"green"
             }
-            width: 312
+            width: 310
             height: 200
             titleDelegate: null
 
             Item{
                 id:itemTitle
-
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
@@ -148,7 +137,7 @@ Item {
                     height: parent.height
                     anchors.left: parent.left
                     verticalAlignment: HusText.AlignVCenter
-                    text: _title
+                    text: projectName
                 }
             }
 
@@ -180,38 +169,37 @@ Item {
                     anchors.bottom: parent.bottom
                     anchors.right: parent.right
                     anchors.leftMargin: 10
-                    anchors.rightMargin: 10
                     HusTag{
                         id: textType
-                        text: _type
-                        presetColor: _card.typeColorConfig[_type]
+                        text: annotationType
+                        presetColor: _card.annotationTagColor[annotationType]
                     }
                     RowLayout{
                         height: 20
                         HusText {
                             Layout.fillWidth: true
                             font.pixelSize: fontSize
-                            text:"图片路径："+ _imagePath
+                            text:"图片路径："+ imagePath
                             elide: Text.ElideRight
                             color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
                         HusIconButton{
                             Layout.preferredHeight: parent.height
                             Layout.preferredWidth: 20
-                            // iconSpacing: 0
                             padding: 0
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
+                            onClicked: {
+                                QmlGlobalHelper.openFolderDialog("图像目录", _imagePath)
+                            }
                         }
                     }
-
-                    id: itemResultPath
                     RowLayout{
                         height: 20
                         HusText{
                             Layout.fillWidth: true
                             font.pixelSize: fontSize
-                            text:"结果路径："+ _resultPath
+                            text:"结果路径："+ resultPath
                             elide: Text.ElideRight
                             color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
@@ -221,21 +209,20 @@ Item {
                             padding: 0
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
+                            onClicked: {
+                                QmlGlobalHelper.openFolderDialog("图像目录", _resultPath)
+                            }
                         }
                     }
                     HusText{
+                        Layout.preferredHeight: 20
                         font.pixelSize: fontSize
-                        text:"创建时间："+ _createTime
+                        text:"创建时间："+ createTime
                         verticalAlignment: Text.AlignVCenter
                         color: HusTheme.Primary.colorPrimaryTextDisabled
                     }
-
                 }
             }
-
-
-
-
 
             HusDivider {
                 id:dividerBottom
@@ -243,33 +230,30 @@ Item {
                 width: parent.width
                 height: 1
             }
-
             RowLayout {
                 id: layoutAction
                 anchors.bottom: parent.bottom
                 height:40
                 width: parent.width
-
                 HusIconButton {
                     Layout.preferredWidth: parent.width / 3
                     Layout.fillHeight: true
                     type: HusButton.Type_Link
                     iconSource: HusIcon.EditOutlined
                     iconSize: 16
-
+                    onClicked: {
+                        popup.openProjectInfo(modelData)
+                    }
                 }
-
                 Item {
                     Layout.preferredWidth: parent.width / 3
                     Layout.fillHeight: true
-
                     HusDivider {
                         width: 1
                         height: parent.height * 0.5
                         anchors.verticalCenter: parent.verticalCenter
                         orientation: Qt.Vertical
                     }
-
                     HusIconButton {
                         anchors.centerIn: parent
                         type: HusButton.Type_Link
@@ -281,14 +265,12 @@ Item {
                 Item {
                     Layout.preferredWidth: parent.width / 3
                     Layout.fillHeight: true
-
                     HusDivider {
                         width: 1
                         height: parent.height * 0.5
                         anchors.verticalCenter: parent.verticalCenter
                         orientation: Qt.Vertical
                     }
-
                     HusIconButton {
                         anchors.centerIn: parent
                         type: HusButton.Type_Link
@@ -298,13 +280,12 @@ Item {
                 }
             }
 
-
         }
 
     }
 
 
-    NewProjectPopup{
+    ProjectPopup{
         id:popup
         x: (parent.width - width) * 0.5
         y: (parent.height - height) * 0.5
@@ -312,7 +293,3 @@ Item {
         height: 600
     }
 }
-
-
-
-
