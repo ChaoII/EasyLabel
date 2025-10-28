@@ -24,21 +24,15 @@ PopupStandardWindow{
     property string _resultFolder: ""
     property bool _outOfTarget: false
     property bool _showOrder: false
-    property int _annotationType: ProjectPopup.AnnotationType.Detection
+    property int annotationType: ProjectPopup.AnnotationType.Detection
+
     title: mode === ProjectPopup.DialogMode.Edit ? qsTr("编辑项目") : qsTr("新建项目")
-    contentDelegate: contentComponent
-        Component{
-        id: rotatedBoxDetail
-        HusRectangle{
-            anchors.fill: parent
-            color: "red"
-        }
-    }
+    contentDelegate: _contentComponent
 
     Component{
-        id:contentComponent
+        id:_contentComponent
         Item{
-            id: _content
+            id: content
             anchors.fill: parent
             HusMenu {
                 id: _menu
@@ -58,32 +52,50 @@ PopupStandardWindow{
                     }
                 }
 
-                Component.onCompleted: {
-                    switch(_annotationType){
+                Component.onCompleted:{
+                    console.log(annotationType)
+                    switch(annotationType){
                     case ProjectPopup.AnnotationType.Detection:{
+                        console.log("Detection")
                         gotoMenu("Detection")
                         break
                     }
                     case ProjectPopup.AnnotationType.RotatedBox:{
+                        console.log("RotatedBox")
                         gotoMenu("RotatedBox")
                         break
                     }
                     default:
+                        console.log("Detection")
                         gotoMenu("Detection")
                     }
                 }
             }
+
             Loader{
                 id: detailLoader
                 anchors.left: _menu.right
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                sourceComponent:_annotationType === ProjectPopup.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
+                sourceComponent:annotationType === ProjectPopup.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
             }
         }
 
     }
+
+    Component{
+        id: rotatedBoxDetail
+        HusRectangle{
+            anchors.fill: parent
+            color: "red"
+        }
+    }
+
+
+
+
+
 
     Component{
         id: detectionDetail
@@ -185,14 +197,7 @@ PopupStandardWindow{
         _resultFolder = data.resultPath || ""
         _outOfTarget = data.outOfTarget || false
         _showOrder = data.showOrder || false
-        _annotationType = data.annotationType || ProjectPopup.AnnotationType.Detection
-        console.log(contentItem)
-        // 通过 contentItem 访问
-        if (contentItem && contentItem._content) {
-            console.log("Menu accessed:", contentItem._menu);
-            // 调用菜单方法
-            contentItem._menu.gotoMenu("Detection");
-        }
+        annotationType = data.annotationType || ProjectPopup.AnnotationType.Detection
     }
 
     function _resetForm() {
@@ -201,7 +206,7 @@ PopupStandardWindow{
         _resultFolder = ""
         _outOfTarget = false
         _showOrder = false
-        _annotationType = ProjectPopup.AnnotationType.Detection
+        annotationType = ProjectPopup.AnnotationType.Detection
     }
 
     function getFormData() {
@@ -211,7 +216,10 @@ PopupStandardWindow{
             resultPath: _resultFolder,
             outOfTarget: _outOfTarget,
             showOrder: _showOrder,
-            annotationType: _annotationType
+            annotationType: annotationType
         }
     }
+
+
+
 }

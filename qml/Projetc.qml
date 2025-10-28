@@ -103,6 +103,15 @@ Item {
             outOfTarget:true
             showOrder:false
         }
+        ListElement{
+            projectName:"我是猪"
+            imagePath:"/user/local/bin/images"
+            resultPath:"/user/local/bin/results"
+            annotationType: 2
+            createTime:"2025-10-26 12:08:23"
+            outOfTarget:true
+            showOrder:true
+        }
     }
 
     Component{
@@ -117,9 +126,9 @@ Item {
             required property string createTime
             property int fontSize: 12
             readonly property var annotationTagColor:{
-                0:"red",
-                1:"blue",
-                2:"green"
+                0 : "red",
+                1 : "blue",
+                2 : "green"
             }
             width: 310
             height: 200
