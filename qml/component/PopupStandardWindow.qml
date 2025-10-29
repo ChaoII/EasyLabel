@@ -1,3 +1,5 @@
+# PopupStandardWindow.qml
+
 import QtQuick
 import HuskarUI.Basic
 import QtQuick.Controls
@@ -8,10 +10,13 @@ HusPopup {
     id: popup
     property alias title: txtTitle.text
     property Component contentDelegate: null
+    property Item loaderItem: contentLoader.item
+    signal accepted()
+    signal rejected()
     x: (parent.width - width) * 0.5
     y: (parent.height - height) * 0.5
-    width: 800
-    height: 600
+    implicitWidth: 800
+    implicitHeight: 600
     parent: Overlay.overlay
     closePolicy: HusPopup.NoAutoClose
     movable: true
@@ -80,12 +85,18 @@ HusPopup {
                 id: btnCancel
                 text: "取消"
                 type: HusButton.Type_Outlined
+                onClicked:{
+                    popup.rejected()
+                }
             }
             HusButton {
                 id: btnEnsure
                 text: "确认"
                 type: HusButton.Type_Primary
                 focus: true
+                onClicked:{
+                    popup.accepted()
+                }
             }
         }
     }

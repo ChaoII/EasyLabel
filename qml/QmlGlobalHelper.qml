@@ -4,13 +4,13 @@ import Qt.labs.platform as Platform
 
 QtObject {
     id: root
+
     // 信号：选择完成时发出
     signal folderSelected(string folderPath)
 
     property var folderDialog: Platform.FolderDialog {
         id: internalDialog
         folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.HomeLocation)
-
         onAccepted: {
             var folderPath = currentFolder.toString().replace("file:///", "")
             root.folderSelected(folderPath)

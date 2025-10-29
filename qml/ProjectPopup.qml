@@ -1,3 +1,4 @@
+#ProjectPopup.qml
 import QtQuick
 import HuskarUI.Basic
 import QtQuick.Controls
@@ -7,33 +8,42 @@ import EasyLabel
 
 PopupStandardWindow{
     id: popup
-    enum DialogMode {
-        Create = 0,
-        Edit = 1
-    }
-
-    enum AnnotationType {
-        Detection = 0,
-        RotatedBox=1
-    }
-
-    property int mode: ProjectPopup.DialogMode.Create
+    property int mode: GlobalEnum.DialogMode.Create
     property var projectData: null
-    property string _projectName: ""
-    property string _imageFolder: ""
-    property string _resultFolder: ""
-    property bool _outOfTarget: false
-    property bool _showOrder: false
-    property int annotationType: ProjectPopup.AnnotationType.Detection
-
-    title: mode === ProjectPopup.DialogMode.Edit ? qsTr("编辑项目") : qsTr("新建项目")
+    property int index: 0
+    property Item detailItem: popup.loaderItem.loaderItem
+    signal formDataEditFinished(int index, var projectData)
+    title: mode === GlobalEnum.DialogMode.Edit ? qsTr("编辑项目") : qsTr("新建项目")
     contentDelegate: _contentComponent
+
+    onAccepted: {
+        projectData = popup.getFormData()
+        formDataEditFinished(popup.index, projectData)
+        popup.close()
+    }
+
+    onRejected:{
+        popup.resetForm()
+        popup.close()
+    }
 
     Component{
         id:_contentComponent
         Item{
             id: content
             anchors.fill: parent
+            property int annotationType: GlobalEnum.AnnotationType.Detection
+            property Item loaderItem: detailLoader.item
+            onAnnotationTypeChanged:{
+                if(annotationType===GlobalEnum.AnnotationType.Detection){
+                    _menu.gotoMenu("Detection")
+                }
+                else if(annotationType===GlobalEnum.AnnotationType.RotatedBox){
+                    _menu.gotoMenu("RotatedBox")
+                }else{
+                    _menu.gotoMenu("Other")
+                }
+            }
             HusMenu {
                 id: _menu
                 Layout.fillHeight: true
@@ -41,33 +51,17 @@ PopupStandardWindow{
                 defaultMenuWidth: 200
                 height: parent.height
                 initModel: [
-                    {key:"Detection", label: qsTr('目标检测'), value: ProjectPopup.AnnotationType.Detection },
-                    {key:"RotatedBox", label: qsTr('旋转框检测'), value: ProjectPopup.AnnotationType.RotatedBox }
+                    {key:"Detection", label: qsTr('目标检测'), value: GlobalEnum.AnnotationType.Detection },
+                    {key:"RotatedBox", label: qsTr('旋转框检测'), value: GlobalEnum.AnnotationType.RotatedBox },
+                    {key:"Other", label: qsTr('其它'), value: GlobalEnum.AnnotationType.Other }
                 ]
                 onClickMenu: function(deep, key, keyPath, data) {
-                    if(data.value===ProjectPopup.AnnotationType.Detection){
+                    if(data.value===GlobalEnum.AnnotationType.Detection){
                         detailLoader.sourceComponent = detectionDetail
-                    }else{
+                    }else if(data.value===GlobalEnum.AnnotationType.RotatedBox){
                         detailLoader.sourceComponent = rotatedBoxDetail
-                    }
-                }
-
-                Component.onCompleted:{
-                    console.log(annotationType)
-                    switch(annotationType){
-                    case ProjectPopup.AnnotationType.Detection:{
-                        console.log("Detection")
-                        gotoMenu("Detection")
-                        break
-                    }
-                    case ProjectPopup.AnnotationType.RotatedBox:{
-                        console.log("RotatedBox")
-                        gotoMenu("RotatedBox")
-                        break
-                    }
-                    default:
-                        console.log("Detection")
-                        gotoMenu("Detection")
+                    }else{
+                        detailLoader.sourceComponent = otherDetail
                     }
                 }
             }
@@ -78,7 +72,7 @@ PopupStandardWindow{
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                sourceComponent:annotationType === ProjectPopup.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
+                sourceComponent:annotationType === GlobalEnum.AnnotationType.Detection? detectionDetail: rotatedBoxDetail
             }
         }
 
@@ -89,19 +83,44 @@ PopupStandardWindow{
         HusRectangle{
             anchors.fill: parent
             color: "red"
+            function _reset(){
+            }
+
+            function _loadFormData(formData){
+            }
+
+            function _getFormData(){
+                return {
+                }
+            }
         }
     }
 
+    Component{
+        id: otherDetail
+        HusRectangle{
+            anchors.fill: parent
+            color: "yellow"
+            function _reset(){
+            }
 
+            function _loadFormData(formData){
+            }
 
+            function _getFormData(){
+                return {
+                }
+            }
+        }
 
-
+    }
 
     Component{
         id: detectionDetail
         ScrollView{
             id: scrollView
             property int labelWidth: 120
+            property var formData: null
             anchors.fill: parent
             contentWidth: width
             contentHeight: columnLayout.implicitHeight
@@ -121,14 +140,12 @@ PopupStandardWindow{
                         text:"项目名称："
                     }
                     HusInput{
+                        id:inputProjectName
                         Layout.fillWidth: true
                         placeholderText: "请输入项目名称"
-                        text: _projectName
-                        Component.onCompleted: {
-                        }
+                        text:""
                     }
                 }
-
                 RowLayout{
                     id: layoutImage
                     HusText{
@@ -136,11 +153,11 @@ PopupStandardWindow{
                         text:"选择图片文件夹："
                     }
                     DirSelectInput{
+                        id: dirSelectImageFolder
                         Layout.fillWidth: true
-                        text:_imageFolder
+                        text:""
                     }
                 }
-
                 RowLayout{
                     id: layoutResult
                     HusText{
@@ -148,11 +165,11 @@ PopupStandardWindow{
                         text:"选择结果文件夹："
                     }
                     DirSelectInput{
+                        id:dirSelectResultFolder
                         Layout.fillWidth: true
-                        text:_resultFolder
+                        text:""
                     }
                 }
-
                 RowLayout{
                     id: layoutOutOfTarget
                     height: layoutName.height
@@ -161,7 +178,8 @@ PopupStandardWindow{
                         text:"目标外标注："
                     }
                     HusSwitch{
-                        checked: _outOfTarget
+                        id:switchOutOfTarget
+                        checked: false
                     }
                 }
                 RowLayout{
@@ -171,55 +189,65 @@ PopupStandardWindow{
                         text:"显示标注顺序"
                     }
                     HusSwitch{
-                        checked: _showOrder
+                        id: switchShowOrder
+                        checked: false
                     }
+                }
+            }
+            function _reset(){
+                inputProjectName.text = ""
+                dirSelectImageFolder.text=""
+                dirSelectResultFolder.text=""
+                switchOutOfTarget.checked=false
+                switchShowOrder.checked=false
+            }
+
+            function _loadFormData(formData){
+                inputProjectName.text = formData.projectName||""
+                dirSelectImageFolder.text=formData.imageFolder||""
+                dirSelectResultFolder.text=formData.resultFolder||""
+                switchOutOfTarget.checked=formData.outOfTarget||false
+                switchShowOrder.checked=formData.showOrder||false
+            }
+
+            function _getFormData(){
+                return {
+                    projectName: inputProjectName.text,
+                    imageFolder: dirSelectImageFolder.text,
+                    resultFolder: dirSelectResultFolder.text,
+                    outOfTarget: switchOutOfTarget.checked,
+                    showOrder: switchShowOrder.checked,
+                    annotationType: GlobalEnum.AnnotationType.Detection
                 }
             }
         }
     }
 
-    function openProjectInfo(data){
+    function openProjectInfo(index, data){
         if (data) {
+            popup.index = index
             popup.projectData = data
-            popup._loadFormData(data)
-            popup.mode = ProjectPopup.DialogMode.Edit
+            popup.loadFormData(data)
+            popup.mode = GlobalEnum.DialogMode.Edit
         } else {
-            popup._resetForm()
-            popup.mode = ProjectPopup.DialogMode.Create
+            popup.resetForm()
+            popup.mode = GlobalEnum.DialogMode.Create
         }
         popup.open()
     }
 
     // 内部方法
-    function _loadFormData(data) {
-        _projectName = data.projectName || ""
-        _imageFolder = data.imagePath || ""
-        _resultFolder = data.resultPath || ""
-        _outOfTarget = data.outOfTarget || false
-        _showOrder = data.showOrder || false
-        annotationType = data.annotationType || ProjectPopup.AnnotationType.Detection
+    function loadFormData(data) {
+        popup.loaderItem.annotationType = data.annotationType
+        popup.detailItem._loadFormData(data)
     }
 
-    function _resetForm() {
-        _projectName = ""
-        _imageFolder = ""
-        _resultFolder = ""
-        _outOfTarget = false
-        _showOrder = false
-        annotationType = ProjectPopup.AnnotationType.Detection
+    function resetForm() {
+        popup.detailItem._reset(data)
     }
 
     function getFormData() {
-        return {
-            projectName: _projectName,
-            imagePath: _imageFolder,
-            resultPath: _resultFolder,
-            outOfTarget: _outOfTarget,
-            showOrder: _showOrder,
-            annotationType: annotationType
-        }
+        var fromData = popup.detailItem._getFormData()
+        return fromData
     }
-
-
-
 }
