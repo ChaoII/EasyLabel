@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import HuskarUI.Basic
+import EasyLabel
 
 HusWindow {
     id: root
@@ -27,8 +28,8 @@ HusWindow {
     }
     Component.onCompleted: {
         setSpecialEffect(HusWindow.Win_MicaAlt)
+        QmlGlobalHelper.initialize(root)
     }
-
     Item{
         id: content
         anchors.top: root.captionBar.bottom
@@ -38,7 +39,7 @@ HusWindow {
         StackView{
             id: stackView
             anchors.fill: parent
-            initialItem: Projetc{}
+            initialItem: ProjetcList{}
         }
     }
 }

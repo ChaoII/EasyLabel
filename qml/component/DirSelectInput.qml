@@ -1,9 +1,7 @@
 import QtQuick
+import QtCore
+import QtQuick.Dialogs
 import HuskarUI.Basic
-import QtQuick.Controls
-import QtQuick.Layouts
-import Qt.labs.platform as Platform
-
 
 Item {
     id: dirSelect
@@ -39,10 +37,10 @@ Item {
         }
     }
 
-    Platform.FolderDialog {
+    FolderDialog {
         id: folderDialog
         title: dialogTitle
-        folder: Platform.StandardPaths.writableLocation(Platform.StandardPaths.HomeLocation)
+        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         onAccepted: {
             // 获取文件夹路径（去掉 file:// 前缀）
             var folderPath = currentFolder.toString().replace("file:///", "")

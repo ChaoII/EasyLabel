@@ -14,6 +14,13 @@ QtObject {
         Other = 2
     }
 
+
+    property var annotationTagColorMap:({
+        [GlobalEnum.AnnotationType.Detection]: "red",
+        [GlobalEnum.AnnotationType.RotatedBox]: "blue",
+        [GlobalEnum.AnnotationType.Other]: "green"
+    })
+
     property var annotationTypeStringMap: ({
         [GlobalEnum.AnnotationType.Detection]: "Detection",
         [GlobalEnum.AnnotationType.RotatedBox]: "RotatedBox",

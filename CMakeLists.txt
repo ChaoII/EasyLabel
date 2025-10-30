@@ -6,12 +6,23 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HuskarUI_DIR "D:/HuskarUI")
+set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(SqliteOrm REQUIRED)
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 qt_add_executable(appEasyLabel
-    main.cpp
+    src/main.cpp
+    src/qmlutilscpp.h
+    src/qmlutilscpp.cpp
+    src/db/schema/schema.h
+    src/db/dbHelper.h
+    src/db/dbHelper.cpp
+    src/projectdto.h
+    src/projectdto.cpp
 )
 
 qt_add_resources(appEasyLabel "images"
@@ -21,8 +32,8 @@ qt_add_resources(appEasyLabel "images"
 )
 
 set_source_files_properties(
-    qml/QmlGlobalHelper.qml
-    qml/GlobalEnum.qml
+    qml/global/QmlGlobalHelper.qml
+    qml/global/GlobalEnum.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_add_qml_module(appEasyLabel
@@ -30,12 +41,17 @@ qt_add_qml_module(appEasyLabel
     VERSION 1.0
     QML_FILES
     qml/Main.qml
-    qml/Projetc.qml
-    qml/ProjectPopup.qml
+    qml/project/ProjetcList.qml
+    qml/project/ProjectPopup.qml
+    qml/project/DetectionDetailComponent.qml
+    qml/project/RotatedBoxDetailComponent.qml
+    qml/project/OtherDetailComponent.qml
     qml/component/PopupStandardWindow.qml
     qml/component/DirSelectInput.qml
-    qml/QmlGlobalHelper.qml
-    qml/GlobalEnum.qml
+    qml/global/QmlGlobalHelper.qml
+    qml/global/GlobalEnum.qml
+
+
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -57,8 +73,9 @@ target_link_directories(appEasyLabel PRIVATE
 )
 
 target_link_libraries(appEasyLabel
-    PRIVATE Qt6::Quick HuskarUIBasic
+    PRIVATE Qt6::Quick HuskarUIBasic sqlite_orm::sqlite_orm
 )
+target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 install(TARGETS appEasyLabel

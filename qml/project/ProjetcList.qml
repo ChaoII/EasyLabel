@@ -2,12 +2,20 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import HuskarUI.Basic
+import EasyLabel
 
 
 Item {
     id:root
     anchors.margins: 10
     anchors.fill: parent
+    property var projectDto:ProjectDto{}
+    property var listModel: []
+    Component.onCompleted: {
+        searchProject()
+    }
+
+
     RowLayout{
         id: layoutBtn
         anchors.top : parent.top
@@ -57,81 +65,47 @@ Item {
         id: pagination
         anchors.bottom: parent.bottom
         currentPageIndex: 0
-        total: 50
+        total: 0
         pageSizeModel: [
             { label: qsTr('10条每页'), value: 10 },
             { label: qsTr('20条每页'), value: 20 },
             { label: qsTr('30条每页'), value: 30 },
             { label: qsTr('40条每页'), value: 40 }
         ]
+        onCurrentPageIndexChanged:{
+            searchProject()
+        }
+        onPageSizeChanged: {
+            searchProject()
+        }
     }
 
-    ListModel{
-        id:listModel
-        ListElement{
-            projectName:"我是猪"
-            imageFolder:"/user/local/bin/images"
-            resultFolder:"/user/local/bin/results"
-            annotationType: 0
-            createTime:"2025-10-26 12:08:23"
-            outOfTarget:false
-            showOrder:true
+    function searchProject(){
+        pagination.total = projectDto.getProjectCount()
+        let _limit = pagination.pageSize
+        let _offset = pagination.pageSize* pagination.currentPageIndex
+        let result = projectDto.getProjectList( _limit,  _offset, "createTime")
+        listModel=result
+    }
+
+    function removeProject(index){
+        let success = false
+        if(index >= 0 && index < listModel.length){
+            let formData = listModel[index]
+            let removed = projectDto.removeProject(formData.id)
+            searchProject()
+            success = true
         }
-        ListElement{
-            projectName:"我是猪"
-            imageFolder:"/user/local/bin/images"
-            resultFolder:"/user/local/bin/results"
-            annotationType: 0
-            createTime:"2025-10-26 12:08:23"
-            outOfTarget:false
-            showOrder:false
-        }
-        ListElement{
-            projectName:"我是猪"
-            imageFolder:"/user/local/bin/images"
-            resultFolder:"/user/local/bin/results/user/local/bin/results"
-            annotationType: 0
-            createTime:"2025-10-26 12:08:23"
-            outOfTarget:false
-            showOrder:false
-        }
-        ListElement{
-            projectName:"我是猪"
-            imageFolder:"/user/local/bin/images"
-            resultFolder:"/user/local/bin/results"
-            annotationType: 1
-            createTime:"2025-10-26 12:08:23"
-            outOfTarget:true
-            showOrder:false
-        }
-        ListElement{
-            projectName:"我是猪"
-            imageFolder:"/user/local/bin/images"
-            resultFolder:"/user/local/bin/results"
-            annotationType: 2
-            createTime:"2025-10-26 12:08:23"
-            outOfTarget:true
-            showOrder:true
-        }
+        return success
     }
 
     Component{
         id:cardDetegate
         HusCard{
             id:_card
-            required property var modelData
             required property int index
-            required property string projectName
-            required property string imageFolder
-            required property string resultFolder
-            required property string annotationType
-            required property string createTime
+            required property var modelData
             property int fontSize: 12
-            readonly property var annotationTagColor:{
-                0 : "red",
-                1 : "blue",
-                2 : "green"
-            }
             width: 310
             height: 200
             titleDelegate: null
@@ -148,7 +122,7 @@ Item {
                     height: parent.height
                     anchors.left: parent.left
                     verticalAlignment: HusText.AlignVCenter
-                    text: projectName
+                    text: modelData.projectName
                 }
             }
 
@@ -182,15 +156,15 @@ Item {
                     anchors.leftMargin: 10
                     HusTag{
                         id: textType
-                        text: annotationType
-                        presetColor: _card.annotationTagColor[annotationType]
+                        text: GlobalEnum.annotationTypeStringMap[modelData.annotationType]
+                        presetColor: GlobalEnum.annotationTagColorMap[modelData.annotationType]
                     }
                     RowLayout{
                         height: 20
                         HusText {
                             Layout.fillWidth: true
                             font.pixelSize: fontSize
-                            text:"图片路径："+ imageFolder
+                            text:"图片路径："+ modelData.imageFolder
                             elide: Text.ElideRight
                             color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
@@ -201,7 +175,7 @@ Item {
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
                             onClicked: {
-                                QmlGlobalHelper.openFolderDialog("图像目录", imageFolder)
+                                QmlGlobalHelper.openFolderDialog("图像目录", modelData.imageFolder)
                             }
                         }
                     }
@@ -210,7 +184,7 @@ Item {
                         HusText{
                             Layout.fillWidth: true
                             font.pixelSize: fontSize
-                            text:"结果路径："+ resultFolder
+                            text:"结果路径："+ modelData.resultFolder
                             elide: Text.ElideRight
                             color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
@@ -221,14 +195,14 @@ Item {
                             type: HusButton.Type_Link
                             iconSource: HusIcon.FolderOpenOutlined
                             onClicked: {
-                                QmlGlobalHelper.openFolderDialog("结果目录", resultFolder)
+                                QmlGlobalHelper.openFolderDialog("结果目录", modelData.resultFolder)
                             }
                         }
                     }
                     HusText{
                         Layout.preferredHeight: 20
                         font.pixelSize: fontSize
-                        text:"创建时间："+ createTime
+                        text:"创建时间："+ modelData.createTime
                         verticalAlignment: Text.AlignVCenter
                         color: HusTheme.Primary.colorPrimaryTextDisabled
                     }
@@ -271,6 +245,9 @@ Item {
                         type: HusButton.Type_Link
                         iconSource: HusIcon.ExportOutlined
                         iconSize: 16
+                        onClicked:{
+                            QmlGlobalHelper.message.info("message")
+                        }
                     }
                 }
 
@@ -289,17 +266,17 @@ Item {
                         iconSource: HusIcon.DeleteOutlined
                         iconSize: 16
                         onClicked: {
-                            listModel.remove(index, 1)
-                            root.message1.success("吃粑粑")
+                            if(removeProject(index)){
+                                QmlGlobalHelper.message.success("删除项目成功！")
+                            }else{
+                                QmlGlobalHelper.message.error("删除项目失败！")
+                            }
                         }
                     }
                 }
             }
         }
     }
-
-
-
 
     ProjectPopup{
         id: popup
@@ -312,20 +289,29 @@ Item {
         }
         onFormDataEditFinished: function(index, formData){
             if(popup.mode === GlobalEnum.Create){
-                listModel.append(formData)
-                console.log("新增成功")
+                if(projectDto.insertProject(formData)){
+                    QmlGlobalHelper.message.success("创建项目成功！")
+                }else{
+                    QmlGlobalHelper.message.error("创建项目失败！")
+                }
+                Qt.callLater(searchProject);
             }if(popup.mode === GlobalEnum.Edit){
-                console.log("修改成功index:" + index)
-                if (index >= 0 && index < listModel.count) {
-                    var currentListItem = listModel.get(index)
+                if (index >= 0 && index < listModel.length) {
+                    var currentListItem = listModel[index]
                     console.log(JSON.stringify(formData))
-                    console.log(currentListItem)
-                    listModel.setProperty(index, "projectName", formData.projectName || currentListItem.projectName)
-                    listModel.setProperty(index, "imageFolder", formData.imageFolder || currentListItem.imageFolder)
-                    listModel.setProperty(index, "resultFolder", formData.resultFolder || currentListItem.resultFolder)
-                    listModel.setProperty(index, "annotationType", formData.annotationType !== undefined ? formData.annotationType : currentListItem.annotationType)
-                    listModel.setProperty(index, "outOfTarget", formData.outOfTarget !== undefined ? formData.outOfTarget : currentListItem.outOfTarget)
-                    listModel.setProperty(index, "showOrder", formData.showOrder !== undefined ? formData.showOrder : currentListItem.showOrder)
+                    currentListItem["projectName"] = formData.projectName || currentListItem.projectName
+                    currentListItem["imageFolder"] = formData.imageFolder || currentListItem.imageFolder
+                    currentListItem["resultFolder"] = formData.resultFolder || currentListItem.resultFolder
+                    currentListItem["annotationType"] = formData.annotationType !== undefined ? formData.annotationType: currentListItem.annotationType
+                    currentListItem["outOfTarget"] = formData.outOfTarget !== undefined ? formData.outOfTarget: currentListItem.outOfTarget
+                    currentListItem["showOrder"] = formData.showOrder !== undefined ? formData.showOrder: currentListItem.showOrder
+                    currentListItem["updateTime"] = formData.showOrder !== undefined ? formData.updateTime: currentListItem.showOrder
+                    if(projectDto.updateProject(currentListItem)){
+                        QmlGlobalHelper.message.success("修改项目成功！")
+                    }else{
+                        QmlGlobalHelper.message.error("修改项目失败！")
+                    }
+                    Qt.callLater(searchProject);
                 }
             }
         }
