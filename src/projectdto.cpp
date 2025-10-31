@@ -1,13 +1,25 @@
-#include "projectdto.h"
+#include "src/projectdto.h"
 
 ProjectDto::ProjectDto(QObject* parent)
     : QObject{parent} {
 }
 
 
-size_t ProjectDto::getProjectCount() {
+size_t ProjectDto::getProjectCount(const QString& projectName, const QString& startTime,
+                                   const QString& endTime) {
     try {
-        return DBHelper::getStorage().count(&Project::id);
+        const QString _projectName = projectName.isEmpty() ? "%" : "%" + projectName + "%";
+        const QString _startTime = startTime.isEmpty()
+                                       ? QDateTime::currentDateTime().addYears(-100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                       : startTime;
+        const QString _endTime = startTime.isEmpty()
+                                     ? QDateTime::currentDateTime().addYears(100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                     : endTime;
+        const auto projects = DBHelper::getStorage().get_all<Project>(
+            where(like(&Project::projectName, _projectName.toStdString())
+                  and c(&Project::createTime) >= _startTime.toStdString()
+                  and c(&Project::createTime) <= _endTime.toStdString()));
+        return projects.size();
     }
     catch (const std::exception& e) {
         qDebug() << "get project count failed: " << e.what();
@@ -49,22 +61,28 @@ bool ProjectDto::removeProject(const int projectID) {
     }
 }
 
-QVariantList ProjectDto::getProjectList(const int _limit, const int _offset,
-                                        const QString& _orderField, const bool descending) {
+QVariantList ProjectDto::getProjectList(const QString& projectName, const QString& startTime,
+                                        const QString& endTime, int _limit, int _offset,
+                                        const QString& _orderField, bool descending) {
     try {
         const auto orderField = _orderField == "projectName"
                                     ? &Project::projectName
                                     : &Project::createTime;
         const auto query = order_by(orderField);
         auto orderedQuery = descending ? query.desc() : query.asc();
-        const auto projects = DBHelper::getStorage().
-            get_all<Project>(orderedQuery, limit(_limit, offset(_offset)));
-        QVariantList list;
-        for (auto& project : projects) {
-            auto map = projectToMap(project);
-            list.append(map);
-        }
-        return list;
+        const QString _projectName = projectName.isEmpty() ? "%" : "%" + projectName + "%";
+        const QString _startTime = startTime.isEmpty()
+                                       ? QDateTime::currentDateTime().addYears(-100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                       : startTime;
+        const QString _endTime = startTime.isEmpty()
+                                     ? QDateTime::currentDateTime().addYears(100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                     : endTime;
+        const auto projects = DBHelper::getStorage().get_all<Project>(
+            where(like(&Project::projectName, _projectName.toStdString())
+                  and c(&Project::createTime) >= _startTime.toStdString()
+                  and c(&Project::createTime) <= _endTime.toStdString()),
+            orderedQuery, limit(_limit, offset(_offset)));
+        return projectsToVariantList(projects);
     }
     catch (const std::exception& e) {
         qDebug() << "get project list failed: " << e.what();
@@ -81,6 +99,8 @@ QVariantMap ProjectDto::projectToMap(const Project& project) {
     map.insert("annotationType", project.annotationType);
     map.insert("outOfTarget", project.outOfTarget);
     map.insert("showOrder", project.showOrder);
+    map.insert("current", project.current);
+    map.insert("total", project.total);
     map.insert("createTime", QString::fromStdString(project.createTime));
     map.insert("updateTime", QString::fromStdString(project.updateTime));
     return map;
@@ -95,7 +115,17 @@ Project ProjectDto::mapToProject(const QVariantMap& projectMap) {
     project.annotationType = projectMap.value("annotationType").toInt();
     project.outOfTarget = projectMap.value("outOfTarget").toBool();
     project.showOrder = projectMap.value("showOrder").toBool();
+    project.current = projectMap.value("current").toBool();
+    project.total = projectMap.value("total").toBool();
     project.createTime = projectMap.value("createTime").toString().toStdString();
     project.updateTime = projectMap.value("updateTime").toString().toStdString();
     return project;
+}
+
+QVariantList ProjectDto::projectsToVariantList(const std::vector<Project>& projects) {
+    QVariantList list;
+    for (const auto& project : projects) {
+        list.append(projectToMap(project));
+    }
+    return list;
 }

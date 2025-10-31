@@ -16,11 +16,8 @@ struct Project {
     int annotationType;
     bool outOfTarget;
     bool showOrder;
+    int current;
+    int total;
     std::string createTime;
     std::string updateTime;
 };
-
-
-
-
-

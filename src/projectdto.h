@@ -11,9 +11,12 @@ class ProjectDto : public QObject {
 public:
     explicit ProjectDto(QObject* parent = nullptr);
 
-    Q_INVOKABLE static QVariantList getProjectList(int _limit, int _offset,
+    Q_INVOKABLE static QVariantList getProjectList(const QString& projectName, const QString& startTime,
+                                                   const QString& endTime, int _limit, int _offset,
                                                    const QString& _orderField, bool descending = true);
-    Q_INVOKABLE static size_t getProjectCount();
+
+    Q_INVOKABLE static size_t getProjectCount(const QString& projectName, const QString& startTime,
+                                              const QString& endTime);
 
     Q_INVOKABLE static bool insertProject(const QVariantMap& projectMap);
 
@@ -25,4 +28,6 @@ private:
     static QVariantMap projectToMap(const Project& project);
 
     static Project mapToProject(const QVariantMap& projectMap);
+
+    static QVariantList projectsToVariantList(const std::vector<Project>& projects);
 };

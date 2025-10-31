@@ -13,7 +13,7 @@ QtObject {
 
     property var rootWindow: null
     property HusMessage message: null
-
+    property StackView mainStackView: null
 
 
     property Component messageComponent: Component {
@@ -67,7 +67,7 @@ QtObject {
                 return "file:///" + path
             } else {
                 // 相对路径，转换为绝对路径
-                return "file:///" + Platform.StandardPaths.writableLocation(Platform.StandardPaths.HomeLocation) + "/" + path
+                return "file:///" + StandardPaths.writableLocation(StandardPaths.HomeLocation) + "/" + path
             }
         } else {
             // Linux/Mac 路径处理

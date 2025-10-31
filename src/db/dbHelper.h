@@ -15,6 +15,8 @@ inline auto createStorage() {
                                            make_column("annotation_type", &Project::annotationType),
                                            make_column("out_of_target", &Project::outOfTarget,default_value(false)),
                                            make_column("show_order", &Project::showOrder,default_value(false)),
+                                           make_column("current", &Project::current, default_value(0)),
+                                           make_column("total", &Project::total, default_value(0)),
                                            make_column("create_time", &Project::createTime),
                                            make_column("update_time", &Project::updateTime)
                                 )

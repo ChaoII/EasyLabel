@@ -29,6 +29,7 @@ HusWindow {
     Component.onCompleted: {
         setSpecialEffect(HusWindow.Win_MicaAlt)
         QmlGlobalHelper.initialize(root)
+        QmlGlobalHelper.mainStackView = stackView
     }
     Item{
         id: content
@@ -39,6 +40,7 @@ HusWindow {
         StackView{
             id: stackView
             anchors.fill: parent
+            anchors.margins: 10
             initialItem: ProjetcList{}
         }
     }

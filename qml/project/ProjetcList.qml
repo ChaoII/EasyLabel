@@ -7,43 +7,74 @@ import EasyLabel
 
 Item {
     id:root
-    anchors.margins: 10
-    anchors.fill: parent
+    property alias searchProjectName: inputSecrch.text
+    property string searchStartTime:""
+    property string searchEndTime:""
     property var projectDto:ProjectDto{}
     property var listModel: []
     Component.onCompleted: {
         searchProject()
     }
-
-
-    RowLayout{
-        id: layoutBtn
+    Item{
+        id: header
+        height:30
         anchors.top : parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         HusButton{
             id: btnCreateProject
+            anchors.left: parent.left
             type: HusButton.Type_Primary
             text: "创建项目"
             onClicked: {
                 popup.openProjectInfo()
             }
         }
-        Item{
-            Layout.fillWidth: true
-        }
-        HusRadioBlock {
-            initCheckedIndex: 0
-            model: [
-                { label: 'Apple', value: 'Apple' },
-                { label: 'Pear', value: 'Pear' },
-                { label: 'Orange', value: 'Orange' },
-            ]
+        RowLayout{
+            height:30
+            anchors.right: parent.right
+            HusDateTimePicker {
+                id:dtpStart
+                Layout.preferredWidth: 180
+                placeholderText: qsTr('请选择开始日期时间')
+                format: qsTr('yyyy-MM-dd hh:mm:ss')
+                onSelected: (dateTime)=>{
+                                searchStartTime = Qt.formatDateTime(dateTime, "yyyy-MM-ddThh:mm:ss.zzz")
+                            }
+            }
+            HusText{
+                text:"~"
+            }
+            HusDateTimePicker {
+                id:dtpEnd
+                Layout.preferredWidth: 180
+                placeholderText: qsTr('请选择结束日期时间')
+                format: qsTr('yyyy-MM-dd hh:mm:ss')
+                onSelected: (dateTime)=>{
+                                searchEndTime = Qt.formatDateTime(dateTime, "yyyy-MM-ddThh:mm:ss.zzz")
+                            }
+            }
+            HusInput {
+                id: inputSecrch
+                Layout.preferredWidth: 180
+                clearEnabled: true
+                placeholderText: "请输入项目名称"
+                text:""
+            }
+            HusIconButton {
+                id: icoBtnSecrch
+                width: 30
+                type: HusButton.Type_Primary
+                iconSource: HusIcon.SearchOutlined
+                onClicked: {
+                    searchProject()
+                }
+            }
         }
     }
     ScrollView   {
         id: scrollView
-        anchors.top: layoutBtn.bottom
+        anchors.top: header.bottom
         anchors.bottom: pagination.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -81,10 +112,10 @@ Item {
     }
 
     function searchProject(){
-        pagination.total = projectDto.getProjectCount()
+        pagination.total = projectDto.getProjectCount(searchProjectName, searchStartTime, searchEndTime)
         let _limit = pagination.pageSize
         let _offset = pagination.pageSize* pagination.currentPageIndex
-        let result = projectDto.getProjectList( _limit,  _offset, "createTime")
+        let result = projectDto.getProjectList(searchProjectName, searchStartTime, searchEndTime, _limit,  _offset, "createTime")
         listModel=result
     }
 
@@ -109,6 +140,16 @@ Item {
             width: 310
             height: 200
             titleDelegate: null
+            MouseArea{
+                anchors.fill: parent
+                onClicked: {
+                    QmlGlobalHelper.message.info("戳戳戳："+modelData.projectName)
+                    QmlGlobalHelper.mainStackView.push(
+                                "../canvas/MainCanvas.qml",{
+                                    projectName: modelData.projectName
+                                })
+                }
+            }
 
             Item{
                 id:itemTitle
@@ -119,10 +160,30 @@ Item {
                 height:20
 
                 HusText{
+                    id: txtTitle
+                    width: parent.width * 0.6 - 10
                     height: parent.height
                     anchors.left: parent.left
                     verticalAlignment: HusText.AlignVCenter
                     text: modelData.projectName
+                    elide: HusText.ElideRight
+                }
+                HusProgress {
+                    anchors.right: parent.right
+                    width: parent.width * 0.4
+                    barThickness: 2
+                    percent: {
+                        if(modelData.total<=0){
+                            return 0
+                        }
+                        return modelData.current/modelData.total*100
+                    }
+                    status: {
+                        if(modelData.total>0 && modelData.current === modelData.total){
+                            return HusProgress.Status_Success
+                        }
+                        return HusProgress.Status_Active
+                    }
                 }
             }
 
