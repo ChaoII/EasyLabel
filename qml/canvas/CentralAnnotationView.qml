@@ -5,6 +5,14 @@ import QtQuick.Controls
 
 Item{
     id:splitLeft
+
+    enum OptionStatus{
+        Select=0,
+        Drawing=1
+    }
+
+    property int drawStatus:0
+
     Flickable {
         id: flickable
         anchors.left: parent.left
@@ -57,7 +65,6 @@ Item{
                 source: "qrc:/images/image.jpg"
                 fillMode: Image.PreserveAspectFit
                 anchors.fill: parent
-
             }
 
             // ================================
@@ -66,46 +73,44 @@ Item{
             Item {
                 id: annotationLayer
                 anchors.fill: parent
-
                 ListModel { id: annotationModel }
-
                 // 鼠标绘制矩形标注
                 MouseArea {
                     id: drawArea
                     anchors.fill: parent
                     property real startX
                     property real startY
+                    // 阻止事件传递到 Flickable
+                    // preventStealing: true
+                    // propagateComposedEvents: false
+                    onPressed:function(mouse){
+                        if(mouse.button === Qt.LeftButton && drawStatus === CentralAnnotationView.Drawing){
+                            startX = mouse.x
+                            startY = mouse.y
+                            annotationModel.append({"x": mouse.x,"y": mouse.y,"w": 0,"h": 0 })
+                        }
+                    }
 
-                    onPressed:(mouse)=> {
-                                  startX = mouse.x
-                                  startY = mouse.y
-
-                                  annotationModel.append({
-                                                             "x": mouse.x,
-                                                             "y": mouse.y,
-                                                             "w": 0,
-                                                             "h": 0
-                                                         })
-                              }
-
-                    onPositionChanged:(mouse)=> {
-                                          if (mouse.buttons & Qt.LeftButton) {
-                                              let last = annotationModel.count - 1
-                                              annotationModel.set(last, {
-                                                                      "x": startX,
-                                                                      "y": startY,
-                                                                      "w": mouse.x - startX,
-                                                                      "h": mouse.y - startY
-                                                                  })
-                                          }
-                                      }
+                    onPositionChanged:function(mouse) {
+                        if (mouse.buttons & Qt.LeftButton && drawStatus === CentralAnnotationView.Drawing) {
+                            let last = annotationModel.count - 1
+                            let realX = mouse.x<startX? mouse.x : startX
+                            let realY=mouse.y < startY? mouse.y : startY
+                            annotationModel.set(last, {
+                                                    "x": realX,
+                                                    "y": realY,
+                                                    "w": Math.abs(mouse.x - startX),
+                                                    "h": Math.abs(mouse.y - startY)
+                                                })
+                            console.log(annotationModel.count)
+                        }
+                    }
                 }
-
                 // 显示所有标注框
                 Repeater {
                     model: annotationModel
-
                     Rectangle {
+                        id: obj
                         x: model.x
                         y: model.y
                         width: model.w
@@ -113,11 +118,41 @@ Item{
                         border.color: "red"
                         border.width: 2
                         color: "#00FF0000"
+
+                        Repeater{
+                            model:ListModel{
+                                ListElement{
+                                    handlerX:obj.x
+                                    handlerY:obj.y
+                                }
+                                ListElement{
+                                    handlerX:obj.x+obj.width
+                                    handlerY:obj.y
+                                }
+                                ListElement{
+                                    handlerX:obj.x
+                                    handlerY:obj.y+obj.height
+                                }
+                                ListElement{
+                                    handlerX:obj.x+obj.width
+                                    handlerY:obj.y+obj.height
+                                }
+
+                            }
+                            Rectangle{
+                                x:modelData.x
+                                y:modelData.y
+                                id:handle
+                                width:10
+                                height:10
+                                radius:5
+                            }
+                        }
+
                     }
                 }
             }
         }
-
     }
 
 
@@ -151,6 +186,23 @@ Item{
                     width:50
                     text: canvasY
                 }
+
+                HusButton{
+                    id:btnSelect
+                    text: "选择"
+                    onClicked:{
+                        drawStatus = CentralAnnotationView.Select
+                    }
+                }
+
+                HusButton{
+                    id:btnDrawing
+                    text:"绘制"
+                    onClicked:{
+                        drawStatus = CentralAnnotationView.Drawing
+                    }
+                }
+
                 Item{
                     Layout.fillWidth: true
                 }
@@ -164,20 +216,11 @@ Item{
         }
     }
 
-    // Component.onCompleted: {
-    //     repositionImage()
-    // }
-    // onWidthChanged: repositionImage()
-    // onHeightChanged: repositionImage()
-
-    function repositionImage() {
-        if (image.implicitWidth <= 0 || image.implicitHeight <= 0)
-            return
-
-        let scaleX = flickable.width / image.implicitWidth
-        let scaleY = flickable.height / image.implicitHeight
-
-        flickable.fitScale = Math.min(scaleX, scaleY)   // ⭐ 自动按窗口缩放
-        imageContainer.scale = flickable.fitScale       // 应用缩放
+    onDrawStatusChanged: {
+        if(drawStatus===CentralAnnotationView.Drawing){
+            flickable.interactive=false
+        }else{
+            flickable.interactive=true
+        }
     }
 }
