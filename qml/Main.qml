@@ -11,8 +11,8 @@ HusWindow {
     title: qsTr("EasyLabel")
     followThemeSwitch: true
     captionBar.color: HusTheme.Primary.colorFillTertiary
-    captionBar.themeButtonVisible: true
-    captionBar.topButtonVisible: true
+    captionBar.showThemeButton: true
+    captionBar.showTopButton: true
     captionBar.height: 30
     captionBar.winIconWidth: 20
     captionBar.winIconHeight: 20

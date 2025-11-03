@@ -143,7 +143,6 @@ Item {
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
-                    QmlGlobalHelper.message.info("戳戳戳："+modelData.projectName)
                     QmlGlobalHelper.mainStackView.push(
                                 "../canvas/MainCanvas.qml",{
                                     projectName: modelData.projectName
@@ -176,7 +175,7 @@ Item {
                         if(modelData.total<=0){
                             return 0
                         }
-                        return modelData.current/modelData.total*100
+                        return modelData.current / modelData.total * 100
                     }
                     status: {
                         if(modelData.total>0 && modelData.current === modelData.total){

@@ -29,6 +29,7 @@ qt_add_resources(appEasyLabel "images"
     PREFIX "/"
     FILES
     images/logo.svg
+    images/image.jpg
 )
 
 set_source_files_properties(
@@ -51,6 +52,8 @@ qt_add_qml_module(appEasyLabel
     qml/project/RotatedBoxDetailComponent.qml
     qml/project/OtherDetailComponent.qml
     qml/canvas/MainCanvas.qml
+    QML_FILES qml/canvas/CentralAnnotationView.qml
+    QML_FILES qml/canvas/AnnotationDetailPanel.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
