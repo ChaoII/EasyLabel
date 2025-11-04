@@ -102,7 +102,6 @@ Item{
                                                     "w": Math.abs(mouse.x - startX),
                                                     "h": Math.abs(mouse.y - startY)
                                                 })
-                            console.log(annotationModel.count)
                         }
                     }
                 }
@@ -120,35 +119,49 @@ Item{
                         color: "#00FF0000"
 
                         Repeater{
-                            model:ListModel{
-                                ListElement{
-                                    handlerX:obj.x
-                                    handlerY:obj.y
-                                }
-                                ListElement{
-                                    handlerX:obj.x+obj.width
-                                    handlerY:obj.y
-                                }
-                                ListElement{
-                                    handlerX:obj.x
-                                    handlerY:obj.y+obj.height
-                                }
-                                ListElement{
-                                    handlerX:obj.x+obj.width
-                                    handlerY:obj.y+obj.height
-                                }
-
-                            }
+                            model: [
+                                { handlerX: 0-10/2,             handlerY: 0-10/2 },
+                                { handlerX: 0-10/2,             handlerY: 0-10/2 + obj.height },
+                                { handlerX: 0-10/2+obj.width,   handlerY: 0-10/2 },
+                                { handlerX: 0-10/2+obj.width,   handlerY: 0-10/2 + obj.height }
+                            ]
                             Rectangle{
-                                x:modelData.x
-                                y:modelData.y
-                                id:handle
-                                width:10
-                                height:10
-                                radius:5
+                                x: modelData.handlerX
+                                y: modelData.handlerY
+                                id: handlerCorner
+                                width: 10
+                                height: 10
+                                radius: 5
+                                color: "red"
+                                Component.onCompleted: {
+                                    console.log(x, y, width, height)
+                                }
                             }
                         }
 
+
+                        Repeater{
+                            property int handlerEdgeWidht : 12
+                            property int handlerEdgeHeight: 6
+                            model: [
+                                { edgeX: obj.width/2-handlerEdgeWidht/2,    edgeY: 0,                                       edgeW:handlerEdgeWidht, edgeH:handlerEdgeHeight},
+                                { edgeX: obj.width/2-handlerEdgeWidht/2,    edgeY: obj.height - handlerEdgeHeight,          edgeW:handlerEdgeWidht, edgeH:handlerEdgeHeight },
+                                { edgeX: 0,                                 edgeY: obj.height/2-handlerEdgeWidht/2 ,        edgeW:handlerEdgeHeight, edgeH:handlerEdgeWidht},
+                                { edgeX: obj.width-handlerEdgeHeight,       edgeY: obj.height/2-handlerEdgeWidht/2 ,        edgeW:handlerEdgeHeight, edgeH:handlerEdgeWidht}
+                            ]
+                            Rectangle{
+                                x: modelData.edgeX
+                                y: modelData.edgeY
+                                id: handlerEdge
+                                width: modelData.edgeW
+                                height: modelData.edgeH
+                                radius: 0
+                                color: "red"
+                                Component.onCompleted: {
+                                    console.log(x, y, width, height)
+                                }
+                            }
+                        }
                     }
                 }
             }
