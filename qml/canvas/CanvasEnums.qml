@@ -7,21 +7,16 @@ Item {
         Drawing = 1
     }
 
-    enum EditStatus{
+    enum EditType{
         Move = 0,
-        Resize = 1,
-        None = 2
-    }
-
-    enum ResizeType{
-        LeftTopCorner = 0,
-        RightTopCorner = 1,
-        LeftBottomCorner = 2,
-        RightBottomCorner = 3,
-        LeftEdge = 4,
-        TopEdge = 5,
-        RightEdge = 6,
-        BottomEdge = 7,
-        None=8
+        ResizeLeftTopCorner = 1,
+        ResizeRightTopCorner = 2,
+        ResizeLeftBottomCorner = 3,
+        ResizeRightBottomCorner = 4,
+        ResizeLeftEdge = 5,
+        ResizeTopEdge = 6,
+        ResizeRightEdge = 7,
+        ResizeBottomEdge = 8,
+        None = 9
     }
 }

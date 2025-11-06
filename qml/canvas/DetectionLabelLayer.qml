@@ -4,16 +4,355 @@ Item {
     id: annotationLayer
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
     property ListModel listModel: ListModel{}
-    property int selectedIndex: -1  // 当前选中的矩形索引
-    property int editMode: CanvasEnums.EditStatus.None
-    property int resizeType: CanvasEnums.ResizeType.None
+    // 当前选中的矩形索引
+    property int selectedIndex: -1
+    property int zOrder: -1
+    property int editType: CanvasEnums.EditType.None
+    property point dragStartPoint: Qt.point(0, 0)
+    property rect startRect: Qt.rect(0, 0, 0, 0)
     signal drawFinished()
+
+    // 鼠标绘制矩形标注
+    MouseArea {
+        id: drawArea
+        anchors.fill: parent
+        property real startX
+        property real startY
+        hoverEnabled: true
+        onPressed: function(mouse) {
+            if(mouse.button === Qt.LeftButton) {
+                if(drawStatus === CanvasEnums.Drawing) {
+                    // 绘制模式：开始绘制新矩形
+                    startX = mouse.x
+                    startY = mouse.y
+                    listModel.append( { "x": mouse.x, "y": mouse.y, "width": 0,
+                                         "height": 0, "zOrder": zOrder++ ,"selected": false})
+                    // selectedIndex = listModel.count - 1
+                    // setOneSelected(selectedIndex)
+                } else {
+                    // 选择模式：检查是否点击了矩形
+                    selectedIndex = getSlectedIndex(mouse.x, mouse.y)
+                    if(selectedIndex >= 0){
+                        setOneSelected(selectedIndex)
+                        // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
+                        if(editType === CanvasEnums.None){
+                            editType = CanvasEnums.Move
+                        }
+                        dragStartPoint = Qt.point(mouse.x, mouse.y)
+                        let selectedRect = listModel.get(selectedIndex)
+                        startRect = Qt.rect(selectedRect.x, selectedRect.y, selectedRect.width, selectedRect.height)
+                    } else {
+                        // 没有元素被选中
+                        removeAllSelected()
+                        selectedIndex = -1
+                        editType=CanvasEnums.None
+                    }
+                }
+            }
+        }
+
+        onPositionChanged: function(mouse) {
+            if (mouse.buttons & Qt.LeftButton) {
+                if (drawStatus === CanvasEnums.Drawing) {
+                    // 绘制模式：更新矩形大小（保持不变）
+                    let last = listModel.count - 1
+                    let realX = mouse.x < startX ? mouse.x : startX
+                    let realY = mouse.y < startY ? mouse.y : startY
+                    let realWidth = Math.abs(mouse.x - startX)
+                    let realHeight = Math.abs(mouse.y - startY)
+
+                    // 绘制时的边界检查
+                    realX = Math.max(0, realX)
+                    realY = Math.max(0, realY)
+                    realWidth = Math.min(realWidth, parent.width - realX)
+                    realHeight = Math.min(realHeight, parent.height - realY)
+                    realWidth = Math.max(5, realWidth)
+                    realHeight = Math.max(5, realHeight)
+
+                    listModel.set(last, {
+                                      "x": realX,
+                                      "y": realY,
+                                      "width": realWidth,
+                                      "height": realHeight,
+                                      "selected": false
+                                  })
+                } else if (selectedIndex >= 0) {
+                    var dx = mouse.x - dragStartPoint.x
+                    var dy = mouse.y - dragStartPoint.y
+                    var newX = startRect.x
+                    var newY = startRect.y
+                    var newWidth = startRect.width
+                    var newHeight = startRect.height
+
+                    // 根据编辑类型计算新的位置和尺寸
+                    if(editType===CanvasEnums.Move){
+                        newX = startRect.x + dx
+                        newY = startRect.y + dy
+
+                        // 移动操作：确保整个矩形不超出边界
+                        newX = Math.max(0, Math.min(newX, parent.width - newWidth))
+                        newY = Math.max(0, Math.min(newY, parent.height - newHeight))
+                    }
+                    else{
+                        // 调整大小操作：保持对应的锚点固定
+                        var minWidth = 5
+                        var minHeight = 5
+
+                        if(editType===CanvasEnums.ResizeLeftTopCorner){
+                            // 保持右下角固定
+                            newX = Math.min(startRect.x + dx, startRect.x + startRect.width - minWidth)
+                            newY = Math.min(startRect.y + dy, startRect.y + startRect.height - minHeight)
+                            newWidth = startRect.width - (newX - startRect.x)
+                            newHeight = startRect.height - (newY - startRect.y)
+                        }
+                        else if(editType===CanvasEnums.ResizeRightTopCorner){
+                            // 保持左下角固定
+                            newY = Math.min(startRect.y + dy, startRect.y + startRect.height - minHeight)
+                            newWidth = Math.max(minWidth, startRect.width + dx)
+                            newHeight = startRect.height - (newY - startRect.y)
+                        }
+                        else if(editType===CanvasEnums.ResizeRightBottomCorner){
+                            // 保持左上角固定
+                            newWidth = Math.max(minWidth, startRect.width + dx)
+                            newHeight = Math.max(minHeight, startRect.height + dy)
+                        }
+                        else if(editType===CanvasEnums.ResizeLeftBottomCorner){
+                            // 保持右上角固定
+                            newX = Math.min(startRect.x + dx, startRect.x + startRect.width - minWidth)
+                            newWidth = startRect.width - (newX - startRect.x)
+                            newHeight = Math.max(minHeight, startRect.height + dy)
+                        }
+                        else if(editType===CanvasEnums.ResizeLeftEdge){
+                            // 保持右边固定
+                            newX = Math.min(startRect.x + dx, startRect.x + startRect.width - minWidth)
+                            newWidth = startRect.width - (newX - startRect.x)
+                        }
+                        else if(editType===CanvasEnums.ResizeTopEdge){
+                            // 保持底边固定
+                            newY = Math.min(startRect.y + dy, startRect.y + startRect.height - minHeight)
+                            newHeight = startRect.height - (newY - startRect.y)
+                        }
+                        else if(editType===CanvasEnums.ResizeRightEdge){
+                            // 保持左边固定
+                            newWidth = Math.max(minWidth, startRect.width + dx)
+                        }
+                        else if(editType===CanvasEnums.ResizeBottomEdge){
+                            // 保持顶边固定
+                            newHeight = Math.max(minHeight, startRect.height + dy)
+                        }
+
+                        // 边界检查：确保矩形不超出画布
+                        if(newX < 0){
+                            newWidth = newWidth + newX  // 调整宽度
+                            newX = 0
+                        }
+
+                        if(newY < 0){
+                            newHeight = newHeight + newY  // 调整高度
+                            newY = 0
+                        }
+
+                        if(newX + newWidth > parent.width){
+                            newWidth = parent.width - newX
+                        }
+
+                        if(newY + newHeight > parent.height){
+                            newHeight = parent.height - newY
+                        }
+                        // 最终确保最小尺寸
+                        newWidth = Math.max(minWidth, newWidth)
+                        newHeight = Math.max(minHeight, newHeight)
+                    }
+
+                    console.log("newX: "+newX,"newY: "+ newY,"newWidth: "+ newWidth, "newHeight: "+ newHeight)
+                    listModel.setProperty(selectedIndex, "x", newX)
+                    listModel.setProperty(selectedIndex, "y", newY)
+                    listModel.setProperty(selectedIndex, "width", newWidth)
+                    listModel.setProperty(selectedIndex, "height", newHeight)
+                }
+            }
+        }
+
+        onReleased: function(mouse) {
+            if (mouse.button === Qt.LeftButton) {
+                if (drawStatus === CanvasEnums.Drawing) {
+                    annotationLayer.drawFinished()
+                }
+                editType = CanvasEnums.None
+            }
+        }
+    }
+    // 显示所有标注框
+    Repeater {
+        model: listModel
+        delegate: HusRectangle {
+            id: obj
+            x: model.x
+            y: model.y
+            width: model.width
+            height: model.height
+            border.color: model.selected ? "blue" : "red"  // 选中时变蓝色
+            border.width: model.selected ? 3 : 2  // 选中时边框加粗
+            border.style: model.selected ? Qt.DashLine : Qt.SolidLine
+            color: "#00FF0000"
+            property bool showHandlers: model.selected
+            MouseArea{
+                anchors.fill:parent
+                hoverEnabled: true
+                onEntered: {
+                    if(drawStatus === CanvasEnums.OptionStatus.Select){
+                        cursorShape = Qt.SizeAllCursor
+                    }
+                }
+                onExited: {
+                    if(drawStatus === CanvasEnums.OptionStatus.Select){
+                        cursorShape = Qt.ArrowCursor
+                    }
+                }
+                onPressed:function(mouse) {
+                    mouse.accepted = false
+                }
+
+            }
+
+            // 角控制点
+            Repeater {
+                property int handlerWidth: 10
+                property int handlerHeight: 10
+                model: obj.showHandlers ? getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
+                delegate: Rectangle {
+                    id: cornerHandler
+                    x: modelData.cornerHandlerX
+                    y: modelData.cornerHandlerY
+                    width: modelData.cornerHandlerWidth
+                    height: modelData.cornerHandlerHeight
+                    radius: modelData.cornerHandlerWidth/2
+                    color: "red"
+                    // 根据角点索引确定调整方向 0:左上 1:右上 2:右下 3:左下
+                    property int resizeType: index
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        propagateComposedEvents: true  // 允许事件传播
+
+                        cursorShape:{
+                            switch(parent.resizeType) {
+                            case 0:return Qt.SizeFDiagCursor
+                            case 1: return Qt.SizeBDiagCursor
+                            case 2: return Qt.SizeFDiagCursor
+                            case 3: return Qt.SizeBDiagCursor
+                            default: return Qt.ArrowCursor
+                            }
+                        }
+                        onEntered: {
+                            switch(parent.resizeType) {
+                            case 0: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeLeftTopCorner
+                                break
+                            }
+                            case 1: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeRightTopCorner
+                                break
+                            }
+                            case 2: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeRightBottomCorner
+                                break
+                            }
+                            case 3: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeLeftBottomCorner
+                                break
+                            }
+                            default: {
+                                annotationLayer.editType = CanvasEnums.EditType.None
+                                break
+                            }
+                            }
+                        }
+                        onExited: {
+                            editType = CanvasEnums.EditType.None
+                        }
+
+                        onPressed: function(mouse) {
+                            // 允许事件继续传播到上层
+                            mouse.accepted = false
+                        }
+                    }
+                }
+            }
+
+            // 边控制点
+            Repeater {
+                property int handlerWidth: 12
+                property int handlerHeight: 6
+                model: obj.showHandlers ? getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
+                delegate: Rectangle {
+                    id: edgeHandler
+                    x: modelData.edgeHandlerX
+                    y: modelData.edgeHandlerY
+                    width: modelData.edgeHandlerWidth
+                    height: modelData.edgeHandlerHeight
+                    radius: 2
+                    color: "red"
+                    property int resizeType: index // 0:左 1:上 2:右 3:下
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape:{
+                            switch(parent.resizeType) {
+                            case 0:return Qt.SizeHorCursor
+                            case 1: return Qt.SizeVerCursor
+                            case 2: return Qt.SizeHorCursor
+                            case 3: return Qt.SizeVerCursor
+                            default: return Qt.ArrowCursor
+                            }
+                        }
+                        onEntered: function(mouse){
+                            switch(parent.resizeType) {
+                            case 0: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeLeftEdge
+                                break
+                            }
+                            case 1: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeTopEdge
+                                break
+                            }
+                            case 2: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeRightEdge
+                                break
+                            }
+                            case 3: {
+                                annotationLayer.editType = CanvasEnums.EditType.ResizeBottomEdge
+                                break
+                            }
+                            default: {
+                                annotationLayer.editType = CanvasEnums.EditType.None
+                                break
+                            }
+                            }
+                        }
+                        onExited: {
+                            annotationLayer.editType = CanvasEnums.EditType.None
+                        }
+                        onPressed: function(mouse) {
+                            // 允许事件继续传播到上层
+                            mouse.accepted = false
+                        }
+                    }
+
+                }
+            }
+        }
+    }
 
     function getSlectedIndex(mouseX, mouseY){
         let _selectIndex = -1
         for(let i=0;i<listModel.count;i++){
             let rect = listModel.get(i)
-            if(mouseX > rect.x && mouseY > rect.y && mouseX < rect.x + rect.w && mouseY < rect.y + rect.h){
+            if( mouseX > rect.x - 5
+                    && mouseY > rect.y - 5
+                    && mouseX < rect.x + rect.width + 5
+                    && mouseY < rect.y + rect.height + 5){
                 // 有元素被选中
                 _selectIndex = i
             }
@@ -32,157 +371,29 @@ Item {
         listModel.setProperty(index, "selected", true)
     }
 
-    // 鼠标绘制矩形标注
-    MouseArea {
-        id: drawArea
-        anchors.fill: parent
-        property real startX
-        property real startY
-        hoverEnabled: true
-        onPressed: function(mouse) {
-            if(mouse.button === Qt.LeftButton) {
-                if(drawStatus === CanvasEnums.Drawing) {
-                    // 绘制模式：开始绘制新矩形
-                    startX = mouse.x
-                    startY = mouse.y
-                    listModel.append( { "x": mouse.x, "y": mouse.y, "w": 0, "h": 0,"selected": false})
-                    selectedIndex = listModel.count - 1
-                    setOneSelected(selectedIndex)
-                }else{
-                    selectedIndex = getSlectedIndex(mouse.x, mouse.y)
-                    if(selectedIndex >= 0){
-                        setOneSelected(selectedIndex)
-                    }else{
-                        // 没有元素被选中
-                        removeAllSelected()
-                    }
-                }
-            }
-        }
-
-        onPositionChanged: function(mouse) {
-            if (mouse.buttons & Qt.LeftButton && drawStatus === CanvasEnums.Drawing) {
-                // 绘制模式：更新矩形大小
-                let last = listModel.count - 1
-                let realX = mouse.x < startX ? mouse.x : startX
-                let realY = mouse.y < startY ? mouse.y : startY
-                listModel.set(last, {
-                                  "x": realX,
-                                  "y": realY,
-                                  "w": Math.abs(mouse.x - startX),
-                                  "h": Math.abs(mouse.y - startY),
-                                  "selected": true
-                              })
-            }
-        }
-        onReleased: function(mouse) {
-            if (mouse.button === Qt.LeftButton && drawStatus === CanvasEnums.Drawing) {
-                console.log("finished a detection label")
-                annotationLayer.drawFinished()
-            }
-        }
-    }
-
-    // 显示所有标注框
-    Repeater {
-        model: listModel
-        delegate: HusRectangle {
-            id: obj
-            x: model.x
-            y: model.y
-            width: model.w
-            height: model.h
-            border.color: model.selected ? "blue" : "red"  // 选中时变蓝色
-            border.width: model.selected ? 3 : 2  // 选中时边框加粗
-            border.style: model.selected ? Qt.DashLine : Qt.SolidLine
-            color: "#00FF0000"
-            property bool showHandlers: model.selected
-            property point pressPoint: Qt.point(0, 0)  // 鼠标按下的画布坐标
-            property point rectStartPos: Qt.point(0, 0)  // 矩形初始位置
-            MouseArea{
-                anchors.fill: parent
-                // 关键：只有选中的矩形才启用 MouseArea
-                enabled: model.selected || containsMouse
-                cursorShape: model.selected ? Qt.SizeAllCursor : Qt.ArrowCursor
-                onPressed:function(mouse) {
-                    // 记录鼠标在画布中的绝对坐标
-                    pressPoint = Qt.point(mouse.x + obj.x, mouse.y + obj.y)
-                    // 记录矩形初始位置
-                    rectStartPos = Qt.point(model.x, model.y)
-                }
-                onPositionChanged:function(mouse) {
-                    let currentCanvasX = mouse.x + obj.x
-                    let currentCanvasY = mouse.y + obj.y
-                    // 计算移动距离（基于画布坐标）
-                    let deltaX = currentCanvasX - pressPoint.x
-                    let deltaY = currentCanvasY - pressPoint.y
-                    // 计算新位置
-                    let newX = rectStartPos.x + deltaX
-                    let newY = rectStartPos.y + deltaY
-                    console.log("移动距离:", deltaX, deltaY, "新位置:", newX, newY)
-                    // 边界检查
-                    newX = Math.max(0, Math.min(newX, annotationLayer.width - model.w))
-                    newY = Math.max(0, Math.min(newY, annotationLayer.height - model.h))
-
-                    // 更新模型数据
-                    listModel.setProperty(index, "x", newX)
-                    listModel.setProperty(index, "y", newY)
-                }
-            }
-            // 角控制点 - 只在选中时显示
-            Repeater {
-                property int handlerWidth: 10
-                property int handlerHeight: 10
-                model: obj.showHandlers ? getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
-                delegate: Rectangle {
-                    x: modelData.cornerHandlerX
-                    y: modelData.cornerHandlerY
-                    width: modelData.cornerHandlerWidth
-                    height: modelData.cornerHandlerHeight
-                    radius: modelData.cornerHandlerWidth/2
-                    color: "red"
-
-
-
-
-                }
-            }
-
-            // 边控制点 - 只在选中时显示
-            Repeater {
-                property int handlerWidth: 12
-                property int handlerHeight: 6
-                model: obj.showHandlers ? getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
-                delegate: Rectangle {
-                    x: modelData.edgeHandlerX
-                    y: modelData.edgeHandlerY
-                    width: modelData.edgeHandlerWidth
-                    height: modelData.edgeHandlerHeight
-                    radius: 2
-                    color: "red"
-                }
-            }
-        }
-    }
-
     function getCornerHandlerModel(labelWidth, labelHeight, handlerWidth, handlerHeight) {
         return [
+                    // 左上
                     {
                         "cornerHandlerX": 0 - handlerWidth/2,
                         "cornerHandlerY": 0 - handlerHeight/2,
                         "cornerHandlerWidth":handlerWidth,
                         "cornerHandlerHeight":handlerHeight
                     },
+                    // 右上
                     {
                         "cornerHandlerX": labelWidth - handlerWidth/2,
                         "cornerHandlerY": 0 - handlerHeight/2,
                         "cornerHandlerWidth":handlerWidth,
-                        "cornerHandlerHeight":handlerHeight},
+                        "cornerHandlerHeight":handlerHeight
+                    },
+                    // 右下
                     {
                         "cornerHandlerX": labelWidth - handlerWidth/2,
                         "cornerHandlerY": labelHeight - handlerHeight/2,
                         "cornerHandlerWidth":handlerWidth,
-                        "cornerHandlerHeight":handlerHeight},
+                        "cornerHandlerHeight":handlerHeight
+                    },
                     {
                         "cornerHandlerX": 0 - handlerWidth/2,
                         "cornerHandlerY": labelHeight - handlerHeight/2,
@@ -193,30 +404,35 @@ Item {
 
     function getEdgeHandlerModel(labelWidth, labelHeight, handlerWidth, handlerHeight) {
         return [
-                    {
-                        "edgeHandlerX": labelWidth/2 - handlerWidth/2,
-                        "edgeHandlerY": 0 - handlerHeight/2,
-                        "edgeHandlerWidth": handlerWidth,
-                        "edgeHandlerHeight": handlerHeight
-                    },
-                    {
-                        "edgeHandlerX": labelWidth/2 - handlerWidth/2,
-                        "edgeHandlerY": labelHeight - handlerHeight/2,
-                        "edgeHandlerWidth": handlerWidth,
-                        "edgeHandlerHeight": handlerHeight
-                    },
+                    // 左
                     {
                         "edgeHandlerX": 0 - handlerHeight/2,
                         "edgeHandlerY": labelHeight/2 - handlerWidth/2,
                         "edgeHandlerWidth": handlerHeight,
                         "edgeHandlerHeight": handlerWidth
                     },
+                    // 上
+                    {
+                        "edgeHandlerX": labelWidth/2 - handlerWidth/2,
+                        "edgeHandlerY": 0 - handlerHeight/2,
+                        "edgeHandlerWidth": handlerWidth,
+                        "edgeHandlerHeight": handlerHeight
+                    },
+                    // 右
                     {
                         "edgeHandlerX": labelWidth - handlerHeight/2,
                         "edgeHandlerY": labelHeight/2 - handlerWidth/2,
                         "edgeHandlerWidth": handlerHeight,
                         "edgeHandlerHeight": handlerWidth
+                    },
+                    // 下
+                    {
+                        "edgeHandlerX": labelWidth/2 - handlerWidth/2,
+                        "edgeHandlerY": labelHeight - handlerHeight/2,
+                        "edgeHandlerWidth": handlerWidth,
+                        "edgeHandlerHeight": handlerHeight
                     }
+
                 ]
     }
 }

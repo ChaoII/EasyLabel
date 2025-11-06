@@ -72,18 +72,24 @@ Item {
             }
         }
     }
-    ScrollView   {
-        id: scrollView
+
+    Flickable   {
+        id: flickable
         anchors.top: header.bottom
         anchors.bottom: pagination.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.topMargin: 10
         anchors.bottomMargin: 10
-        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ScrollBar.vertical: HusScrollBar { policy:ScrollBar.AsNeeded}
+        clip:true
+
+        contentWidth: width
+        contentHeight: flow.implicitHeight
+
         Flow{
-            width: scrollView.width
+            id: flow
+            width: flickable.width
             spacing: 10
             Repeater {
                 model: listModel

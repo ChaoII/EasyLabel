@@ -7,7 +7,6 @@ Item{
     HusCard{
         anchors.fill: parent
         bodyDelegate: null
-        radius: 0
         border.color:"transparent"
     }
 }

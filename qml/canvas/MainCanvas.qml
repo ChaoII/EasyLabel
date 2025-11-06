@@ -22,7 +22,6 @@ Item {
             anchors.fill: parent
             bodyDelegate: null
             titleDelegate: null
-            radius: 0
             border.color:"transparent"
         }
 
