@@ -1,5 +1,6 @@
 import QtQuick
 import HuskarUI.Basic
+import EasyLabel
 Item {
     id: annotationLayer
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
@@ -10,7 +11,34 @@ Item {
     property int editType: CanvasEnums.EditType.None
     property point dragStartPoint: Qt.point(0, 0)
     property rect startRect: Qt.rect(0, 0, 0, 0)
+    property point mousePosition: Qt.point(0,0)
     signal drawFinished()
+
+    Crosshair {
+        id: crosshair
+        anchors.fill: parent
+        visible: drawStatus === CanvasEnums.Drawing
+        color: "#ffff00"
+        lineWidth: 5
+        showCoordinates: true
+        showCenterPoint: true
+    }
+
+    onMousePositionChanged: {
+        crosshair.mousePosition = mousePosition
+        console.log(Qt.rgba(crosshair.color.r, crosshair.color.g, crosshair.color.b,0.3))
+    }
+
+    HoverHandler{
+        id: hoverHandler
+        target:annotationLayer
+        onPointChanged: function () {
+            if(drawStatus === CanvasEnums.Drawing){
+            mousePosition=point.position
+        }
+    }}
+
+
 
     // 鼠标绘制矩形标注
     MouseArea {
@@ -54,6 +82,8 @@ Item {
         onPositionChanged: function(mouse) {
             if (mouse.buttons & Qt.LeftButton) {
                 if (drawStatus === CanvasEnums.Drawing) {
+                    // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
+                    mousePosition = Qt.point(mouse.x,mouse.y)
                     // 绘制模式：更新矩形大小（保持不变）
                     let last = listModel.count - 1
                     let realX = mouse.x < startX ? mouse.x : startX
@@ -191,14 +221,15 @@ Item {
             y: model.y
             width: model.width
             height: model.height
-            border.color: model.selected ? "blue" : "red"  // 选中时变蓝色
+            border.color: "red"  // 选中时变蓝色
             border.width: model.selected ? 3 : 2  // 选中时边框加粗
             border.style: model.selected ? Qt.DashLine : Qt.SolidLine
-            color: "#00FF0000"
+            color: model.selected ? Qt.rgba(border.color.r, border.color.g, border.color.b,0.3):"#00000000"
             property bool showHandlers: model.selected
             MouseArea{
                 anchors.fill:parent
                 hoverEnabled: true
+                propagateComposedEvents: true
                 onEntered: {
                     if(drawStatus === CanvasEnums.OptionStatus.Select){
                         cursorShape = Qt.SizeAllCursor
@@ -212,7 +243,6 @@ Item {
                 onPressed:function(mouse) {
                     mouse.accepted = false
                 }
-
             }
 
             // 角控制点

@@ -15,118 +15,92 @@ Item{
         anchors.top: parent.top
         anchors.bottom: footer.top
         anchors.bottomMargin: 4
-        ScrollBar.vertical: HusScrollBar{ policy: HusScrollBar.AsNeeded }
-        ScrollBar.horizontal: HusScrollBar{ policy: HusScrollBar.AsNeeded }
+        ScrollBar.vertical: HusScrollBar{policy: HusScrollBar.AsNeeded}
+        ScrollBar.horizontal:  HusScrollBar{policy: HusScrollBar.AsNeeded}
         clip: true
 
         // Flickable 的内容大小由图片缩放后的尺寸决定
-        contentWidth: imageContainer.width * imageContainer.scale
-        contentHeight: imageContainer.height * imageContainer.scale
+        contentWidth: Math.max(imageContainer.width * imageContainer.scale, width)
+        contentHeight: Math.max(imageContainer.height * imageContainer.scale, height)
 
-        // 图片缩放范围（可以调整）
+        // 图片缩放范围
         property real minScale: 0.3
         property real maxScale: 3.0
         property alias fitScale: imageContainer.scale
+        property real zoomFactor: 1.1
 
-        onContentXChanged: {
-            console.log(contentX)
-            console.log(contentY)
-        }
-
-
-        // 鼠标滚轮缩放 - 修正为以鼠标为中心
+        // 鼠标滚轮缩放
         WheelHandler {
             id: wheelHandler
             onWheel: function(wheel) {
-                const zoomStep = 0.1
-                var oldScale = imageContainer.scale
-                var newScale = imageContainer.scale + (wheel.angleDelta.y > 0 ? zoomStep : -zoomStep)
-                newScale = Math.max(flickable.minScale, Math.min(newScale, flickable.maxScale))
-
-                if (oldScale !== newScale) {
-                    // 计算鼠标在图片上的相对位置（0-1之间的比例）
-                    var mouseXInImage = (flickable.contentX + wheel.x) / (imageContainer.width * oldScale)
-                    var mouseYInImage = (flickable.contentY + wheel.y) / (imageContainer.height * oldScale)
-                    // 应用新的缩放比例
-                    imageContainer.scale = newScale
-                    // 调整内容位置，使鼠标位置保持在同一图片点上
-                    flickable.contentX = mouseXInImage * imageContainer.width * newScale - wheel.x
-                    flickable.contentY = mouseYInImage * imageContainer.height * newScale - wheel.y
-                }
+                var _zoomFactor = flickable.zoomFactor
+                if (wheel.angleDelta.y < 0)
+                    _zoomFactor = 1 / flickable.zoomFactor
+                flickable.zoom(_zoomFactor)
             }
         }
-
-        // PinchArea 控制缩放（触摸屏）
-        PinchArea {
-            anchors.fill: parent
-            pinch.target: imageContainer
-            pinch.minimumScale: flickable.minScale
-            pinch.maximumScale: flickable.maxScale
-            onPinchStarted: {
-                // 记录捏合开始时的状态
-                pinch.previousScale = imageContainer.scale
-            }
-            onPinchUpdated: {
-                // 计算捏合中心在图片上的相对位置
-                var centerXInImage = (flickable.contentX + pinch.center.x) / (imageContainer.width * pinch.previousScale)
-                var centerYInImage = (flickable.contentY + pinch.center.y) / (imageContainer.height * pinch.previousScale)
-                // 应用新的缩放比例
-                imageContainer.scale = Math.max(flickable.minScale, Math.min(pinch.previousScale * pinch.scale, flickable.maxScale))
-                // 调整内容位置
-                flickable.contentX = centerXInImage * imageContainer.width * imageContainer.scale - pinch.center.x
-                flickable.contentY = centerYInImage * imageContainer.height * imageContainer.scale - pinch.center.y
-            }
-            onPinchFinished: {
-                flickable.returnToBounds()
-            }
-        }
-
-        // 图片 ＋ 标注层
+        // 图片以实际图像的尺寸大小为准 ＋ 标注层
         Item {
             id: imageContainer
             width: image.sourceSize.width
             height: image.sourceSize.height
-            transformOrigin: Item.TopLeft
-
+            transformOrigin: Item.Center
+            anchors.centerIn: parent
             // 初始缩放比例设置为适合窗口
             scale: Math.min(flickable.width/width, flickable.height/height)
-
             Image {
                 id: image
-                // source: "qrc:/images/image.jpg"
-                source: "file:///C:/Users/aichao/Desktop/ccc.jpg"
+                source: "qrc:/images/image.jpg"
                 anchors.fill: parent
             }
-
             DetectionLabelLayer{
                 id: drawerLayer
                 anchors.fill: parent
                 drawStatus: splitLeft.drawStatus
             }
 
-            // 组件完成时居中图片
-            Component.onCompleted: {
-                // 延迟执行以确保布局完成
-                Qt.callLater(function() {
-                    flickable.contentX = (imageContainer.width * imageContainer.scale - flickable.width) / 2
-                    flickable.contentY = (imageContainer.height * imageContainer.scale - flickable.height) / 2
-                })
+        }
+        // 放大
+        function zoomIn(){
+            zoom(flickable.zoomFactor)
+        }
+        function zoomOut(){
+            zoom(1/flickable.zoomFactor)
+        }
+
+        function zoom(zoomFactor){
+            var oldScale = imageContainer.scale
+            var newScale = imageContainer.scale * zoomFactor
+            newScale = Math.max(flickable.minScale, Math.min(newScale, flickable.maxScale))
+            if (oldScale !== newScale) {
+
+                // 缩放中心固定为 Flickable 中心
+                var centerX = flickable.width / 2
+                var centerY = flickable.height / 2
+
+                // 缩放前中心对应的内容坐标
+                var contentPosX = flickable.contentX + centerX
+                var contentPosY = flickable.contentY + centerY
+
+                // 应用缩放
+                imageContainer.scale = newScale
+
+                // 缩放后内容保持中心不变
+                var newContentX = contentPosX * (newScale / oldScale) - centerX
+                var newContentY = contentPosY * (newScale / oldScale) - centerY
+
+                // 关键：限制在有效范围内（防止跑到四个角）
+                flickable.contentX = Math.max(0, Math.min(newContentX, flickable.contentWidth  - flickable.width))
+                flickable.contentY = Math.max(0, Math.min(newContentY, flickable.contentHeight - flickable.height))
             }
         }
 
-        // 当Flickable大小改变时重新居中
-        onWidthChanged: Qt.callLater(centerImage)
-        onHeightChanged: Qt.callLater(centerImage)
 
-        function centerImage() {
-            flickable.contentX = (imageContainer.width * imageContainer.scale - flickable.width) / 2
-            flickable.contentY = (imageContainer.height * imageContainer.scale - flickable.height) / 2
-        }
 
         // 适合窗口大小的函数
         function fitToWindow() {
-            imageContainer.scale = Math.min(flickable.width/imageContainer.width, flickable.height/imageContainer.height)
-            centerImage()
+            imageContainer.scale = Math.min(flickable.width / imageContainer.width,
+                                            flickable.height / imageContainer.height)
         }
     }
 
@@ -135,7 +109,7 @@ Item{
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height:30
+        height:40
         HusCard{
             anchors.fill: parent
             bodyDelegate: null
@@ -146,20 +120,92 @@ Item{
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
+
+                HusIconButton{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconSource: HusIcon.LineOutlined
+                    radiusBg.all: 0
+                }
+
                 HusText{
                     text:"缩放: "
                 }
+
                 HusText{
                     width:60
                     text: Math.round(imageContainer.scale * 100) + "%"
                 }
+                HusIconButton{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconSource: HusIcon.PlusOutlined
+                    radiusBg.all: 0
+                }
 
-                HusButton{
+                HusIconButton{
                     id: btnFit
-                    text: "适合窗口"
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    radiusBg.all: 0
+                    iconSource:HusIcon.ExpandOutlined
                     onClicked: {
                         flickable.fitToWindow()
                     }
+                }
+
+                HusDivider{
+                    height: 30
+                    orientation: Qt.Vertical
+                }
+
+                HusText{
+                    text:"标签数：123"
+                }
+
+                HusDivider{
+                    height: 30
+                    orientation: Qt.Vertical
+                }
+
+
+                HusIconButton{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconSource: HusIcon.LeftOutlined
+                    radiusBg.all: 0
+                }
+
+                HusInput{
+                    Layout.minimumWidth: 30
+                    Layout.maximumWidth: 60
+                    text: ""
+                    background: HusRectangle {
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: parent.colorBg
+                        border.color: parent.colorBorder
+                    }
+                }
+
+                HusText{
+                    text: "/"
+                }
+
+                HusText{
+                    text: "456"
+                }
+
+                HusIconButton{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconSource: HusIcon.RightOutlined
+                    radiusBg.all: 0
                 }
 
                 HusButton{
@@ -181,16 +227,13 @@ Item{
                 Item{
                     Layout.fillWidth: true
                 }
-                HusText{
-                    Layout.preferredWidth: 300
-                    horizontalAlignment: HusText.AlignRight
-                    elide: HusText.ElideRight
+                HusTag{
                     text:"C:/User/aichao/Picture/1287.png"
                 }
             }
         }
-    }
 
+    }
     onDrawStatusChanged: {
         if(drawStatus===CanvasEnums.OptionStatus.Drawing){
             flickable.interactive = false
@@ -201,6 +244,6 @@ Item{
 
     // 初始化完成后居中图片
     Component.onCompleted: {
-        Qt.callLater(flickable.centerImage)
+        // Qt.callLater(flickable.centerImage)
     }
 }
