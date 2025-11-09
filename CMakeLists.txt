@@ -8,12 +8,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HuskarUI_DIR "D:/HuskarUI")
 set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
-set(CMAKE_PREFIX_PATH "E:/vcpkg/installed/x64-windows/share")
+
 find_package(Qt6 REQUIRED COMPONENTS Quick Core)
 find_package(SqliteOrm CONFIG REQUIRED)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
-
 qt_add_executable(appEasyLabel
     src/main.cpp
     src/qmlutilscpp.h
