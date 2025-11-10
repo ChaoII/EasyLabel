@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import HuskarUI.Basic
 import Qt.labs.folderlistmodel
+import QtQuick.Dialogs
 import EasyLabel
 
 Item{
@@ -12,14 +13,44 @@ Item{
         anchors.fill: parent
         border.color:"transparent"
         titleDelegate: Item{
-            height:40
-            HusIconText{
-                iconSize: 40
-                iconSource :HusIcon.BorderOutlined
-                horizontalAlignment: HusText.AlignHCenter
+            width:parent.width
+            height: 40
+            ColumnLayout{
+                anchors.fill: parent
+                anchors.margins: 10
+                RowLayout{
+                    HusIconText{
+                        id: logo
+                        font.bold: true
+                        iconSize:16
+                        iconSource :HusIcon.BorderOutlined
+                    }
+                    HusText{
+                        font.bold: true
+                        font.pixelSize: 16
+                        text:"对象检测"
+                    }
+                    HusButton{
+                        id:btn_
+                        text:"open"
+                        onClicked: {
+                            console.log("open")
+                            colorDialog.open()
+                        }
+
+                    }
+                }
             }
         }
         bodyDelegate: bodyComponent
+    }
+
+    ColorDialog {
+        id: colorDialog
+
+        onAccepted: {
+            console.log("选择的颜色是: " + selectedColor)
+        }
     }
 
     Component{
@@ -27,6 +58,7 @@ Item{
         HusCollapse {
             id: _menu
             accordion: true
+            radiusBg.all: 0
             defaultActiveKey: ["A"]
             initModel: [
                 {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: aaa },
@@ -41,10 +73,6 @@ Item{
                     anchors.margins: 10
                     sourceComponent: model.contentDelegate
                 }
-            }
-            Component.onCompleted: {
-
-                console.log(_menu.titleDelegate.height)
             }
         }
 

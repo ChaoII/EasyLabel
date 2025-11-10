@@ -10,6 +10,7 @@ QtObject {
 
     // 信号：选择完成时发出
     signal folderSelected(string folderPath)
+    signal colorSelected(selectColod: color)
 
     property var rootWindow: null
     property HusMessage message: null
@@ -41,6 +42,20 @@ QtObject {
             root.folderSelected(folderPath)
         }
     }
+
+
+    property var colorDialog: ColorDialog {
+        id: internalColorDialog
+        onAccepted: colorSelected(selectedColor)
+    }
+
+    function openColorDialog(color) {
+        if(color){
+            internalColorDialog.selectedColor=color
+        }
+        internalColorDialog.open()
+    }
+
 
     // 公开的打开方法
     function openFolderDialog(title, defaultFolder) {
