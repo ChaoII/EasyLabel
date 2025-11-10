@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import HuskarUI.Basic
+import Qt.labs.folderlistmodel
 import EasyLabel
 
 Item{
@@ -10,6 +11,14 @@ Item{
         id: card
         anchors.fill: parent
         border.color:"transparent"
+        titleDelegate: Item{
+            height:40
+            HusIconText{
+                iconSize: 40
+                iconSource :HusIcon.BorderOutlined
+                horizontalAlignment: HusText.AlignHCenter
+            }
+        }
         bodyDelegate: bodyComponent
     }
 
@@ -17,20 +26,28 @@ Item{
         id:bodyComponent
         HusCollapse {
             id: _menu
+            accordion: true
+            defaultActiveKey: ["A"]
             initModel: [
                 {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: aaa },
-                {key:"B", title: qsTr('煮都还实'), value: 2 , contentDelegate: bbb },
-                {key:"C", title: qsTr('浓度高强'), value: 3 , contentDelegate: aaa }
+                {key:"B", title: qsTr('标签'), value: 2 , contentDelegate: bbb },
+                {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: aaa },
+                {key:"D", title: qsTr('文件列表'), value: 4 , contentDelegate: ddd }
             ]
             contentDelegate:Item{
-                height:240
+                height:splitRight.height - 40 * _menu.count -40
                 Loader{
                     anchors.fill: parent
                     anchors.margins: 10
                     sourceComponent: model.contentDelegate
                 }
             }
+            Component.onCompleted: {
+
+                console.log(_menu.titleDelegate.height)
+            }
         }
+
     }
 
     Component{
@@ -149,6 +166,52 @@ Item{
                 }
                 Item{
                     Layout.fillHeight: true
+                }
+            }
+        }
+    }
+
+    Component{
+        id: ddd
+        Item{
+            implicitHeight: 200
+            width: parent.width
+            property string currentFolder: Qt.resolvedUrl(".").toString().replace("file:///", "")
+
+            FolderListModel {
+                id: folderModel
+                folder: "file:///" + currentFolder
+                showDirs: true
+                showFiles: true
+                showDotAndDotDot: false
+                nameFilters: ["*"]  // 所有文件
+            }
+
+            ListView {
+                anchors.fill: parent
+                model: folderModel
+                delegate: Rectangle {
+                    width: ListView.view.width
+                    height: 30
+                    color: index % 2 === 0 ? "#f0f0f0" : "#ffffff"
+                    border.color: "#dddddd"
+
+                    HusText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        text: fileName + (fileIsDir ? "/" : "")
+                        color: fileIsDir ? "blue" : "black"
+                    }
+
+                    HusText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        text: fileIsDir ? "文件夹" : "文件"
+                        color: "gray"
+                        font.pixelSize: 12
+                    }
                 }
             }
         }

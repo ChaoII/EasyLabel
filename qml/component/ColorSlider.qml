@@ -6,7 +6,7 @@ HusSlider {
     value: 6
 
     // 颜色相关的自定义属性
-    property color currentColor: getRainbowColor((currentValue-min)/(max-min))
+    property color currentColor: getColor((currentValue-min)/(max-min))
 
     bgDelegate: Item {
         HusRectangleInternal {
@@ -72,7 +72,7 @@ HusSlider {
         }
     }
 
-    function getRainbowColor(position) {
+    function getColor(position) {
         position = Math.max(0, Math.min(1, position))
         // 渐变色关键点对应的色相值
         var keyPoints = [
