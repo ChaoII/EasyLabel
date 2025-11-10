@@ -1,5 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import HuskarUI.Basic
+import EasyLabel
 
 Item{
     id: splitRight
@@ -13,86 +15,144 @@ Item{
 
     Component{
         id:bodyComponent
-        HusMenu {
+        HusCollapse {
             id: _menu
-            showEdge:true
-            width: card.width
-            height: card.height
             initModel: [
-                {key:"A", label: qsTr('一心二意'), value: 1 , menuChildren: [{contentDelegate: aaa}] },
-                {key:"B", label: qsTr('煮都还实'), value: 2 , menuChildren: [{contentDelegate: aaa}] },
-                {key:"C", label: qsTr('浓度高强'), value: 3 , menuChildren: [{contentDelegate: aaa}] }
+                {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: aaa },
+                {key:"B", title: qsTr('煮都还实'), value: 2 , contentDelegate: bbb },
+                {key:"C", title: qsTr('浓度高强'), value: 3 , contentDelegate: aaa }
             ]
-            onClickMenu: function(deep, key, keyPath, data) {
-
-            }
-            Component.onCompleted: {
+            contentDelegate:Item{
+                height:240
+                Loader{
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    sourceComponent: model.contentDelegate
+                }
             }
         }
     }
 
     Component{
         id:aaa
-        HusRectangle{
-            implicitHeight: 200
+        Item{
+            height: parent.height
             width: parent.width
-            color:"lightgreen"
-            HusSlider {
-                id:control
-                width: parent.width -30
-                height: 30
-                min: 0
-                max: 10
-                stepSize: 1
-                snapMode: HusSlider.SnapAlways
-                handleDelegate: Rectangle {
-                    id: __handleItem
-                    x:  slider.leftPadding + visualPosition * (slider.availableWidth - width)
-                    y:  slider.topPadding + (slider.availableHeight - height) * 0.5 -3
-                    implicitWidth: active ? 18 : 14
-                    implicitHeight: active ? 18 : 14
-                    color: "transparent"
-
-                    HusRectangle{
-                        y : tt.y+9
-                        anchors.horizontalCenter:  parent.horizontalCenter
-                        width: tt.width/Math.sqrt(2)
-                        height: tt.width/Math.sqrt(2)
-                        color: "blue"
-                        rotation: 45
-                        bottomLeftRadius:0
-                        bottomRightRadius: 2
-                        topLeftRadius: 0
-                        topRightRadius: 0
-                        transformOrigin: Item.Center
+            ColumnLayout{
+                anchors.fill: parent
+                RowLayout{
+                    HusIconText{
+                        iconSource: HusIcon.BorderOuterOutlined
                     }
-
-                    HusRectangle{
-                        id:tt
-                        anchors.centerIn: parent
-                        width:14
-                        height:14
-                        bottomLeftRadius:2
-                        bottomRightRadius: 2
-                        topLeftRadius: 2
-                        topRightRadius: 2
-                        color:"blue"
+                    HusCopyableText{
+                        text:"边框粗细"
+                    }
+                    Item{
+                        Layout.fillWidth: true
+                    }
+                    HusTag{
+                        text:lineWidthSlider.currentValue
                     }
 
 
-
-
                 }
-                HusCopyableText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: parent.currentValue;
+                LineWidthSlider {
+                    id: lineWidthSlider
+                    Layout.fillWidth: true
+                    snapMode: HusSlider.SnapAlways
+                    height: 50
+                    min: 1
+                    max: 5
+                    value: 2
+                    stepSize: 1
+                }
+                RowLayout{
+                    HusIconText{
+                        iconSource: HusIcon.FormatPainterOutlined
+                    }
+                    HusCopyableText{
+                        text:"边框颜色"
+                    }
+                    Item{
+                        Layout.fillWidth: true
+                    }
+                    HusTag{
+                        text:colorSlider.currentColor
+                        presetColor:colorSlider.currentColor
+                    }
+                }
+                ColorSlider {
+                    id:colorSlider
+                    Layout.fillWidth: true
+                    height: 30
+                    value: 3
+                    min:1
+                    max:100
                 }
 
+                RowLayout{
+                    HusIconText{
+                        iconSource: HusIcon.IcoMoonDelicious
+                    }
+                    HusCopyableText{
+                        text:"填充透明度"
+                    }
+
+                    Item{
+                        Layout.fillWidth: true
+                    }
+                    HusTag{
+                        text:opacitySlider.currentValue.toFixed(2)
+                    }
+                }
+
+                OpacitySlider {
+                    id: opacitySlider
+                    Layout.fillWidth: true
+                    height: 30
+                    value: 1.00
+                    min:0.0
+                    max:1.0
+                    stepSize: 0.01
+                }
+                Item{
+                    Layout.fillHeight: true
+                }
             }
         }
-
     }
+
+    Component{
+        id: bbb
+        Item{
+            implicitHeight: 200
+            width: parent.width
+            ColumnLayout{
+                anchors.fill: parent
+                RowLayout{
+                    HusIconText{
+                        iconSource: HusIcon.BorderOuterOutlined
+                    }
+                    HusCopyableText{
+                        text:"边框粗细"
+                    }
+                }
+                LineWidthSlider {
+                    id: control
+                    Layout.fillWidth: true
+                    snapMode: HusSlider.SnapAlways
+                    height: 30
+                    min: 1
+                    max: 5
+                    value: 2
+                    stepSize: 1
+                }
+                Item{
+                    Layout.fillHeight: true
+                }
+            }
+        }
+    }
+
 
 }

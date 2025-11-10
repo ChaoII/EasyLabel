@@ -52,11 +52,16 @@ qt_add_qml_module(appEasyLabel
     qml/project/RotatedBoxDetailComponent.qml
     qml/project/OtherDetailComponent.qml
     qml/canvas/MainCanvas.qml
-    QML_FILES qml/canvas/CentralAnnotationView.qml
-    QML_FILES qml/canvas/AnnotationDetailPanel.qml
-    QML_FILES qml/canvas/DetectionLabelLayer.qml
-    QML_FILES qml/canvas/CanvasEnums.qml
-    QML_FILES qml/component/Crosshair.qml
+     qml/canvas/CentralAnnotationView.qml
+     qml/canvas/AnnotationDetailPanel.qml
+     qml/canvas/DetectionLabelLayer.qml
+     qml/canvas/CanvasEnums.qml
+     qml/component/Crosshair.qml
+     qml/component/LineWidthSlider.qml
+     qml/component/Cursor.qml
+     QML_FILES qml/component/Collapse.qml
+     QML_FILES qml/component/ColorSlider.qml
+     QML_FILES qml/component/OpacitySlider.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

@@ -10,11 +10,11 @@ size_t ProjectDto::getProjectCount(const QString& projectName, const QString& st
     try {
         const QString _projectName = projectName.isEmpty() ? "%" : "%" + projectName + "%";
         const QString _startTime = startTime.isEmpty()
-                                       ? QDateTime::currentDateTime().addYears(-100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
-                                       : startTime;
+                                       ? QDateTime::currentDateTime().addYears(-100)
+                                             .toString("yyyy-MM-ddTHH:mm:ss.zzz"): startTime;
         const QString _endTime = startTime.isEmpty()
-                                     ? QDateTime::currentDateTime().addYears(100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
-                                     : endTime;
+                                     ? QDateTime::currentDateTime().addYears(100)
+                                           .toString("yyyy-MM-ddTHH:mm:ss.zzz"): endTime;
         const auto projects = DBHelper::getStorage().get_all<Project>(
             where(like(&Project::projectName, _projectName.toStdString())
                   and c(&Project::createTime) >= _startTime.toStdString()
