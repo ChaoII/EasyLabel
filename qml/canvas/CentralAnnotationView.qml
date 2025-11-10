@@ -7,6 +7,7 @@ import EasyLabel
 Item{
     id:splitLeft
     property int drawStatus: CanvasEnums.OptionStatus.Select
+    readonly property int labelNum: drawerLayer.listModel.count
 
     Flickable {
         id: flickable
@@ -127,6 +128,9 @@ Item{
                     iconSize: 20
                     iconSource: HusIcon.LineOutlined
                     radiusBg.all: 0
+                    onClicked:{
+                        flickable.zoomOut()
+                    }
                 }
 
                 HusText{
@@ -143,6 +147,9 @@ Item{
                     iconSize: 20
                     iconSource: HusIcon.PlusOutlined
                     radiusBg.all: 0
+                    onClicked:{
+                        flickable.zoomIn()
+                    }
                 }
 
                 HusIconButton{
@@ -163,7 +170,7 @@ Item{
                 }
 
                 HusText{
-                    text:"标签数：123"
+                    text:"标签数："+ labelNum
                 }
 
                 HusDivider{

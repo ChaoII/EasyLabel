@@ -2,18 +2,17 @@ cmake_minimum_required(VERSION 3.16)
 
 project(EasyLabel VERSION 0.1 LANGUAGES CXX)
 
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HuskarUI_DIR "D:/HuskarUI")
 set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(SqliteOrm REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Quick Core)
+find_package(SqliteOrm CONFIG REQUIRED)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
-
 qt_add_executable(appEasyLabel
     src/main.cpp
     src/qmlutilscpp.h
@@ -83,9 +82,8 @@ target_link_directories(appEasyLabel PRIVATE
 )
 
 target_link_libraries(appEasyLabel
-    PRIVATE Qt6::Quick HuskarUIBasic sqlite_orm::sqlite_orm
+    PRIVATE Qt6::Quick HuskarUIBasic Qt6::Core sqlite_orm::sqlite_orm
 )
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 install(TARGETS appEasyLabel
