@@ -172,28 +172,69 @@ Item{
         Item{
             implicitHeight: 200
             width: parent.width
-            ColumnLayout{
+            ListView{
+                id:listView
                 anchors.fill: parent
-                RowLayout{
-                    HusIconText{
-                        iconSource: HusIcon.BorderOuterOutlined
-                    }
-                    HusCopyableText{
-                        text:"边框粗细"
-                    }
-                }
-                LineWidthSlider {
-                    id: control
-                    Layout.fillWidth: true
-                    snapMode: HusSlider.SnapAlways
+                focus: true
+                highlightMoveDuration: 0 // 取消高亮移动动画
+                keyNavigationEnabled: true // 启用键盘导航
+                model: [
+                    {"label":"mouse","labelColor":"#ff0000"},
+                    {"label":"train","labelColor":"#ffff00"},
+                    {"label":"airplane","labelColor":"#ffee00"},
+                    {"label":"truck","labelColor":"#00ff00"},
+                    {"label":"car","labelColor":"#ff00ff"},
+                    {"label":"motorcircle","labelColor":"#ff00cc"}
+                ]
+                delegate: Item {
+                    width: listView.width
                     height: 30
-                    min: 1
-                    max: 5
-                    value: 2
-                    stepSize: 1
-                }
-                Item{
-                    Layout.fillHeight: true
+                    required property string label
+                    required property color labelColor
+                    required property int index
+
+                    property bool isCurrent: listView.currentIndex === index
+                    property bool isHovered: false
+
+                    HusRectangle {
+                        color: {
+                            if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
+                            else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
+                            else return "transparent"
+                        }
+                        anchors.fill: parent
+
+                        MouseArea {
+                            anchors.fill: parent
+                            // anchors.leftMargin: 40
+                            hoverEnabled: true
+                            onClicked: listView.currentIndex = index
+                            onEntered:isHovered = true
+                            onExited:isHovered = false
+                        }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+
+                            ColorButton {
+                                width: 24
+                                height: 24
+                                currentColor: labelColor
+                                onClicked:{
+                                    console.log("1231231")
+                                }
+                            }
+
+                            HusText {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                text: label
+                                verticalAlignment: HusText.AlignVCenter
+                            }
+                        }
+
+                    }
                 }
             }
         }
