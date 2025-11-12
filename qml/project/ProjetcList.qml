@@ -364,7 +364,6 @@ Item {
             }if(popup.mode === GlobalEnum.Edit){
                 if (index >= 0 && index < listModel.length) {
                     var currentListItem = listModel[index]
-                    console.log(JSON.stringify(formData))
                     currentListItem["projectName"] = formData.projectName || currentListItem.projectName
                     currentListItem["imageFolder"] = formData.imageFolder || currentListItem.imageFolder
                     currentListItem["resultFolder"] = formData.resultFolder || currentListItem.resultFolder

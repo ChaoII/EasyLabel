@@ -97,20 +97,6 @@ T.Button {
     HoverHandler {
         cursorShape: control.hoverCursorShape
     }
-    // 正确的悬停状态变化信号
-        onHoveredChanged: {
-            console.log("hovered changed:", hovered, "down:", down, "colorBg:", colorBg)
-        }
-
-        // 正确的按下状态变化信号
-        onDownChanged: {
-            console.log("down changed:", down, "hovered:", hovered, "colorBg:", colorBg)
-        }
-
-        // 其他有用的信号
-        onPressedChanged: {
-            console.log("pressed changed:", pressed) // pressed 是鼠标按下的瞬时状态
-        }
     Accessible.role: Accessible.Button
     Accessible.name: control.text
     Accessible.onPressAction: control.clicked();

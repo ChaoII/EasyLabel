@@ -30,28 +30,13 @@ Item{
                         font.pixelSize: 16
                         text:"对象检测"
                     }
-                    HusButton{
-                        id:btn_
-                        text:"open"
-                        onClicked: {
-                            console.log("open")
-                            colorDialog.open()
-                        }
-
-                    }
                 }
             }
         }
         bodyDelegate: bodyComponent
     }
 
-    ColorDialog {
-        id: colorDialog
 
-        onAccepted: {
-            console.log("选择的颜色是: " + selectedColor)
-        }
-    }
 
     Component{
         id:bodyComponent
@@ -63,7 +48,7 @@ Item{
             initModel: [
                 {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: aaa },
                 {key:"B", title: qsTr('标签'), value: 2 , contentDelegate: bbb },
-                {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: aaa },
+                {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: ccc },
                 {key:"D", title: qsTr('文件列表'), value: 4 , contentDelegate: ddd }
             ]
             contentDelegate:Item{
@@ -98,8 +83,6 @@ Item{
                     HusTag{
                         text:lineWidthSlider.currentValue
                     }
-
-
                 }
                 LineWidthSlider {
                     id: lineWidthSlider
@@ -170,22 +153,33 @@ Item{
     Component{
         id: bbb
         Item{
+            ColorDialog {
+                id: colorDialog
+                onAccepted: {
+                    // 更新数据模型
+                    dataModel.setProperty(currentEditingIndex,"labelColor",selectedColor.toString())
+                }
+            }
+
             implicitHeight: 200
             width: parent.width
+            property ListModel dataModel:ListModel
+            {
+                ListElement{label:"mouse";labelColor:"#ff0000"}
+                ListElement{label:"train";labelColor:"#ffff00"}
+                ListElement{label:"airplane";labelColor:"#0003ff"}
+                ListElement{label:"truck"; labelColor:"#00ff00"}
+                ListElement{label:"car";labelColor:"#ff00ff"}
+                ListElement{label:"motorcircle";labelColor:"#ff00cc"}
+            }
+            property int currentEditingIndex:-1
             ListView{
                 id:listView
                 anchors.fill: parent
                 focus: true
                 highlightMoveDuration: 0 // 取消高亮移动动画
                 keyNavigationEnabled: true // 启用键盘导航
-                model: [
-                    {"label":"mouse","labelColor":"#ff0000"},
-                    {"label":"train","labelColor":"#ffff00"},
-                    {"label":"airplane","labelColor":"#ffee00"},
-                    {"label":"truck","labelColor":"#00ff00"},
-                    {"label":"car","labelColor":"#ff00ff"},
-                    {"label":"motorcircle","labelColor":"#ff00cc"}
-                ]
+                model: dataModel
                 delegate: Item {
                     width: listView.width
                     height: 30
@@ -194,7 +188,7 @@ Item{
                     required property int index
 
                     property bool isCurrent: listView.currentIndex === index
-                    property bool isHovered: false
+                    property bool isHovered: itemMouseArea.containsMouse || colorButton.hovered
 
                     HusRectangle {
                         color: {
@@ -205,27 +199,27 @@ Item{
                         anchors.fill: parent
 
                         MouseArea {
+                            id: itemMouseArea
                             anchors.fill: parent
-                            // anchors.leftMargin: 40
                             hoverEnabled: true
                             onClicked: listView.currentIndex = index
-                            onEntered:isHovered = true
-                            onExited:isHovered = false
                         }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 10
                             anchors.rightMargin: 10
-
                             ColorButton {
+                                id: colorButton
                                 width: 24
                                 height: 24
                                 currentColor: labelColor
                                 onClicked:{
-                                    console.log("1231231")
+                                    listView.currentIndex = index
+                                    currentEditingIndex = index
+                                    colorDialog.selectedColor = labelColor
+                                    colorDialog.open()
                                 }
                             }
-
                             HusText {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -233,12 +227,113 @@ Item{
                                 verticalAlignment: HusText.AlignVCenter
                             }
                         }
-
                     }
                 }
             }
         }
     }
+
+
+    Component{
+        id: ccc
+        Item{
+            implicitHeight: 200
+            width: parent.width
+            property ListModel dataModel:ListModel
+            {
+                ListElement{labelX:10;   labelY:30;   labelWidth:100;  labelHeight:100; label:"mouse"}
+                ListElement{labelX:110;  labelY:130;  labelWidth:100;  labelHeight:100; label:"mouse"}
+                ListElement{labelX:20;   labelY:230;  labelWidth:100;  labelHeight:100; label:"mouse"}
+                ListElement{labelX:310;  labelY:330;  labelWidth:100;  labelHeight:100; label:"mouse"}
+                ListElement{labelX:410;  labelY:30;   labelWidth:100;  labelHeight:100; label:"truck"}
+                ListElement{labelX:510;  labelY:30;   labelWidth:100;  labelHeight:100; label:"truck"}
+
+            }
+            property int currentEditingIndex:-1
+            ListView{
+                id:listView
+                anchors.fill: parent
+                focus: true
+                highlightMoveDuration: 0 // 取消高亮移动动画
+                keyNavigationEnabled: true // 启用键盘导航
+                model: dataModel
+                delegate: Item {
+                    width: listView.width
+                    height: 30
+                    required property int labelX
+                    required property int labelY
+                    required property int labelWidth
+                    required property int labelHeight
+                    required property string label
+                    required property int index
+                    property color labelColor:"#FFFF00"
+
+                    property bool isCurrent: listView.currentIndex === index
+                    property bool isHovered: itemMouseArea.containsMouse ||btnDelete.hovered || btnEdit.hovered
+
+                    HusRectangle {
+                        color: {
+                            if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
+                            else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
+                            else return "transparent"
+                        }
+                        anchors.fill: parent
+
+                        MouseArea {
+                            id: itemMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: listView.currentIndex = index
+                        }
+                        RowLayout{
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            HusRectangle {
+                                id: colorButton
+                                width: 24
+                                height: 24
+                                color: labelColor
+                            }
+                            HusText {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                text: label
+                                verticalAlignment: HusText.AlignVCenter
+                            }
+                            Item{
+                                Layout.fillWidth: true
+                            }
+                            HusIconButton {
+                                id:btnEdit
+                                Layout.preferredWidth:  24
+                                Layout.preferredHeight:  24
+                                type: HusButton.Type_Link
+                                iconSource: HusIcon.EditOutlined
+                                onClicked: {
+
+                                    listView.currentIndex = index
+                                }
+                            }
+                            HusIconButton {
+                                id:btnDelete
+                                Layout.preferredWidth:  24
+                                Layout.preferredHeight:  24
+                                type: HusButton.Type_Link
+                                iconSource: HusIcon.DeleteOutlined
+                                onClicked: {
+
+                                    listView.currentIndex = index
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 
     Component{
         id: ddd
