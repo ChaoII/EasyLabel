@@ -8,8 +8,8 @@ import EasyLabel
 Item {
     id:root
     property alias projectName: textProjectName.text
-    property int canvasX: 0
-    property int canvasY: 0
+    property string imageDir: ""
+    property string resultDir: ""
 
     Item{
         id: header
@@ -66,6 +66,12 @@ Item {
             SplitView.fillHeight: true
             SplitView.preferredWidth: 280
             SplitView.maximumWidth: 400
+            imageDir: root.imageDir
+            resultDir: root.resultDir
+            Component.onCompleted: {
+                console.log(imageDir)
+                console.log(resultDir)
+            }
         }
     }
 

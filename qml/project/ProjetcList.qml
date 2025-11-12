@@ -151,7 +151,9 @@ Item {
                 onClicked: {
                     QmlGlobalHelper.mainStackView.push(
                                 "../canvas/MainCanvas.qml",{
-                                    projectName: modelData.projectName
+                                    projectName: modelData.projectName,
+                                    imageDir: modelData.imageFolder,
+                                    resultDir:modelData.resultFolder
                                 })
                 }
             }
