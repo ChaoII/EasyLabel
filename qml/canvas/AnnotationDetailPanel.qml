@@ -7,15 +7,6 @@ import EasyLabel
 Item{
     id: splitRight
     property int annotationType: GlobalEnum.AnnotationType.Detection
-    property string imageDir:""
-    property string resultDir: ""
-    property AnnotationConfig annotationConfig:AnnotationConfig{
-        id:annotationConfig
-        imageDir: splitRight.imageDir
-        resultDir: splitRight.resultDir
-    }
-
-
     HusCard{
         id: card
         anchors.fill: parent
@@ -91,7 +82,7 @@ Item{
     Component{
         id:bbb
         AnnotationLabelDetail{
-            dataModel: annotationConfig.loadLabelFile()
+            // dataModel: AnnotationConfig.loadLabelFile()
         }
     }
 

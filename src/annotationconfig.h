@@ -2,53 +2,65 @@
 
 #include <QObject>
 #include <QQmlEngine>
+#include "labellistmodel.h"
 
 class AnnotationConfig: public QObject
 {
     Q_OBJECT
+    QML_SINGLETON
     QML_ELEMENT
 
-    Q_PROPERTY(QString imageDir READ imageDir WRITE setImageDir NOTIFY imageDirChanged)
-    Q_PROPERTY(QString resultDir READ resultDir WRITE setResultDir NOTIFY resultDirChanged)
+    Q_PROPERTY(QString imageDir READ imageDir WRITE setImageDir NOTIFY imageDirChanged FINAL)
+    Q_PROPERTY(QString resultDir READ resultDir WRITE setResultDir NOTIFY resultDirChanged FINAL)
+    Q_PROPERTY(LabelListModel* labelListModel READ labelListModel CONSTANT)
+
 
 public:
-    AnnotationConfig(QObject* parent=nullptr);
 
-    QString imageDir(){
-        return imageDir_;
-    }
+    static AnnotationConfig *instance();
 
-    QString resultDir(){
-        return resultDir_;
-    }
+    static AnnotationConfig *create(QQmlEngine *, QJSEngine *);
 
-    void setImageDir(const QString& imageDir){
-        if(imageDir!=imageDir_){
-            imageDir_ = imageDir;
-            emit imageDirChanged();
-        }
-    }
+    QString imageDir();
 
-    void setResultDir(const QString& resultDir){
+    QString resultDir();
 
-        if(resultDir!=resultDir_){
-            resultDir_ = resultDir;
-            emit resultDirChanged();
-        }
-    }
+    LabelListModel* labelListModel();
 
-    Q_INVOKABLE QVariantList loadLabelFile();
+    void setImageDir(const QString& imageDir);
+
+    void setResultDir(const QString& resultDir);
+
+
+
+
+    Q_INVOKABLE void setImageAndResultDir(const QString& imageDir,const QString& resultDir);
+
+    Q_INVOKABLE void loadLabelFile();
+
+    Q_INVOKABLE bool saveLabelFile();
 
     Q_INVOKABLE QVariantList loadAnnotationFile();
 
+    Q_INVOKABLE QString getLabelColor(const QString& label);
 
 signals:
     void imageDirChanged();
+
     void resultDirChanged();
 
+    void labelListChanged();
+
 private:
+
+    AnnotationConfig(QObject* parent=nullptr);
+
+    void updateLabelProperty(int index, const QString& key, const QVariant& value);
+
+    bool isDirty_ = false;
     QString imageDir_;
     QString resultDir_;
-
+    LabelListModel* labelListModel_;
+    static AnnotationConfig* instance_;
 };
 

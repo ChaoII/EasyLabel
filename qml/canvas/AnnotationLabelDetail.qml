@@ -9,19 +9,16 @@ Item{
         id: colorDialog
         onAccepted: {
             // 更新数据模型
-            dataModel.setProperty(currentEditingIndex,"labelColor",selectedColor.toString())
+            AnnotationConfig.labelListModel.setLabelColor(listView.currentIndex, selectedColor.toString())
         }
     }
     implicitHeight: 200
     width: parent.width
-    property var dataModel: []
-    property int currentEditingIndex:-1
-
     ColumnLayout{
         anchors.fill: parent
         RowLayout{
             HusText{
-                text:"标签数: "+ dataModel.length
+                text:"标签数: "+ listView.count
             }
             Item{
                 Layout.fillWidth: true
@@ -31,7 +28,7 @@ Item{
                 type: HusButton.Type_Link
                 iconSource: HusIcon.PlusOutlined
                 onClicked: {
-                    dataModel.push({"label":"untitled","color":"black"})
+                    AnnotationConfig.labelListModel.addItem("untitled", "black")
                 }
             }
         }
@@ -44,16 +41,17 @@ Item{
             Layout.fillHeight: true
             highlightMoveDuration: 0 // 取消高亮移动动画
             keyNavigationEnabled: true // 启用键盘导航
-            model: dataModel
+            model: AnnotationConfig.labelListModel
             delegate: Item {
+                id: listViewDelegate
                 width: listView.width
                 height: 30
                 required property string label
                 required property color labelColor
                 required property int index
-                property bool isCurrent: listView.currentIndex === index
-                property bool isHovered: itemMouseArea.containsMouse || colorButton.hovered
-                property bool isEditing: false  // 新增编辑状态
+                property bool isCurrent: ListView.isCurrentItem
+                property bool isHovered: itemMouseArea.containsMouse || colorButton.hovered || btnDelete.hovered
+                property bool isEditing: false
                 HusRectangle {
                     color: {
                         if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
@@ -68,9 +66,7 @@ Item{
                         hoverEnabled: true
                         onClicked: listView.currentIndex = index
                         onDoubleClicked: {
-                            listView.currentIndex = index
                             isEditing = true
-                            console.log(getLabelColor(label))
                         }
                     }
                     RowLayout {
@@ -84,7 +80,6 @@ Item{
                             currentColor: labelColor
                             onClicked:{
                                 listView.currentIndex = index
-                                currentEditingIndex = index
                                 colorDialog.selectedColor = labelColor
                                 colorDialog.open()
                             }
@@ -150,11 +145,10 @@ Item{
                         function confirmEdit() {
                             if (text.trim() !== "" && text !== label) {
                                 // 更新数据模型
-                                dataModel.setProperty(index,"label",text)
+                                AnnotationConfig.labelListModel.setLabel(index, text)
                             }
                             isEditing = false
                         }
-
                         // 取消编辑
                         function cancelEdit() {
                             text = label
@@ -162,14 +156,6 @@ Item{
                         }
                     }
                 }
-            }
-        }
-    }
-    function getLabelColor(label){
-        for(let i=0;i<dataModel.count;i++){
-            var data = dataModel.get(i)
-            if(data.label === label){
-                return data.labelColor
             }
         }
     }

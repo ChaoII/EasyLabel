@@ -68,6 +68,7 @@ qt_add_qml_module(appEasyLabel
      QML_FILES qml/canvas/AnnotationFileListDetail.qml
      QML_FILES qml/canvas/AnnotationStyleDetail.qml
      SOURCES src/annotationconfig.h src/annotationconfig.cpp
+     SOURCES src/labellistmodel.h src/labellistmodel.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

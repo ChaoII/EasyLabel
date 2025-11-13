@@ -149,11 +149,11 @@ Item {
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
+                    AnnotationConfig.imageDir = modelData.imageFolder
+                    AnnotationConfig.resultDir = modelData.resultFolder
                     QmlGlobalHelper.mainStackView.push(
                                 "../canvas/MainCanvas.qml",{
                                     projectName: modelData.projectName,
-                                    imageDir: modelData.imageFolder,
-                                    resultDir:modelData.resultFolder
                                 })
                 }
             }
