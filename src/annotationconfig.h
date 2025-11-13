@@ -42,7 +42,6 @@ public:
 
     Q_INVOKABLE QVariantList loadAnnotationFile();
 
-    Q_INVOKABLE QString getLabelColor(const QString& label);
 
 signals:
     void imageDirChanged();
@@ -54,8 +53,6 @@ signals:
 private:
 
     AnnotationConfig(QObject* parent=nullptr);
-
-    void updateLabelProperty(int index, const QString& key, const QVariant& value);
 
     bool isDirty_ = false;
     QString imageDir_;
