@@ -44,6 +44,7 @@ FileListModel* AnnotationConfig::fileListModel(){
 }
 
 DetectionAnnotationModel* AnnotationConfig::currentAnnotationModel(){
+    if(currentIndex_ < 0 && currentIndex_ >= annotationModelList_.size())
     return annotationModelList_[currentIndex_];
 }
 
@@ -93,7 +94,7 @@ void AnnotationConfig::loadAnnotationFiles(){
         // 不存在就创建
         if(!QFile::exists(AnnotationFilePath)){
             QFile file(AnnotationFilePath);
-            if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
+            if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
                 qWarning() << "无法打开文件:" << AnnotationFilePath << file.errorString();
                 continue;
             }
