@@ -2,7 +2,9 @@
 
 #include <QObject>
 #include <QQmlEngine>
+#include "filelistmodel.h"
 #include "labellistmodel.h"
+#include "detectionAnnotationmodel.h"
 
 class AnnotationConfig: public QObject
 {
@@ -13,6 +15,10 @@ class AnnotationConfig: public QObject
     Q_PROPERTY(QString imageDir READ imageDir WRITE setImageDir NOTIFY imageDirChanged FINAL)
     Q_PROPERTY(QString resultDir READ resultDir WRITE setResultDir NOTIFY resultDirChanged FINAL)
     Q_PROPERTY(LabelListModel* labelListModel READ labelListModel CONSTANT)
+    Q_PROPERTY(FileListModel* fileListModel READ fileListModel CONSTANT)
+    Q_PROPERTY(DetectionAnnotationModel* currentAnnotationModel READ currentAnnotationModel CONSTANT)
+    Q_PROPERTY(int currentIndex READ currentIndex  WRITE setCurrentIndex NOTIFY currentIndexChanged FINAL)
+
 
 
 public:
@@ -27,12 +33,17 @@ public:
 
     LabelListModel* labelListModel();
 
+    FileListModel* fileListModel();
+
+    DetectionAnnotationModel* currentAnnotationModel();
+
+    int currentIndex();
+
     void setImageDir(const QString& imageDir);
 
     void setResultDir(const QString& resultDir);
 
-
-
+    void setCurrentIndex(int index);
 
     Q_INVOKABLE void setImageAndResultDir(const QString& imageDir,const QString& resultDir);
 
@@ -40,7 +51,9 @@ public:
 
     Q_INVOKABLE bool saveLabelFile();
 
-    Q_INVOKABLE QVariantList loadAnnotationFile();
+    Q_INVOKABLE void loadAnnotationFiles();
+
+    Q_INVOKABLE DetectionAnnotationModel* getAnnotationModel(int index);
 
 
 signals:
@@ -50,14 +63,19 @@ signals:
 
     void labelListChanged();
 
+    void currentIndexChanged(int index);
+
 private:
 
     AnnotationConfig(QObject* parent=nullptr);
 
+    int currentIndex_ = 0;
     bool isDirty_ = false;
     QString imageDir_;
     QString resultDir_;
     LabelListModel* labelListModel_;
+    FileListModel* fileListModel_;
+    QVector<DetectionAnnotationModel*> annotationModelList_;
     static AnnotationConfig* instance_;
 };
 

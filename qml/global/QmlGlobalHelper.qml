@@ -49,6 +49,10 @@ QtObject {
         onAccepted: colorSelected(selectedColor)
     }
 
+    function getColor(colorBase, index){
+        return HusThemeFunctions.genColor(colorBase,!HusTheme.isDark,HusTheme.Primary.colorBgBase)[index]
+    }
+
     function openColorDialog(color) {
         if(color){
             internalColorDialog.selectedColor=color

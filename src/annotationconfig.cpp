@@ -7,11 +7,14 @@
 #include <QJsonParseError>
 #include <QJsonDocument>
 #include <QSaveFile>
+#include <QModelIndex>
 
 
 AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 
-AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),labelListModel_(new LabelListModel(this)) {}
+AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
+    labelListModel_(new LabelListModel(this)),
+    fileListModel_(new FileListModel(this)){}
 
 AnnotationConfig* AnnotationConfig::instance(){
     if(!instance_){
@@ -36,10 +39,30 @@ LabelListModel* AnnotationConfig::labelListModel(){
     return labelListModel_;
 }
 
+FileListModel* AnnotationConfig::fileListModel(){
+    return fileListModel_;
+}
+
+DetectionAnnotationModel* AnnotationConfig::currentAnnotationModel(){
+    return annotationModelList_[currentIndex_];
+}
+
+int AnnotationConfig::currentIndex(){
+    return currentIndex_;
+}
+
+void AnnotationConfig::setCurrentIndex(int index){
+    if(currentIndex_ != index){
+        currentIndex_ = index;
+        emit currentIndexChanged(index);
+    }
+}
+
 
 void AnnotationConfig::setImageDir(const QString& imageDir){
     if(imageDir != imageDir_){
         imageDir_ = imageDir;
+        fileListModel_->setFolderPath(imageDir_);
         emit imageDirChanged();
     }
 }
@@ -48,19 +71,45 @@ void AnnotationConfig::setResultDir(const QString& resultDir){
     if(resultDir != resultDir_){
         resultDir_ = resultDir;
         loadLabelFile();
+        loadAnnotationFiles();
         emit resultDirChanged();
     }
 }
 
 void AnnotationConfig::setImageAndResultDir(const QString& imageDir, const QString& resultDir){
-    setImageDir(imageDir);
     setResultDir(resultDir);
+    setImageDir(imageDir);
+}
+
+void AnnotationConfig::loadAnnotationFiles(){
+    QDir dir(resultDir_);
+    if(!dir.exists()){
+        qDebug() << "目录不存在："<< dir;
+        return;
+    }
+    for(int i=0; i < fileListModel_->rowCount(); i++){
+        QString annotationBaseFileName = fileListModel_->getResultFilePath(i);
+        QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
+        // 不存在就创建
+        if(!QFile::exists(AnnotationFilePath)){
+            QFile file(AnnotationFilePath);
+            if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
+                qWarning() << "无法打开文件:" << AnnotationFilePath << file.errorString();
+                continue;
+            }
+            file.close();
+            continue;
+        }
+        // 存在就解析
+        DetectionAnnotationModel* annotationModel = new DetectionAnnotationModel(this);
+        annotationModel->addItem(0,10,10,200,100);
+        annotationModelList_.append(annotationModel);
+    }
 }
 
 
 void AnnotationConfig::loadLabelFile(){
     QDir dir(resultDir_);
-    QVariantList list;
     if(!dir.exists()){
         qDebug() << "目录不存在："<< dir;
         return;
@@ -95,20 +144,17 @@ void AnnotationConfig::loadLabelFile(){
     }
     // 转换为 QVariantList
     if (doc.isArray()) {
-        list = doc.array().toVariantList();
+        QVariantList list = doc.array().toVariantList();
         for(int i=0;i<list.count();i++){
             QVariantMap map = list[i].toMap();
             if(map.contains("label") && map.contains("labelColor")){
-                labelListModel_->addItem(map.value("label").toString(),map.value("label").toString());
+                labelListModel_->addItem(map.value("label").toString(), map.value("labelColor").toString());
             }
         }
         qDebug() << "成功解析数组格式 JSON，包含" << list.size() << "个元素";
     }else {
         qWarning() << "JSON 文档格式不支持";
         return;
-    }
-    if (!list.isEmpty()) {
-        qDebug() << "第一个标签项:" << list.first();
     }
 }
 
@@ -157,7 +203,9 @@ bool AnnotationConfig::saveLabelFile(){
     return true;
 }
 
-QVariantList AnnotationConfig::loadAnnotationFile(){
-    QVariantList list;
-    return list;
+
+DetectionAnnotationModel* AnnotationConfig::getAnnotationModel(int index){
+    if(index<0 || index>annotationModelList_.size()) return nullptr;
+    return annotationModelList_[index];
 }
+

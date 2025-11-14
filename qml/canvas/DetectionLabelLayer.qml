@@ -34,9 +34,9 @@ Item {
         target:annotationLayer
         onPointChanged: function () {
             if(drawStatus === CanvasEnums.Drawing){
-            mousePosition=point.position
-        }
-    }}
+                mousePosition=point.position
+            }
+        }}
 
 
 
@@ -462,7 +462,6 @@ Item {
                         "edgeHandlerWidth": handlerWidth,
                         "edgeHandlerHeight": handlerHeight
                     }
-
                 ]
     }
 }

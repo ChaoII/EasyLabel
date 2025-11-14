@@ -1,12 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
 import HuskarUI.Basic
-import Qt.labs.folderlistmodel
 import EasyLabel
 
 Item{
     id: splitRight
     property int annotationType: GlobalEnum.AnnotationType.Detection
+
     HusCard{
         id: card
         anchors.fill: parent
@@ -15,14 +15,13 @@ Item{
             width: parent.width
             height: 40
             property color colorBase: GlobalEnum.annotationTagColorMap[annotationType]
-
             RowLayout{
                 anchors.fill: parent
                 anchors.margins: 10
                 HusIconText{
                     id: logo
                     font.bold: true
-                    colorIcon: getColor(colorBase, 5)
+                    colorIcon: QmlGlobalHelper.getColor(colorBase, 5)
                     iconSize: 16
                     iconSource: HusIcon.BorderOutlined
                 }
@@ -30,17 +29,12 @@ Item{
                     Layout.fillWidth: true
                     font.bold: true
                     font.pixelSize: 16
-                    color: getColor(colorBase, 5)
+                    color: QmlGlobalHelper.getColor(colorBase, 5)
                     text: GlobalEnum.annotationTypeStringMap[annotationType]
                 }
             }
         }
         bodyDelegate: bodyComponent
-    }
-
-
-    function getColor(colorBase, index){
-        return HusThemeFunctions.genColor(colorBase,!HusTheme.isDark,HusTheme.Primary.colorBgBase)[index]
     }
 
     Component{
@@ -89,12 +83,14 @@ Item{
     Component{
         id:ccc
         AnnotationListDetail{
+
         }
     }
 
     Component{
         id:ddd
         AnnotationFileListDetail{
+
         }
     }
 }

@@ -56,8 +56,9 @@ Item{
                     color: {
                         if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
                         else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
-                        else return "transparent"
+                        else return index % 2 !== 0 ? HusTheme.HusTableView.colorCellBgHover : HusTheme.HusTableView.colorCellBg;
                     }
+
                     anchors.fill: parent
 
                     MouseArea {
@@ -75,8 +76,8 @@ Item{
                         anchors.rightMargin: 10
                         ColorButton {
                             id: colorButton
-                            width: 24
-                            height: 24
+                            width: 16
+                            height: 16
                             currentColor: labelColor
                             onClicked:{
                                 listView.currentIndex = index
@@ -99,6 +100,7 @@ Item{
                             iconSource: HusIcon.DeleteOutlined
                             onClicked: {
                                 listView.currentIndex = index
+                                AnnotationConfig.labelListModel.removeItem(index)
                             }
                         }
                     }

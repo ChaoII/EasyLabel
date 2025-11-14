@@ -38,13 +38,10 @@ public:
     Q_INVOKABLE void setLabel(int index, const QString &label);
     Q_INVOKABLE void setLabelColor(int index, const QString &labelColor);
 
-    QJsonArray toJsonArray() const;
-
-    QString toJsonString(bool compact) const;
-
-    bool saveToFile(const QString& filePath) const;
-
-    bool loadFromFile(const QString& filePath);
+    Q_INVOKABLE QJsonArray toJsonArray() const;
+    Q_INVOKABLE QString toJsonString(bool compact) const;
+    Q_INVOKABLE bool saveToFile(const QString& filePath) const;
+    Q_INVOKABLE bool loadFromFile(const QString& filePath);
 
 
 private:

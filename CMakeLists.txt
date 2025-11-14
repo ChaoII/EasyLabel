@@ -11,6 +11,8 @@ set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(SqliteOrm CONFIG REQUIRED)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -69,6 +71,8 @@ qt_add_qml_module(appEasyLabel
      QML_FILES qml/canvas/AnnotationStyleDetail.qml
      SOURCES src/annotationconfig.h src/annotationconfig.cpp
      SOURCES src/labellistmodel.h src/labellistmodel.cpp
+     SOURCES src/filelistmodel.h src/filelistmodel.cpp
+     SOURCES src/detectionAnnotationmodel.h src/detectionAnnotationmodel.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -92,6 +96,8 @@ target_link_directories(appEasyLabel PRIVATE
 target_link_libraries(appEasyLabel
     PRIVATE Qt6::Quick HuskarUIBasic Qt6::Core sqlite_orm::sqlite_orm
 )
+target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
+target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)

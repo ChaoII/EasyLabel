@@ -7,6 +7,7 @@ import EasyLabel
 Item{
     id:splitLeft
     property int drawStatus: CanvasEnums.OptionStatus.Select
+    property int currentImageIndex: AnnotationConfig.currentIndex
     readonly property int labelNum: drawerLayer.listModel.count
 
     Flickable {
@@ -51,7 +52,7 @@ Item{
             scale: Math.min(flickable.width/width, flickable.height/height)
             Image {
                 id: image
-                source: "qrc:/images/image.jpg"
+                source: "file:///" + AnnotationConfig.fileListModel.getFullPath(currentImageIndex)
                 anchors.fill: parent
             }
             DetectionLabelLayer{
@@ -59,7 +60,6 @@ Item{
                 anchors.fill: parent
                 drawStatus: splitLeft.drawStatus
             }
-
         }
         // 放大
         function zoomIn(){
@@ -96,13 +96,19 @@ Item{
             }
         }
 
-
-
         // 适合窗口大小的函数
         function fitToWindow() {
             imageContainer.scale = Math.min(flickable.width / imageContainer.width,
                                             flickable.height / imageContainer.height)
         }
+        onWidthChanged: {
+            flickable.fitToWindow()
+        }
+        onHeightChanged: {
+            flickable.fitToWindow()
+
+        }
+
     }
 
     Item{
@@ -178,24 +184,45 @@ Item{
                     orientation: Qt.Vertical
                 }
 
-
                 HusIconButton{
+                    enabled: AnnotationConfig.currentIndex > 0
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.LeftOutlined
                     radiusBg.all: 0
+                    onClicked: {
+                        AnnotationConfig.currentIndex -= 1
+                    }
                 }
 
                 HusInput{
                     Layout.minimumWidth: 30
                     Layout.maximumWidth: 60
-                    text: ""
+                    text: AnnotationConfig.currentIndex + 1
                     background: HusRectangle {
                         anchors.bottom: parent.bottom
                         height: 1
                         color: parent.colorBg
                         border.color: parent.colorBorder
+                    }
+                    validator: IntValidator {
+                        id: indexValidator
+                        bottom: 1
+                        top: Math.max(1, AnnotationConfig.fileListModel.rowCount())
+                    }
+                    Keys.onPressed: function(event)  {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            if(parseInt(text) === 0) return
+                            AnnotationConfig.currentIndex = parseInt(text) - 1
+                        }
+                    }
+
+                    onFocusChanged: {
+                        if(!focus){
+                            if(parseInt(text) === 0) return
+                            AnnotationConfig.currentIndex = parseInt(text) - 1
+                        }
                     }
                 }
 
@@ -204,15 +231,19 @@ Item{
                 }
 
                 HusText{
-                    text: "456"
+                    text: AnnotationConfig.fileListModel.rowCount()
                 }
 
                 HusIconButton{
+                    enabled: AnnotationConfig.currentIndex < AnnotationConfig.fileListModel.rowCount() -1
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.RightOutlined
                     radiusBg.all: 0
+                    onClicked: {
+                        AnnotationConfig.currentIndex += 1
+                    }
                 }
 
                 HusButton{
@@ -235,7 +266,7 @@ Item{
                     Layout.fillWidth: true
                 }
                 HusTag{
-                    text:"C:/User/aichao/Picture/1287.png"
+                    text: AnnotationConfig.fileListModel.getFullPath(currentImageIndex)
                 }
             }
         }

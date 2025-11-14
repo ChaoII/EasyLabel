@@ -1,48 +1,57 @@
 import QtQuick
 import QtQuick.Layouts
 import HuskarUI.Basic
-import Qt.labs.folderlistmodel
 import EasyLabel
 
 
 Item{
     implicitHeight: 200
     width: parent.width
-    property string currentFolder: Qt.resolvedUrl(".").toString().replace("file:///", "")
-
-    FolderListModel {
-        id: folderModel
-        folder: "file:///" + currentFolder
-        showDirs: true
-        showFiles: true
-        showDotAndDotDot: false
-        nameFilters: ["*"]  // 所有文件
-    }
-
     ListView {
+        id: listView
         anchors.fill: parent
-        model: folderModel
+        model: AnnotationConfig.fileListModel
+        currentIndex: AnnotationConfig.currentIndex
         delegate: Rectangle {
             width: ListView.view.width
             height: 30
-            color: index % 2 === 0 ? "#f0f0f0" : "#ffffff"
-            border.color: "#dddddd"
-
-            HusText {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                text: fileName + (fileIsDir ? "/" : "")
-                color: fileIsDir ? "blue" : "black"
+            required property int index
+            required property string fileName
+            required property bool isDir
+            required property bool isAnnotation
+            property bool isCurrent: ListView.isCurrentItem
+            property bool isHovered: itemMouseArea.containsMouse
+            color: {
+                if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
+                else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
+                else return index % 2 !== 0 ? HusTheme.HusTableView.colorCellBgHover : HusTheme.HusTableView.colorCellBg;
             }
 
-            HusText {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
+            MouseArea {
+                id: itemMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: {
+                    AnnotationConfig.currentIndex = index
+                }
+            }
+
+            RowLayout{
+                anchors.fill: parent
+                anchors.leftMargin: 10
                 anchors.rightMargin: 10
-                text: fileIsDir ? "文件夹" : "文件"
-                color: "gray"
-                font.pixelSize: 12
+                Rectangle{
+                    property color baseColor: isAnnotation? "green" : "red"
+                    width: 16
+                    height: 16
+                    radius: 8
+                    color: QmlGlobalHelper.getColor(baseColor, 5)
+                }
+
+                HusText {
+                    Layout.fillWidth: true
+                    text: fileName
+                }
             }
         }
     }
