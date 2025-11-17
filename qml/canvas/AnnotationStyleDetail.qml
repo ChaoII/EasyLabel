@@ -85,6 +85,96 @@ Item{
                 AnnotationConfig.currentFillOpacity = currentValue
             }
         }
+
+        RowLayout{
+            HusIconText{
+                iconSource: HusIcon.AimOutlined
+            }
+            HusCopyableText{
+                text:"角控制点直径"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+            HusInputNumber{
+                Layout.preferredWidth: 80
+                useWheel: true
+                min: 5
+                max: 40
+                value: 10
+                onValueChanged: {
+                    AnnotationConfig.currentCornerRadius = value
+                }
+            }
+        }
+
+        RowLayout{
+            HusIconText{
+                iconSource: HusIcon.ColumnWidthOutlined
+            }
+            HusCopyableText{
+                text:"边控制点宽"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+            HusInputNumber{
+                Layout.preferredWidth: 80
+                useWheel: true
+                min: 5
+                max: 40
+                value: 12
+                onValueChanged: {
+                    AnnotationConfig.currentEdgeWidth = value
+                }
+            }
+        }
+
+        RowLayout{
+            HusIconText{
+                iconSource: HusIcon.ColumnHeightOutlined
+            }
+            HusCopyableText{
+                text:"边控制点高"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+            HusInputNumber{
+                Layout.preferredWidth: 80
+                useWheel: true
+                min: 5
+                max: 40
+                value: 6
+                onValueChanged: {
+                    AnnotationConfig.currentEdgeHeight = value
+                }
+            }
+        }
+
+        RowLayout{
+            HusIconText{
+                iconSource: HusIcon.FundViewOutlined
+            }
+            HusCopyableText{
+                text:"显示标签"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+
+            HusSwitch {
+                id: switch2
+                radiusBg.all: 2
+                handleDelegate: Rectangle {
+                    radius: 2
+                    color: switch2.colorHandle
+                }
+                checkedText: "是"
+                uncheckedText: "否"
+            }
+        }
+
         Item{
             Layout.fillHeight: true
         }

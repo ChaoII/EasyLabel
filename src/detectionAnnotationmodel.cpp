@@ -158,7 +158,7 @@ void DetectionAnnotationModel::setSingleSelected(int index){
 }
 
 int DetectionAnnotationModel::getSelectedIndex(int x, int y){
-    for(int i=0;i<items_.size();i++){
+    for(int i=0; i< items_.size(); i++){
         if(getRect(i).contains(x,y)) return i;
     }
     return -1;

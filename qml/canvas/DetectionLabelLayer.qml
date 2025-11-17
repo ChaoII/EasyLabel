@@ -39,7 +39,6 @@ Item {
         }
     }
 
-
     // 鼠标绘制矩形标注
     MouseArea {
         id: drawArea
@@ -53,7 +52,7 @@ Item {
                     // 绘制模式：开始绘制新矩形
                     startX = mouse.x
                     startY = mouse.y
-                    listModel.addItem(currentLabelID, mouse.x, mouse.y, 0, 0, zOrder++,false)
+                    listModel.addItem(currentLabelID, mouse.x, mouse.y, 0, 0, zOrder++, false)
                 } else {
                     // 选择模式：检查是否点击了矩形
                     selectedIndex = listModel.getSelectedIndex(mouse.x, mouse.y)
@@ -184,9 +183,6 @@ Item {
                         newWidth = Math.max(minWidth, newWidth)
                         newHeight = Math.max(minHeight, newHeight)
                     }
-
-                    console.log("newX: "+newX,"newY: "+ newY,"newWidth: "+ newWidth, "newHeight: "+ newHeight)
-
                     listModel.updateItem(selectedIndex, currentLabelID ,newX, newY,newWidth,newHeight, zOrder, true)
                 }
             }
@@ -206,17 +202,42 @@ Item {
         model: listModel
         delegate: HusRectangle {
             id: obj
+            property color currentLabelColor: AnnotationConfig.currentLabelColor
+            property string currentLabel: AnnotationConfig.currentLabel
+            property bool showHandlers: model.selected
             x: model.boxX
             y: model.boxY
             width: model.boxWidth
             height: model.boxHeight
-            border.color: "red"
+            border.color: currentLabelColor
             border.width: AnnotationConfig.currentLineWidth
-            border.style: model.selected ? Qt.DashLine : Qt.SolidLine
+            border.style: model.selected ? Qt.DashDotLine : Qt.SolidLine
             color: Qt.rgba(border.color.r, border.color.g, border.color.b, AnnotationConfig.currentFillOpacity)
-            property bool showHandlers: model.selected
+            Connections{
+                target:AnnotationConfig.labelListModel
+                function onDataChanged(){
+                    currentLabelColor = AnnotationConfig.currentLabelColor
+                    currentLabel = AnnotationConfig.currentLabel
+                }
+            }
+
+            // 显示标签
+            HusRectangle{
+                x: 0
+                y: -text.height
+                width: text.width
+                height: text.height
+                color: obj.border.color
+                HusText{
+                    id: text
+                    color: QmlGlobalHelper.revertColor(obj.border.color)
+                    text: currentLabel
+                }
+            }
+
             MouseArea{
-                anchors.fill:parent
+                anchors.fill: parent
+                anchors.margins: -Math.max(AnnotationConfig.currentCornerRadius, AnnotationConfig.currentEdgeHeight)
                 hoverEnabled: true
                 propagateComposedEvents: true
                 onEntered: {
@@ -236,8 +257,8 @@ Item {
 
             // 角控制点
             Repeater {
-                property int handlerWidth: 10
-                property int handlerHeight: 10
+                property int handlerWidth: AnnotationConfig.currentCornerRadius
+                property int handlerHeight: AnnotationConfig.currentCornerRadius
                 model: obj.showHandlers ? getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: cornerHandler
@@ -246,17 +267,16 @@ Item {
                     width: modelData.cornerHandlerWidth
                     height: modelData.cornerHandlerHeight
                     radius: modelData.cornerHandlerWidth/2
-                    color: "red"
+                    color: currentLabelColor
                     // 根据角点索引确定调整方向 0:左上 1:右上 2:右下 3:左下
                     property int resizeType: index
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
                         propagateComposedEvents: true  // 允许事件传播
-
                         cursorShape:{
                             switch(parent.resizeType) {
-                            case 0:return Qt.SizeFDiagCursor
+                            case 0: return Qt.SizeFDiagCursor
                             case 1: return Qt.SizeBDiagCursor
                             case 2: return Qt.SizeFDiagCursor
                             case 3: return Qt.SizeBDiagCursor
@@ -301,8 +321,8 @@ Item {
 
             // 边控制点
             Repeater {
-                property int handlerWidth: 12
-                property int handlerHeight: 6
+                property int handlerWidth: AnnotationConfig.currentEdgeWidth
+                property int handlerHeight: AnnotationConfig.currentEdgeHeight
                 model: obj.showHandlers ? getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: edgeHandler

@@ -49,6 +49,11 @@ QtObject {
         onAccepted: colorSelected(selectedColor)
     }
 
+    function revertColor(color){
+        let color_ = Qt.color(color)
+        return Qt.rgba(1-color_.r, 1-color_.g, 1-color_.b, color_.a)
+    }
+
     function getColor(colorBase, index){
         return HusThemeFunctions.genColor(colorBase,!HusTheme.isDark,HusTheme.Primary.colorBgBase)[index]
     }
