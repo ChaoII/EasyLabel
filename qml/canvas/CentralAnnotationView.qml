@@ -7,7 +7,7 @@ import EasyLabel
 Item{
     id:splitLeft
     property int drawStatus: CanvasEnums.OptionStatus.Select
-    property int currentImageIndex: AnnotationConfig.currentIndex
+    property int currentImageIndex: AnnotationConfig.currentImageIndex
     readonly property int labelNum: drawerLayer.listModel.rowCount()
 
     Flickable {
@@ -185,21 +185,21 @@ Item{
                 }
 
                 HusIconButton{
-                    enabled: AnnotationConfig.currentIndex > 0
+                    enabled: AnnotationConfig.currentImageIndex > 0
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.LeftOutlined
                     radiusBg.all: 0
                     onClicked: {
-                        AnnotationConfig.currentIndex -= 1
+                        AnnotationConfig.currentImageIndex -= 1
                     }
                 }
 
                 HusInput{
                     Layout.minimumWidth: 30
                     Layout.maximumWidth: 60
-                    text: AnnotationConfig.currentIndex + 1
+                    text: AnnotationConfig.currentImageIndex + 1
                     background: HusRectangle {
                         anchors.bottom: parent.bottom
                         height: 1
@@ -214,14 +214,14 @@ Item{
                     Keys.onPressed: function(event)  {
                         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             if(parseInt(text) === 0) return
-                            AnnotationConfig.currentIndex = parseInt(text) - 1
+                            AnnotationConfig.currentImageIndex = parseInt(text) - 1
                         }
                     }
 
                     onFocusChanged: {
                         if(!focus){
                             if(parseInt(text) === 0) return
-                            AnnotationConfig.currentIndex = parseInt(text) - 1
+                            AnnotationConfig.currentImageIndex = parseInt(text) - 1
                         }
                     }
                 }
@@ -235,14 +235,14 @@ Item{
                 }
 
                 HusIconButton{
-                    enabled: AnnotationConfig.currentIndex < AnnotationConfig.fileListModel.rowCount() -1
+                    enabled: AnnotationConfig.currentImageIndex < AnnotationConfig.fileListModel.rowCount() -1
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.RightOutlined
                     radiusBg.all: 0
                     onClicked: {
-                        AnnotationConfig.currentIndex += 1
+                        AnnotationConfig.currentImageIndex += 1
                     }
                 }
 

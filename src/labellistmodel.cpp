@@ -29,6 +29,8 @@ QVariant LabelListModel::data(const QModelIndex &index, int role) const
         return item.label;
     case LabelColorRole:
         return item.labelColor;
+    case SelectedRole:
+        return item.selected;
     default:
         return QVariant();
     }
@@ -39,13 +41,14 @@ QHash<int, QByteArray> LabelListModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[LabelRole] = "label";
     roles[LabelColorRole] = "labelColor";
+    roles[SelectedRole] = "selected";
     return roles;
 }
 
 void LabelListModel::addItem(const QString &label, const QString &labelColor)
 {
     beginInsertRows(QModelIndex(), items_.size(), items_.size());
-    items_.append({label, labelColor});
+    items_.append({label, labelColor, false});
     endInsertRows();
 }
 
@@ -54,9 +57,9 @@ void LabelListModel::updateItem(int index, const QString &label, const QString &
     if (index < 0 || index >= items_.size())
         return;
 
-    items_[index] = {label, labelColor};
+    items_[index] = {label, labelColor, true};
     QModelIndex modelIndex = createIndex(index, 0);
-    emit dataChanged(modelIndex, modelIndex, {LabelRole, LabelColorRole});
+    emit dataChanged(modelIndex, modelIndex, {LabelRole, LabelColorRole, SelectedRole});
 }
 
 void LabelListModel::removeItem(int index)
@@ -110,6 +113,29 @@ void LabelListModel::setLabelColor(int index, const QString &labelColor)
     items_[index].labelColor = labelColor;
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex, {LabelColorRole});
+}
+
+
+void LabelListModel::setSelected(int index, bool selected)
+{
+    if (index < 0 || index >= items_.size() || items_.at(index).selected == selected)
+        return;
+    qDebug() << index <<": " << selected;
+    items_[index].selected = selected;
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex, {SelectedRole});
+}
+
+
+void LabelListModel::setSingleSelected(int index){
+    if (index < 0 || index >= items_.size()) return;
+    for(int i = 0; i < items_.size(); i++){
+        if(i==index){
+            setSelected(i, true);
+        }else{
+            setSelected(i, false);
+        }
+    }
 }
 
 
@@ -176,6 +202,7 @@ bool LabelListModel::loadFromFile(const QString& filePath)
             LabelItem item;
             item.label = obj["label"].toString();
             item.labelColor = obj["labelColor"].toString();
+            item.selected = false;
             items_.append(item);
         }
     }

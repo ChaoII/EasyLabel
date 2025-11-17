@@ -17,9 +17,10 @@ class AnnotationConfig: public QObject
     Q_PROPERTY(LabelListModel* labelListModel READ labelListModel CONSTANT)
     Q_PROPERTY(FileListModel* fileListModel READ fileListModel CONSTANT)
     Q_PROPERTY(DetectionAnnotationModel* currentAnnotationModel READ currentAnnotationModel CONSTANT)
-    Q_PROPERTY(int currentIndex READ currentIndex  WRITE setCurrentIndex NOTIFY currentIndexChanged FINAL)
-
-
+    Q_PROPERTY(int currentImageIndex READ currentImageIndex  WRITE setCurrentImageIndex NOTIFY currentImageIndexChanged FINAL)
+    Q_PROPERTY(int currentLabelIndex READ currentLabelIndex  WRITE setCurrentLabelIndex NOTIFY currentLabelIndexChanged FINAL)
+    Q_PROPERTY(int currentLineWidth READ currentLineWidth  WRITE setCurrentLineWidth NOTIFY currentLineWidthChanged FINAL)
+    Q_PROPERTY(double currentFillOpacity READ currentFillOpacity  WRITE setCurrentFillOpacity NOTIFY currentFillOpacityChanged FINAL)
 
 public:
 
@@ -37,13 +38,25 @@ public:
 
     DetectionAnnotationModel* currentAnnotationModel();
 
-    int currentIndex();
+    int currentLineWidth();
+
+    double currentFillOpacity();
+
+    int currentImageIndex();
+
+    int currentLabelIndex();
 
     void setImageDir(const QString& imageDir);
 
     void setResultDir(const QString& resultDir);
 
-    void setCurrentIndex(int index);
+    void setCurrentLineWidth(int lineWidth);
+
+    void setCurrentFillOpacity(double fillOpacity);
+
+    void setCurrentImageIndex(int index);
+
+    void setCurrentLabelIndex(int index);
 
     Q_INVOKABLE void setImageAndResultDir(const QString& imageDir,const QString& resultDir);
 
@@ -65,13 +78,22 @@ signals:
 
     void labelListChanged();
 
-    void currentIndexChanged(int index);
+    void currentLineWidthChanged();
+
+    void currentFillOpacityChanged();
+
+    void currentImageIndexChanged(int index);
+
+    void currentLabelIndexChanged(int index);
 
 private:
 
     AnnotationConfig(QObject* parent=nullptr);
 
-    int currentIndex_ = 0;
+    double currentFillOpacity_ = 1.0;
+    int currentLineWidth_ = 1;
+    int currentImageIndex_ = 0;
+    int currentLabelIndex_ = 0;
     bool isDirty_ = false;
     QString imageDir_;
     QString resultDir_;

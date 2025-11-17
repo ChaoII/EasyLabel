@@ -36,7 +36,8 @@ Item {
             if(drawStatus === CanvasEnums.Drawing){
                 mousePosition=point.position
             }
-        }}
+        }
+    }
 
 
     // 鼠标绘制矩形标注
@@ -53,7 +54,6 @@ Item {
                     startX = mouse.x
                     startY = mouse.y
                     listModel.addItem(currentLabelID, mouse.x, mouse.y, 0, 0, zOrder++,false)
-                    console.log("rowCount:",listModel.rowCount())
                 } else {
                     // 选择模式：检查是否点击了矩形
                     selectedIndex = listModel.getSelectedIndex(mouse.x, mouse.y)
@@ -210,10 +210,10 @@ Item {
             y: model.boxY
             width: model.boxWidth
             height: model.boxHeight
-            border.color: "red"  // 选中时变蓝色
-            border.width: model.selected ? 3 : 2  // 选中时边框加粗
+            border.color: "red"
+            border.width: AnnotationConfig.currentLineWidth
             border.style: model.selected ? Qt.DashLine : Qt.SolidLine
-            color: model.selected ? Qt.rgba(border.color.r, border.color.g, border.color.b, 0.3):"#00000000"
+            color: Qt.rgba(border.color.r, border.color.g, border.color.b, AnnotationConfig.currentFillOpacity)
             property bool showHandlers: model.selected
             MouseArea{
                 anchors.fill:parent

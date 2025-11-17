@@ -11,7 +11,7 @@ Item{
         id: listView
         anchors.fill: parent
         model: AnnotationConfig.fileListModel
-        currentIndex: AnnotationConfig.currentIndex
+        currentIndex: AnnotationConfig.currentImageIndex
         delegate: Rectangle {
             width: ListView.view.width
             height: 30

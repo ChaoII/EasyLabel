@@ -14,11 +14,13 @@ public:
     struct LabelItem {
         QString label;
         QString labelColor;
+        bool selected;
     };
 
     enum ItemRoles {
         LabelRole = Qt::UserRole + 1,
-        LabelColorRole
+        LabelColorRole,
+        SelectedRole
     };
 
     explicit LabelListModel(QObject *parent = nullptr);
@@ -38,6 +40,8 @@ public:
     Q_INVOKABLE QString getLabelColor(int index) const;
     Q_INVOKABLE void setLabel(int index, const QString &label);
     Q_INVOKABLE void setLabelColor(int index, const QString &labelColor);
+    Q_INVOKABLE void setSelected(int index, bool selected);
+    Q_INVOKABLE void setSingleSelected(int index);
 
     Q_INVOKABLE QJsonArray toJsonArray() const;
     Q_INVOKABLE QString toJsonString(bool compact) const;

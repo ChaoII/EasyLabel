@@ -31,6 +31,9 @@ Item{
             max: 5
             value: 2
             stepSize: 1
+            onCurrentValueChanged: {
+                AnnotationConfig.currentLineWidth = currentValue
+            }
         }
         RowLayout{
             HusIconText{
@@ -74,10 +77,13 @@ Item{
             id: opacitySlider
             Layout.fillWidth: true
             height: 30
-            value: 1.00
-            min:0.0
-            max:1.0
+            value: 0.25
+            min: 0.0
+            max: 1.0
             stepSize: 0.01
+            onCurrentValueChanged: {
+                AnnotationConfig.currentFillOpacity = currentValue
+            }
         }
         Item{
             Layout.fillHeight: true

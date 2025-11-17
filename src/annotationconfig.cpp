@@ -15,7 +15,7 @@ AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
     labelListModel_(new LabelListModel(this)),
     fileListModel_(new FileListModel(this)){
-    connect(labelListModel_,&LabelListModel::listModelDataChanged,this,&AnnotationConfig::saveLabelFile);
+    connect(labelListModel_, &LabelListModel::listModelDataChanged, this, &AnnotationConfig::saveLabelFile);
 }
 
 AnnotationConfig* AnnotationConfig::instance(){
@@ -46,18 +46,51 @@ FileListModel* AnnotationConfig::fileListModel(){
 }
 
 DetectionAnnotationModel* AnnotationConfig::currentAnnotationModel(){
-    if(currentIndex_ < 0 || currentIndex_ >= annotationModelList_.size()) return new DetectionAnnotationModel();
-    return annotationModelList_[currentIndex_];
+    if(currentImageIndex_ < 0 || currentImageIndex_ >= annotationModelList_.size()) return new DetectionAnnotationModel();
+    return annotationModelList_[currentImageIndex_];
 }
 
-int AnnotationConfig::currentIndex(){
-    return currentIndex_;
+int AnnotationConfig::currentLineWidth(){
+    return currentLineWidth_;
 }
 
-void AnnotationConfig::setCurrentIndex(int index){
-    if(currentIndex_ != index){
-        currentIndex_ = index;
-        emit currentIndexChanged(index);
+double AnnotationConfig::currentFillOpacity(){
+    return currentFillOpacity_;
+}
+
+int AnnotationConfig::currentImageIndex(){
+    return currentImageIndex_;
+}
+
+int AnnotationConfig::currentLabelIndex(){
+    return currentLabelIndex_;
+}
+
+void AnnotationConfig::setCurrentLineWidth(int lineWidth){
+    if(currentLineWidth_ != lineWidth){
+        currentLineWidth_ = lineWidth;
+        emit currentLineWidthChanged();
+    }
+}
+
+void AnnotationConfig::setCurrentFillOpacity(double fillOpacity){
+    if(currentFillOpacity_ != fillOpacity){
+        currentFillOpacity_ = fillOpacity;
+        emit currentFillOpacityChanged();
+    }
+}
+
+void AnnotationConfig::setCurrentImageIndex(int index){
+    if(currentImageIndex_ != index){
+        currentImageIndex_ = index;
+        emit currentImageIndexChanged(index);
+    }
+}
+
+void AnnotationConfig::setCurrentLabelIndex(int index){
+    if(currentLabelIndex_ != index){
+        currentLabelIndex_ = index;
+        emit currentLabelIndexChanged(index);
     }
 }
 

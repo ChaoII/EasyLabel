@@ -5,13 +5,6 @@ import QtQuick.Dialogs
 import EasyLabel
 
 Item{
-    ColorDialog {
-        id: colorDialog
-        onAccepted: {
-            // 更新数据模型
-            AnnotationConfig.labelListModel.setLabelColor(listView.currentIndex, selectedColor.toString())
-        }
-    }
     implicitHeight: 200
     width: parent.width
     ColumnLayout{
@@ -48,8 +41,9 @@ Item{
                 height: 30
                 required property string label
                 required property color labelColor
+                required property bool selected
                 required property int index
-                property bool isCurrent: ListView.isCurrentItem
+                property bool isCurrent: selected
                 property bool isHovered: itemMouseArea.containsMouse || colorButton.hovered || btnDelete.hovered
                 property bool isEditing: false
                 HusRectangle {
@@ -58,14 +52,12 @@ Item{
                         else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
                         else return index % 2 !== 0 ? HusTheme.HusTableView.colorCellBgHover : HusTheme.HusTableView.colorCellBg;
                     }
-
                     anchors.fill: parent
-
                     MouseArea {
                         id: itemMouseArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        onClicked: listView.currentIndex = index
+                        onClicked: AnnotationConfig.labelListModel.setSingleSelected(index)
                         onDoubleClicked: {
                             isEditing = true
                         }
@@ -80,9 +72,16 @@ Item{
                             height: 16
                             currentColor: labelColor
                             onClicked:{
-                                listView.currentIndex = index
+                                AnnotationConfig.labelListModel.setSingleSelected(index)
                                 colorDialog.selectedColor = labelColor
                                 colorDialog.open()
+                            }
+                            ColorDialog {
+                                id: colorDialog
+                                onAccepted: {
+                                    // 更新数据模型
+                                    AnnotationConfig.labelListModel.setLabelColor(index, selectedColor.toString())
+                                }
                             }
                         }
                         // 根据编辑状态切换显示
@@ -99,7 +98,6 @@ Item{
                             type: HusButton.Type_Link
                             iconSource: HusIcon.DeleteOutlined
                             onClicked: {
-                                listView.currentIndex = index
                                 AnnotationConfig.labelListModel.removeItem(index)
                             }
                         }
