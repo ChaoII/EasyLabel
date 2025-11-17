@@ -5,6 +5,10 @@
 LabelListModel::LabelListModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    connect(this, &QAbstractItemModel::dataChanged, this, &LabelListModel::listModelDataChanged);
+    connect(this, &QAbstractItemModel::rowsInserted, this, &LabelListModel::listModelDataChanged);
+    connect(this, &QAbstractItemModel::rowsRemoved, this, &LabelListModel::listModelDataChanged);
+    connect(this, &QAbstractItemModel::modelReset, this, &LabelListModel::listModelDataChanged);
 }
 
 int LabelListModel::rowCount(const QModelIndex &parent) const

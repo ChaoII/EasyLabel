@@ -8,7 +8,7 @@ Item{
     id:splitLeft
     property int drawStatus: CanvasEnums.OptionStatus.Select
     property int currentImageIndex: AnnotationConfig.currentIndex
-    readonly property int labelNum: drawerLayer.listModel.count
+    readonly property int labelNum: drawerLayer.listModel.rowCount()
 
     Flickable {
         id: flickable

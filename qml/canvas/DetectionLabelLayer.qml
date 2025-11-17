@@ -4,7 +4,8 @@ import EasyLabel
 Item {
     id: annotationLayer
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
-    property ListModel listModel: ListModel{}
+    property var listModel: AnnotationConfig.currentAnnotationModel
+    property int currentLabelID: 0
     // 当前选中的矩形索引
     property int selectedIndex: -1
     property int zOrder: -1
@@ -26,7 +27,6 @@ Item {
 
     onMousePositionChanged: {
         crosshair.mousePosition = mousePosition
-        console.log(Qt.rgba(crosshair.color.r, crosshair.color.g, crosshair.color.b,0.3))
     }
 
     HoverHandler{
@@ -37,7 +37,6 @@ Item {
                 mousePosition=point.position
             }
         }}
-
 
 
     // 鼠标绘制矩形标注
@@ -53,25 +52,23 @@ Item {
                     // 绘制模式：开始绘制新矩形
                     startX = mouse.x
                     startY = mouse.y
-                    listModel.append( { "x": mouse.x, "y": mouse.y, "width": 0,
-                                         "height": 0, "zOrder": zOrder++ ,"selected": false})
-                    // selectedIndex = listModel.count - 1
-                    // setOneSelected(selectedIndex)
+                    listModel.addItem(currentLabelID, mouse.x, mouse.y, 0, 0, zOrder++,false)
+                    console.log("rowCount:",listModel.rowCount())
                 } else {
                     // 选择模式：检查是否点击了矩形
-                    selectedIndex = getSlectedIndex(mouse.x, mouse.y)
+                    selectedIndex = listModel.getSelectedIndex(mouse.x, mouse.y)
                     if(selectedIndex >= 0){
-                        setOneSelected(selectedIndex)
+                        listModel.setSingleSelected(selectedIndex)
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
                         if(editType === CanvasEnums.None){
                             editType = CanvasEnums.Move
                         }
                         dragStartPoint = Qt.point(mouse.x, mouse.y)
-                        let selectedRect = listModel.get(selectedIndex)
+                        let selectedRect = listModel.getRect(selectedIndex)
                         startRect = Qt.rect(selectedRect.x, selectedRect.y, selectedRect.width, selectedRect.height)
                     } else {
                         // 没有元素被选中
-                        removeAllSelected()
+                        listModel.removeAllSelected()
                         selectedIndex = -1
                         editType=CanvasEnums.None
                     }
@@ -83,9 +80,9 @@ Item {
             if (mouse.buttons & Qt.LeftButton) {
                 if (drawStatus === CanvasEnums.Drawing) {
                     // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
-                    mousePosition = Qt.point(mouse.x,mouse.y)
+                    mousePosition = Qt.point(mouse.x, mouse.y)
                     // 绘制模式：更新矩形大小（保持不变）
-                    let last = listModel.count - 1
+                    let last = listModel.rowCount() - 1
                     let realX = mouse.x < startX ? mouse.x : startX
                     let realY = mouse.y < startY ? mouse.y : startY
                     let realWidth = Math.abs(mouse.x - startX)
@@ -98,14 +95,8 @@ Item {
                     realHeight = Math.min(realHeight, parent.height - realY)
                     realWidth = Math.max(5, realWidth)
                     realHeight = Math.max(5, realHeight)
+                    listModel.updateItem(last, currentLabelID, realX, realY, realWidth, realHeight, zOrder, false)
 
-                    listModel.set(last, {
-                                      "x": realX,
-                                      "y": realY,
-                                      "width": realWidth,
-                                      "height": realHeight,
-                                      "selected": false
-                                  })
                 } else if (selectedIndex >= 0) {
                     var dx = mouse.x - dragStartPoint.x
                     var dy = mouse.y - dragStartPoint.y
@@ -195,10 +186,8 @@ Item {
                     }
 
                     console.log("newX: "+newX,"newY: "+ newY,"newWidth: "+ newWidth, "newHeight: "+ newHeight)
-                    listModel.setProperty(selectedIndex, "x", newX)
-                    listModel.setProperty(selectedIndex, "y", newY)
-                    listModel.setProperty(selectedIndex, "width", newWidth)
-                    listModel.setProperty(selectedIndex, "height", newHeight)
+
+                    listModel.updateItem(selectedIndex, currentLabelID ,newX, newY,newWidth,newHeight, zOrder, true)
                 }
             }
         }
@@ -217,14 +206,14 @@ Item {
         model: listModel
         delegate: HusRectangle {
             id: obj
-            x: model.x
-            y: model.y
-            width: model.width
-            height: model.height
+            x: model.boxX
+            y: model.boxY
+            width: model.boxWidth
+            height: model.boxHeight
             border.color: "red"  // 选中时变蓝色
             border.width: model.selected ? 3 : 2  // 选中时边框加粗
             border.style: model.selected ? Qt.DashLine : Qt.SolidLine
-            color: model.selected ? Qt.rgba(border.color.r, border.color.g, border.color.b,0.3):"#00000000"
+            color: model.selected ? Qt.rgba(border.color.r, border.color.g, border.color.b, 0.3):"#00000000"
             property bool showHandlers: model.selected
             MouseArea{
                 anchors.fill:parent
@@ -373,32 +362,6 @@ Item {
                 }
             }
         }
-    }
-
-    function getSlectedIndex(mouseX, mouseY){
-        let _selectIndex = -1
-        for(let i=0;i<listModel.count;i++){
-            let rect = listModel.get(i)
-            if( mouseX > rect.x - 5
-                    && mouseY > rect.y - 5
-                    && mouseX < rect.x + rect.width + 5
-                    && mouseY < rect.y + rect.height + 5){
-                // 有元素被选中
-                _selectIndex = i
-            }
-        }
-        return _selectIndex
-    }
-
-    function removeAllSelected(){
-        for(let i=0;i<listModel.count;i++){
-            listModel.setProperty(i, "selected", false)
-        }
-    }
-
-    function setOneSelected(index){
-        removeAllSelected()
-        listModel.setProperty(index, "selected", true)
     }
 
     function getCornerHandlerModel(labelWidth, labelHeight, handlerWidth, handlerHeight) {

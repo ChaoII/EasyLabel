@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QRect>
 #include <QColor>
 #include <QAbstractListModel>
 
@@ -17,6 +18,8 @@ public:
         int y;
         int width;
         int height;
+        int zOrder;
+        bool selected;
     };
 
 
@@ -25,7 +28,9 @@ public:
         XRole,
         YRole,
         WidthRole,
-        HeightRole
+        HeightRole,
+        ZOrderRole,
+        SelectedRole
     };
 
     explicit DetectionAnnotationModel(QObject *parent = nullptr);
@@ -39,13 +44,24 @@ public:
     // 基本属性
     // int selectedCount() const;
 
-    void addItem(int lableID, int x,int y,int width,int height);
+    Q_INVOKABLE void addItem(int lableID, int x,int y,int width,int height,int zOrder, bool selected);
 
-    void updateItem(int index, int lableID, int x,int y,int width,int height);
+    Q_INVOKABLE void updateItem(int index, int lableID, int x,int y,int width,int height, int zOrder, bool selected);
 
-    void removeItem(int index);
+    Q_INVOKABLE void setSelected(int index, bool selected);
 
-    void clear();
+    Q_INVOKABLE void removeItem(int index);
+
+    Q_INVOKABLE void clear();
+
+    Q_INVOKABLE QRect getRect(int index);
+
+    Q_INVOKABLE void removeAllSelected();
+
+    Q_INVOKABLE void setSingleSelected(int index);
+
+    Q_INVOKABLE int getSelectedIndex(int x, int y);
+
 
 
     // 标注操作 - 增删改查
@@ -54,60 +70,60 @@ public:
     // Q_INVOKABLE int addPolygon(const QVector<QPointF>& polygon, int groupId = 0, const QColor& color = Qt::red, const QString& label = "");
     // Q_INVOKABLE int addText(const QString& text, const QPointF& position, int groupId = 0, const QColor& color = Qt::red, const QString& label = "");
 
-//     Q_INVOKABLE bool removeAnnotation(int id);
-//     Q_INVOKABLE void clear();
-//     Q_INVOKABLE AnnotationItem* getAnnotation(int id) const;
-//     Q_INVOKABLE int getIndexById(int id) const;
+    //     Q_INVOKABLE bool removeAnnotation(int id);
+    //     Q_INVOKABLE void clear();
+    //     Q_INVOKABLE AnnotationItem* getAnnotation(int id) const;
+    //     Q_INVOKABLE int getIndexById(int id) const;
 
-//     // 选择操作
-//     Q_INVOKABLE void selectAnnotation(int id, bool selected = true);
-//     Q_INVOKABLE void clearSelection();
-//     Q_INVOKABLE void selectAll();
-//     Q_INVOKABLE QList<int> getSelectedIds() const;
+    //     // 选择操作
+    //     Q_INVOKABLE void selectAnnotation(int id, bool selected = true);
+    //     Q_INVOKABLE void clearSelection();
+    //     Q_INVOKABLE void selectAll();
+    //     Q_INVOKABLE QList<int> getSelectedIds() const;
 
-//     // 分组操作
-//     Q_INVOKABLE void setGroupVisible(int groupId, bool visible);
-//     Q_INVOKABLE void setGroupColor(int groupId, const QColor& color);
-//     Q_INVOKABLE void removeGroup(int groupId);
-//     Q_INVOKABLE QList<int> getGroupIds() const;
-//     Q_INVOKABLE QList<AnnotationItem*> getAnnotationsByGroup(int groupId) const;
+    //     // 分组操作
+    //     Q_INVOKABLE void setGroupVisible(int groupId, bool visible);
+    //     Q_INVOKABLE void setGroupColor(int groupId, const QColor& color);
+    //     Q_INVOKABLE void removeGroup(int groupId);
+    //     Q_INVOKABLE QList<int> getGroupIds() const;
+    //     Q_INVOKABLE QList<AnnotationItem*> getAnnotationsByGroup(int groupId) const;
 
-//     // 几何更新
-//     Q_INVOKABLE void updateRect(int id, const QRectF& rect);
-//     Q_INVOKABLE void updatePoint(int id, const QPointF& point);
-//     Q_INVOKABLE void updatePolygon(int id, const QVector<QPointF>& polygon);
-//     Q_INVOKABLE void updateText(int id, const QString& text, const QPointF& position);
+    //     // 几何更新
+    //     Q_INVOKABLE void updateRect(int id, const QRectF& rect);
+    //     Q_INVOKABLE void updatePoint(int id, const QPointF& point);
+    //     Q_INVOKABLE void updatePolygon(int id, const QVector<QPointF>& polygon);
+    //     Q_INVOKABLE void updateText(int id, const QString& text, const QPointF& position);
 
-//     // 导入导出
-//     Q_INVOKABLE QJsonArray toJsonArray() const;
-//     Q_INVOKABLE bool loadFromJson(const QJsonArray& jsonArray);
-//     Q_INVOKABLE bool saveToFile(const QString& filePath) const;
-//     Q_INVOKABLE bool loadFromFile(const QString& filePath);
+    //     // 导入导出
+    //     Q_INVOKABLE QJsonArray toJsonArray() const;
+    //     Q_INVOKABLE bool loadFromJson(const QJsonArray& jsonArray);
+    //     Q_INVOKABLE bool saveToFile(const QString& filePath) const;
+    //     Q_INVOKABLE bool loadFromFile(const QString& filePath);
 
-//     // 查找和过滤
-//     Q_INVOKABLE QList<int> findAnnotationsByType(const QString& type) const;
-//     Q_INVOKABLE QList<int> findAnnotationsByLabel(const QString& label) const;
-//     Q_INVOKABLE int findAnnotationAtPoint(const QPointF& point, double tolerance = 5.0) const;
+    //     // 查找和过滤
+    //     Q_INVOKABLE QList<int> findAnnotationsByType(const QString& type) const;
+    //     Q_INVOKABLE QList<int> findAnnotationsByLabel(const QString& label) const;
+    //     Q_INVOKABLE int findAnnotationAtPoint(const QPointF& point, double tolerance = 5.0) const;
 
-// signals:
-//     void countChanged();
-//     void selectedCountChanged();
-//     void annotationAdded(int id);
-//     void annotationRemoved(int id);
-//     void annotationChanged(int id);
-//     void selectionChanged();
-//     void groupUpdated(int groupId);
+    // signals:
+    //     void countChanged();
+    //     void selectedCountChanged();
+    //     void annotationAdded(int id);
+    //     void annotationRemoved(int id);
+    //     void annotationChanged(int id);
+    //     void selectionChanged();
+    //     void groupUpdated(int groupId);
 
-// private slots:
-//     void onItemDataChanged();
+    // private slots:
+    //     void onItemDataChanged();
 
-// private:
+    // private:
     QVector<DetectionAnnotationItem> items_;
-//     QHash<int, int> m_idToIndex;  // ID到索引的映射
-//     int m_nextId;
+    //     QHash<int, int> m_idToIndex;  // ID到索引的映射
+    //     int m_nextId;
 
-//     int generateId();
-//     int addAnnotation(AnnotationItem* item);
-//     void emitDataChanged(int index, const QVector<int>& roles = {});
+    //     int generateId();
+    //     int addAnnotation(AnnotationItem* item);
+    //     void emitDataChanged(int index, const QVector<int>& roles = {});
 };
 

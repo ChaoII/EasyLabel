@@ -14,7 +14,9 @@ AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 
 AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
     labelListModel_(new LabelListModel(this)),
-    fileListModel_(new FileListModel(this)){}
+    fileListModel_(new FileListModel(this)){
+    connect(labelListModel_,&LabelListModel::listModelDataChanged,this,&AnnotationConfig::saveLabelFile);
+}
 
 AnnotationConfig* AnnotationConfig::instance(){
     if(!instance_){
@@ -44,6 +46,7 @@ FileListModel* AnnotationConfig::fileListModel(){
 }
 
 DetectionAnnotationModel* AnnotationConfig::currentAnnotationModel(){
+    if(currentIndex_ < 0 || currentIndex_ >= annotationModelList_.size()) return new DetectionAnnotationModel();
     return annotationModelList_[currentIndex_];
 }
 
@@ -93,69 +96,33 @@ void AnnotationConfig::loadAnnotationFiles(){
         // 不存在就创建
         if(!QFile::exists(AnnotationFilePath)){
             QFile file(AnnotationFilePath);
-            if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
+            if(!file.open(QIODevice::WriteOnly | QIODevice::Text)){
                 qWarning() << "无法打开文件:" << AnnotationFilePath << file.errorString();
                 continue;
             }
             file.close();
             continue;
         }
-        // 存在就解析
-        DetectionAnnotationModel* annotationModel = new DetectionAnnotationModel(this);
-        annotationModel->addItem(0,10,10,200,100);
-        annotationModelList_.append(annotationModel);
+        // 如果存在那么加载annotation
+        DetectionAnnotationModel * annotaiton = new DetectionAnnotationModel();
+        annotaiton->addItem(0,10,10,200,200,-1,false);
+        annotationModelList_.append(annotaiton);
     }
 }
 
 
-void AnnotationConfig::loadLabelFile(){
+bool AnnotationConfig::loadLabelFile(){
     QDir dir(resultDir_);
     if(!dir.exists()){
         qDebug() << "目录不存在："<< dir;
-        return;
+        return false;
     }
-
     QString labelFilePath = dir.absoluteFilePath("label.json");
-
     if(!QFile::exists(labelFilePath)){
         qDebug() << "文件不存在："<<labelFilePath;
-        return;
+        return false;
     }
-    QFile file(labelFilePath);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        qWarning() << "无法打开文件:" << labelFilePath << file.errorString();
-        return;
-    }
-
-    QByteArray jsonData = file.readAll();
-    file.close();
-
-    if (jsonData.isEmpty()) {
-        qWarning() << "文件为空:" << labelFilePath;
-        return;
-    }
-
-    QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        qWarning() << "JSON 解析错误 - 位置:" << parseError.offset
-                   << "错误:" << parseError.errorString();
-        return;
-    }
-    // 转换为 QVariantList
-    if (doc.isArray()) {
-        QVariantList list = doc.array().toVariantList();
-        for(int i=0;i<list.count();i++){
-            QVariantMap map = list[i].toMap();
-            if(map.contains("label") && map.contains("labelColor")){
-                labelListModel_->addItem(map.value("label").toString(), map.value("labelColor").toString());
-            }
-        }
-        qDebug() << "成功解析数组格式 JSON，包含" << list.size() << "个元素";
-    }else {
-        qWarning() << "JSON 文档格式不支持";
-        return;
-    }
+    return labelListModel_->loadFromFile(labelFilePath);
 }
 
 
@@ -178,29 +145,7 @@ bool AnnotationConfig::saveLabelFile(){
         qWarning() << "无法打开文件:" << labelFilePath << file.errorString();
         return false;
     }
-
-    // 转换数据
-    QJsonArray jsonArray;
-    for(int i=0;i<labelListModel_->rowCount();i++){
-        QString label = labelListModel_->getLabel(i);
-        QString labelColor = labelListModel_->getLabelColor(i);
-        QVariantMap map;
-        map.insert("label",label);
-        map.insert("labelColor",labelColor);
-        jsonArray.append(QJsonObject::fromVariantMap(map));
-    }
-
-    // 写入文件
-    QJsonDocument doc(jsonArray);
-    file.write(doc.toJson(QJsonDocument::Indented));
-
-    // 提交保存（原子操作）
-    if (!file.commit()) {
-        qWarning() << "保存文件失败:" << file.errorString();
-        return false;
-    }
-    qDebug() << "成功保存" << jsonArray.size() << "个标签到:" << labelFilePath;
-    return true;
+    return labelListModel_->saveToFile(labelFilePath);
 }
 
 
@@ -209,3 +154,7 @@ DetectionAnnotationModel* AnnotationConfig::getAnnotationModel(int index){
     return annotationModelList_[index];
 }
 
+void AnnotationConfig::setAnnotationModel(int index, DetectionAnnotationModel* annotationModel){
+    if(index<0 || index>annotationModelList_.size()) return;
+    annotationModelList_[index] = annotationModel;
+}

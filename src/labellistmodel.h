@@ -2,6 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QColor>
+#include <QTimer>
 #include <QJsonArray>
 #include <QJsonObject>
 
@@ -42,7 +43,8 @@ public:
     Q_INVOKABLE QString toJsonString(bool compact) const;
     Q_INVOKABLE bool saveToFile(const QString& filePath) const;
     Q_INVOKABLE bool loadFromFile(const QString& filePath);
-
+signals:
+    void listModelDataChanged();
 
 private:
     QVector<LabelItem> items_;

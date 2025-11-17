@@ -47,13 +47,15 @@ public:
 
     Q_INVOKABLE void setImageAndResultDir(const QString& imageDir,const QString& resultDir);
 
-    Q_INVOKABLE void loadLabelFile();
+    Q_INVOKABLE bool loadLabelFile();
 
     Q_INVOKABLE bool saveLabelFile();
 
     Q_INVOKABLE void loadAnnotationFiles();
 
     Q_INVOKABLE DetectionAnnotationModel* getAnnotationModel(int index);
+
+    Q_INVOKABLE void setAnnotationModel(int index, DetectionAnnotationModel* annotationModel);
 
 
 signals:

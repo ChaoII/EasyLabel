@@ -17,13 +17,9 @@ Item{
         delegate: Item {
             width: listView.width
             height: 30
-            required property string labelID
-            required property int boxX
-            required property int boxY
-            required property int boxWidth
-            required property int boxHeight
+            required property int labelID
             required property int index
-            property color labelColor:"#FFFF00"
+            property color labelColor: AnnotationConfig.labelListModel.getLabelColor(labelID)
             property bool isCurrent: ListView.isCurrentItem
             property bool isHovered: itemMouseArea.containsMouse ||btnDelete.hovered || btnEdit.hovered
             HusRectangle {
@@ -52,7 +48,7 @@ Item{
                     HusText {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        text: labelID
+                        text: AnnotationConfig.labelListModel.getLabel(labelID)
                         verticalAlignment: HusText.AlignVCenter
                     }
                     Item{
@@ -75,7 +71,6 @@ Item{
                         type: HusButton.Type_Link
                         iconSource: HusIcon.DeleteOutlined
                         onClicked: {
-
                             listView.currentIndex = index
                         }
                     }
