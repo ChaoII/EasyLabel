@@ -38,7 +38,7 @@ Item {
         radius: centerPointerSize/2
         color: crosshairRoot.color
         border.color: "white"
-        border.width: 2
+        border.width: lineWidth
         opacity: 0.9
     }
 

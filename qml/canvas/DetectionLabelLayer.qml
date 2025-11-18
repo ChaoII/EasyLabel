@@ -9,6 +9,7 @@ Item {
     property color currentLabelColor: AnnotationConfig.currentLabelColor
     property string currentLabel: AnnotationConfig.currentLabel
     property int selectedIndex: -1
+    property real scaleFactor: 1.0
     property int zOrder: -1
     property int editType: CanvasEnums.EditType.None
     property point dragStartPoint: Qt.point(0, 0)
@@ -21,8 +22,8 @@ Item {
         anchors.fill: parent
         visible: drawStatus === CanvasEnums.Drawing
         color: currentLabelColor
-        centerPointerSize: AnnotationConfig.centerPointerSize
-        lineWidth: AnnotationConfig.currentLineWidth
+        centerPointerSize: AnnotationConfig.centerPointerSize/scaleFactor
+        lineWidth: AnnotationConfig.currentLineWidth/scaleFactor
         showCoordinates: true
         showCenterPoint: true
     }
@@ -215,7 +216,7 @@ Item {
             width: model.boxWidth
             height: model.boxHeight
             border.color: annotationColor
-            border.width: AnnotationConfig.currentLineWidth
+            border.width: AnnotationConfig.currentLineWidth/scaleFactor
             border.style: model.selected ? Qt.DashDotLine : Qt.SolidLine
             color: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, AnnotationConfig.currentFillOpacity)
 
@@ -237,7 +238,7 @@ Item {
                 color: annotationColor
                 HusText{
                     id: text
-                    font.pixelSize: AnnotationConfig.fontPointSize
+                    font.pixelSize: AnnotationConfig.fontPointSize / scaleFactor
                     color: QmlGlobalHelper.revertColor(annotationColor)
                     text: annotationLabel
                 }
@@ -265,8 +266,8 @@ Item {
 
             // 角控制点
             Repeater {
-                property int handlerWidth: AnnotationConfig.currentCornerRadius
-                property int handlerHeight: AnnotationConfig.currentCornerRadius
+                property int handlerWidth: AnnotationConfig.currentCornerRadius/scaleFactor
+                property int handlerHeight: AnnotationConfig.currentCornerRadius/scaleFactor
                 model: obj.showHandlers ? getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: cornerHandler
@@ -329,8 +330,8 @@ Item {
 
             // 边控制点
             Repeater {
-                property int handlerWidth: AnnotationConfig.currentEdgeWidth
-                property int handlerHeight: AnnotationConfig.currentEdgeHeight
+                property int handlerWidth: AnnotationConfig.currentEdgeWidth/scaleFactor
+                property int handlerHeight: AnnotationConfig.currentEdgeHeight/scaleFactor
                 model: obj.showHandlers ? getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: edgeHandler

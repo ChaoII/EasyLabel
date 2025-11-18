@@ -59,6 +59,7 @@ Item{
                 id: drawerLayer
                 anchors.fill: parent
                 drawStatus: splitLeft.drawStatus
+                scaleFactor: imageContainer.scale
             }
         }
         // 放大
