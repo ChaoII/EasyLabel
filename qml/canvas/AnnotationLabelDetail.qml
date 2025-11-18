@@ -57,7 +57,9 @@ Item{
                         id: itemMouseArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        onClicked: AnnotationConfig.labelListModel.setSingleSelected(index)
+                        onClicked: {
+                            AnnotationConfig.labelListModel.setSingleSelected(index)
+                        }
                         onDoubleClicked: {
                             isEditing = true
                         }
@@ -156,6 +158,11 @@ Item{
                         }
                     }
                 }
+            }
+        }
+        Component.onCompleted: {
+            if(listView.count > 0){
+                AnnotationConfig.labelListModel.setSingleSelected(0)
             }
         }
     }

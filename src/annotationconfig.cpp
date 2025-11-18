@@ -15,7 +15,12 @@ AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
     labelListModel_(new LabelListModel(this)),
     fileListModel_(new FileListModel(this)){
-    connect(labelListModel_, &LabelListModel::listModelDataChanged, this, &AnnotationConfig::saveLabelFile);
+    connect(labelListModel_, &LabelListModel::listModelDataChanged, [this]() {
+        saveLabelFile();
+        emit currentLabelIndexChanged();
+        emit currentLabelChanged();
+        emit currentLabelColorChanged();
+    });
 }
 
 AnnotationConfig* AnnotationConfig::instance(){
@@ -76,19 +81,23 @@ int AnnotationConfig::currentImageIndex(){
 }
 
 int AnnotationConfig::currentLabelIndex(){
-    return currentLabelIndex_;
+    return labelListModel_->getFirstSelected();
 }
 
 QString AnnotationConfig::currentLabelColor(){
-    return labelListModel_->getLabelColor(currentLabelIndex());
+    return labelListModel_->getLabelColor(currentLabelIndex_);
 }
 
 QString AnnotationConfig::currentLabel(){
-    return labelListModel_->getLabel(currentLabelIndex());
+    return labelListModel_->getLabel(currentLabelIndex_);
 }
 
 bool AnnotationConfig::showLabel(){
     return showLabel_;
+}
+
+int AnnotationConfig::fontPointSize(){
+    return fontPointSize_;
 }
 
 void AnnotationConfig::setCurrentLineWidth(int lineWidth){
@@ -128,7 +137,6 @@ void AnnotationConfig::setCurrentEdgeHeight(int height){
 }
 
 
-
 void AnnotationConfig::setCurrentImageIndex(int index){
     if(currentImageIndex_ != index){
         currentImageIndex_ = index;
@@ -136,17 +144,18 @@ void AnnotationConfig::setCurrentImageIndex(int index){
     }
 }
 
-void AnnotationConfig::setCurrentLabelIndex(int index){
-    if(currentLabelIndex_ != index){
-        currentLabelIndex_ = index;
-        emit currentLabelIndexChanged();
-    }
-}
 
 void AnnotationConfig::setShowLabel(bool showLabel){
     if(showLabel_ != showLabel){
         showLabel_ = showLabel;
         emit showLabelChanged();
+    }
+}
+
+void AnnotationConfig::setFontPointSize(int fontPointSize){
+    if(fontPointSize_ != fontPointSize){
+        fontPointSize_ = fontPointSize;
+        emit fontPointSizeChanged();
     }
 }
 

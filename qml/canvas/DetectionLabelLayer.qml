@@ -5,8 +5,9 @@ Item {
     id: annotationLayer
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
     property var listModel: AnnotationConfig.currentAnnotationModel
-    property int currentLabelID: 0
-    // 当前选中的矩形索引
+    property int currentLabelID: AnnotationConfig.currentLabelIndex
+    property color currentLabelColor: AnnotationConfig.currentLabelColor
+    property string currentLabel: AnnotationConfig.currentLabel
     property int selectedIndex: -1
     property int zOrder: -1
     property int editType: CanvasEnums.EditType.None
@@ -19,8 +20,8 @@ Item {
         id: crosshair
         anchors.fill: parent
         visible: drawStatus === CanvasEnums.Drawing
-        color: "#ffff00"
-        lineWidth: 5
+        color: currentLabelColor
+        lineWidth: AnnotationConfig.currentLineWidth
         showCoordinates: true
         showCenterPoint: true
     }
@@ -50,6 +51,10 @@ Item {
             if(mouse.button === Qt.LeftButton) {
                 if(drawStatus === CanvasEnums.Drawing) {
                     // 绘制模式：开始绘制新矩形
+                    if(currentLabelID===-1){
+                        QmlGlobalHelper.message.error("请选择一个标签")
+                        return
+                    }
                     startX = mouse.x
                     startY = mouse.y
                     listModel.addItem(currentLabelID, mouse.x, mouse.y, 0, 0, zOrder++, false)
@@ -74,10 +79,10 @@ Item {
                 }
             }
         }
-
         onPositionChanged: function(mouse) {
             if (mouse.buttons & Qt.LeftButton) {
                 if (drawStatus === CanvasEnums.Drawing) {
+                    if(currentLabelID===-1) return
                     // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                     mousePosition = Qt.point(mouse.x, mouse.y)
                     // 绘制模式：更新矩形大小（保持不变）
@@ -95,7 +100,6 @@ Item {
                     realWidth = Math.max(5, realWidth)
                     realHeight = Math.max(5, realHeight)
                     listModel.updateItem(last, currentLabelID, realX, realY, realWidth, realHeight, zOrder, false)
-
                 } else if (selectedIndex >= 0) {
                     var dx = mouse.x - dragStartPoint.x
                     var dy = mouse.y - dragStartPoint.y
@@ -183,11 +187,11 @@ Item {
                         newWidth = Math.max(minWidth, newWidth)
                         newHeight = Math.max(minHeight, newHeight)
                     }
-                    listModel.updateItem(selectedIndex, currentLabelID ,newX, newY,newWidth,newHeight, zOrder, true)
+                    let annotationID = listModel.getLabelID(selectedIndex)
+                    listModel.updateItem(selectedIndex, annotationID ,newX, newY,newWidth,newHeight, zOrder, true)
                 }
             }
         }
-
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
                 if (drawStatus === CanvasEnums.Drawing) {
@@ -202,22 +206,23 @@ Item {
         model: listModel
         delegate: HusRectangle {
             id: obj
-            property color currentLabelColor: AnnotationConfig.currentLabelColor
-            property string currentLabel: AnnotationConfig.currentLabel
             property bool showHandlers: model.selected
+            property color annotationColor: AnnotationConfig.labelListModel.getLabelColor(model.labelID)
+            property string annotationLabel: AnnotationConfig.labelListModel.getLabel(model.labelID)
             x: model.boxX
             y: model.boxY
             width: model.boxWidth
             height: model.boxHeight
-            border.color: currentLabelColor
+            border.color: annotationColor
             border.width: AnnotationConfig.currentLineWidth
             border.style: model.selected ? Qt.DashDotLine : Qt.SolidLine
-            color: Qt.rgba(border.color.r, border.color.g, border.color.b, AnnotationConfig.currentFillOpacity)
+            color: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, AnnotationConfig.currentFillOpacity)
+
             Connections{
-                target:AnnotationConfig.labelListModel
+                target: AnnotationConfig.labelListModel
                 function onDataChanged(){
-                    currentLabelColor = AnnotationConfig.currentLabelColor
-                    currentLabel = AnnotationConfig.currentLabel
+                    annotationColor = AnnotationConfig.labelListModel.getLabelColor(model.labelID)
+                    annotationLabel = AnnotationConfig.labelListModel.getLabel(model.labelID)
                 }
             }
 
@@ -227,11 +232,13 @@ Item {
                 y: -text.height
                 width: text.width
                 height: text.height
-                color: obj.border.color
+                visible: AnnotationConfig.showLabel
+                color: annotationColor
                 HusText{
                     id: text
-                    color: QmlGlobalHelper.revertColor(obj.border.color)
-                    text: currentLabel
+                    font.pixelSize: AnnotationConfig.fontPointSize
+                    color: QmlGlobalHelper.revertColor(annotationColor)
+                    text: annotationLabel
                 }
             }
 
@@ -267,7 +274,7 @@ Item {
                     width: modelData.cornerHandlerWidth
                     height: modelData.cornerHandlerHeight
                     radius: modelData.cornerHandlerWidth/2
-                    color: currentLabelColor
+                    color: annotationColor
                     // 根据角点索引确定调整方向 0:左上 1:右上 2:右下 3:左下
                     property int resizeType: index
                     MouseArea {
@@ -331,7 +338,7 @@ Item {
                     width: modelData.edgeHandlerWidth
                     height: modelData.edgeHandlerHeight
                     radius: 2
-                    color: "red"
+                    color: annotationColor
                     property int resizeType: index // 0:左 1:上 2:右 3:下
 
                     MouseArea {

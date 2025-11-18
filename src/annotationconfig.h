@@ -18,15 +18,16 @@ class AnnotationConfig: public QObject
     Q_PROPERTY(FileListModel* fileListModel READ fileListModel CONSTANT)
     Q_PROPERTY(DetectionAnnotationModel* currentAnnotationModel READ currentAnnotationModel CONSTANT)
     Q_PROPERTY(int currentImageIndex READ currentImageIndex  WRITE setCurrentImageIndex NOTIFY currentImageIndexChanged FINAL)
-    Q_PROPERTY(int currentLabelIndex READ currentLabelIndex  WRITE setCurrentLabelIndex NOTIFY currentLabelIndexChanged FINAL)
-    Q_PROPERTY(QString currentLabelColor READ currentLabelColor  CONSTANT)
-    Q_PROPERTY(QString currentLabel READ currentLabel CONSTANT)
+    Q_PROPERTY(int currentLabelIndex READ currentLabelIndex  NOTIFY currentLabelIndexChanged FINAL)
+    Q_PROPERTY(QString currentLabelColor READ currentLabelColor NOTIFY currentLabelColorChanged)
+    Q_PROPERTY(QString currentLabel READ currentLabel NOTIFY currentLabelChanged)
     Q_PROPERTY(int currentLineWidth READ currentLineWidth  WRITE setCurrentLineWidth NOTIFY currentLineWidthChanged FINAL)
     Q_PROPERTY(double currentFillOpacity READ currentFillOpacity  WRITE setCurrentFillOpacity NOTIFY currentFillOpacityChanged FINAL)
     Q_PROPERTY(int currentCornerRadius READ currentCornerRadius  WRITE setCurrentCornerRadius NOTIFY currentCornerRadiusChanged FINAL)
     Q_PROPERTY(int currentEdgeWidth READ currentEdgeWidth  WRITE setCurrentEdgeWidth NOTIFY currentEdgeWidthChanged FINAL)
     Q_PROPERTY(int currentEdgeHeight READ currentEdgeHeight  WRITE setCurrentEdgeHeight NOTIFY currentEdgeHeightChanged FINAL)
     Q_PROPERTY(bool showLabel READ showLabel  WRITE setShowLabel NOTIFY showLabelChanged FINAL)
+    Q_PROPERTY(int fontPointSize READ fontPointSize  WRITE setFontPointSize NOTIFY fontPointSizeChanged FINAL)
 
 
 public:
@@ -65,6 +66,8 @@ public:
 
     bool showLabel();
 
+    int fontPointSize();
+
     void setImageDir(const QString& imageDir);
 
     void setResultDir(const QString& resultDir);
@@ -81,9 +84,10 @@ public:
 
     void setCurrentImageIndex(int index);
 
-    void setCurrentLabelIndex(int index);
-
     void setShowLabel(bool showLabel);
+
+    void setFontPointSize(int fontPointSize);
+
 
     Q_INVOKABLE void setImageAndResultDir(const QString& imageDir,const QString& resultDir);
 
@@ -119,7 +123,13 @@ signals:
 
     void currentLabelIndexChanged();
 
+    void currentLabelChanged();
+
+    void currentLabelColorChanged();
+
     void showLabelChanged();
+
+    void fontPointSizeChanged();
 
 
 private:
@@ -133,8 +143,8 @@ private:
     int currentEdgeWidth_ = 12;
     int currentEdgeHeight_ = 6;
     int currentLabelIndex_ = 0;
-
-    bool showLabel_ = false;
+    int fontPointSize_ = 16;
+    bool showLabel_ = true;
     bool isDirty_ = false;
     QString imageDir_;
     QString resultDir_;

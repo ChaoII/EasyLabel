@@ -130,12 +130,21 @@ void LabelListModel::setSelected(int index, bool selected)
 void LabelListModel::setSingleSelected(int index){
     if (index < 0 || index >= items_.size()) return;
     for(int i = 0; i < items_.size(); i++){
-        if(i==index){
+        if(i == index){
             setSelected(i, true);
         }else{
             setSelected(i, false);
         }
     }
+}
+
+int LabelListModel::getFirstSelected(){
+    for(int i = 0; i < items_.size(); i++){
+        if(items_[i].selected){
+            return i;
+        }
+    }
+    return -1;
 }
 
 

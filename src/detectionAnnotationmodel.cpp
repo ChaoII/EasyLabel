@@ -145,6 +145,13 @@ QRect DetectionAnnotationModel::getRect(int index){
     return {item.x, item.y, item.width, item.height};
 }
 
+int DetectionAnnotationModel::getLabelID(int index){
+    if (index < 0 || index >= items_.size())
+        return -1;
+    return items_[index].labelID;
+}
+
+
 void DetectionAnnotationModel::removeAllSelected(){
     for(int i=0; i< items_.size();i++){
         setSelected(i, false);
@@ -163,5 +170,7 @@ int DetectionAnnotationModel::getSelectedIndex(int x, int y){
     }
     return -1;
 }
+
+
 
 

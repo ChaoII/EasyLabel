@@ -56,6 +56,8 @@ public:
 
     Q_INVOKABLE QRect getRect(int index);
 
+    Q_INVOKABLE int getLabelID(int index);
+
     Q_INVOKABLE void removeAllSelected();
 
     Q_INVOKABLE void setSingleSelected(int index);

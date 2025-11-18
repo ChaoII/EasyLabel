@@ -42,6 +42,7 @@ public:
     Q_INVOKABLE void setLabelColor(int index, const QString &labelColor);
     Q_INVOKABLE void setSelected(int index, bool selected);
     Q_INVOKABLE void setSingleSelected(int index);
+    Q_INVOKABLE int getFirstSelected();
 
     Q_INVOKABLE QJsonArray toJsonArray() const;
     Q_INVOKABLE QString toJsonString(bool compact) const;
@@ -49,7 +50,6 @@ public:
     Q_INVOKABLE bool loadFromFile(const QString& filePath);
 signals:
     void listModelDataChanged();
-
 private:
     QVector<LabelItem> items_;
 };

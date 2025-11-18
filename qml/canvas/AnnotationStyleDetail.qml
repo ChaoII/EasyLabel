@@ -166,12 +166,40 @@ Item{
             HusSwitch {
                 id: switch2
                 radiusBg.all: 2
+                animationEnabled: false
                 handleDelegate: Rectangle {
                     radius: 2
                     color: switch2.colorHandle
                 }
+                checked: AnnotationConfig.showLabel
                 checkedText: "是"
                 uncheckedText: "否"
+                onCheckedChanged: {
+                    AnnotationConfig.showLabel = checked
+                }
+            }
+        }
+
+        RowLayout{
+            visible: switch2.checked
+            HusIconText{
+                iconSource: HusIcon.LineHeightOutlined
+            }
+            HusCopyableText{
+                text:"标签字体大小"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+            HusInputNumber{
+                Layout.preferredWidth: 80
+                useWheel: true
+                min: 12
+                max: 60
+                value: 16
+                onValueChanged: {
+                    AnnotationConfig.fontPointSize = value
+                }
             }
         }
 
