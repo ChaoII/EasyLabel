@@ -117,6 +117,16 @@ Item{
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height:40
+        Connections{
+            target:AnnotationConfig
+            function onCurrentImageIndexChanged(pre, next){
+                if(AnnotationConfig.saveAnnotationFile(pre)){
+                    QmlGlobalHelper.message.success("标注保存成功")
+                }
+                flickable.fitToWindow()
+            }
+        }
+
         HusCard{
             anchors.fill: parent
             bodyDelegate: null
@@ -246,21 +256,48 @@ Item{
                     }
                 }
 
-                HusButton{
+                HusDivider{
+                    height: 30
+                    orientation: Qt.Vertical
+                }
+                HusIconButton{
                     id:btnSelect
-                    text: "选择"
-                    onClicked:{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 16
+                    iconSource: HusIcon.IcoMoonPointUp
+                    radiusBg.all: 0
+                    onClicked: {
                         drawStatus = CanvasEnums.OptionStatus.Select
+                        flickable.interactive = true
                     }
                 }
 
-                HusButton{
+                HusIconButton{
                     id:btnDrawing
-                    text:"绘制"
-                    onClicked:{
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 16
+                    iconSource: HusIcon.IcoMoonPencil
+                    radiusBg.all: 0
+                    onClicked: {
                         drawStatus = CanvasEnums.OptionStatus.Drawing
+                        flickable.interactive = false
                     }
                 }
+
+                HusIconButton{
+                    id: btnsave
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconSource: HusIcon.SaveOutlined
+                    radiusBg.all: 0
+                    onClicked: {
+                        AnnotationConfig.saveAnnotationFile(AnnotationConfig.currentImageIndex)
+                    }
+                }
+
 
                 Item{
                     Layout.fillWidth: true

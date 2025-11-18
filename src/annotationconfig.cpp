@@ -15,7 +15,7 @@ AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
     labelListModel_(new LabelListModel(this)),
     fileListModel_(new FileListModel(this)){
-    connect(labelListModel_, &LabelListModel::listModelDataChanged, [this]() {
+    connect(labelListModel_, &LabelListModel::listModelDataChanged, this, [this]() {
         saveLabelFile();
         emit currentLabelIndexChanged();
         emit currentLabelChanged();
@@ -81,7 +81,8 @@ int AnnotationConfig::currentImageIndex(){
 }
 
 int AnnotationConfig::currentLabelIndex(){
-    return labelListModel_->getFirstSelected();
+    currentLabelIndex_ = labelListModel_->getFirstSelected();
+    return currentLabelIndex_;
 }
 
 QString AnnotationConfig::currentLabelColor(){
@@ -98,6 +99,10 @@ bool AnnotationConfig::showLabel(){
 
 int AnnotationConfig::fontPointSize(){
     return fontPointSize_;
+}
+
+int AnnotationConfig::centerPointerSize(){
+    return centerPointerSize_;
 }
 
 void AnnotationConfig::setCurrentLineWidth(int lineWidth){
@@ -139,11 +144,11 @@ void AnnotationConfig::setCurrentEdgeHeight(int height){
 
 void AnnotationConfig::setCurrentImageIndex(int index){
     if(currentImageIndex_ != index){
+        int prewIndex = currentImageIndex_;
         currentImageIndex_ = index;
-        emit currentImageIndexChanged();
+        emit currentImageIndexChanged(prewIndex, index);
     }
 }
-
 
 void AnnotationConfig::setShowLabel(bool showLabel){
     if(showLabel_ != showLabel){
@@ -156,6 +161,13 @@ void AnnotationConfig::setFontPointSize(int fontPointSize){
     if(fontPointSize_ != fontPointSize){
         fontPointSize_ = fontPointSize;
         emit fontPointSizeChanged();
+    }
+}
+
+void AnnotationConfig::setCenterPointerSize(int pointerSize){
+    if(centerPointerSize_ != pointerSize){
+        centerPointerSize_ = pointerSize;
+        emit centerPointerSizeChanged();
     }
 }
 
@@ -203,7 +215,9 @@ void AnnotationConfig::loadAnnotationFiles(){
         }
         // 如果存在那么加载annotation
         DetectionAnnotationModel * annotaiton = new DetectionAnnotationModel();
-        annotaiton->addItem(0,10,10,200,200,-1,false);
+        if(annotaiton->loadFromFile(AnnotationFilePath)){
+            fileListModel_->setAnnotated(i, true);
+        }
         annotationModelList_.append(annotaiton);
     }
 }
@@ -246,9 +260,17 @@ bool AnnotationConfig::saveLabelFile(){
     return labelListModel_->saveToFile(labelFilePath);
 }
 
+bool AnnotationConfig::saveAnnotationFile(int imageIndex){
+    if(imageIndex<0 || imageIndex > annotationModelList_.size()) return false;
+    QString annotationBaseFileName = fileListModel_->getResultFilePath(imageIndex);
+    QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
+    if(!annotationModelList_[imageIndex]->saveToFile(AnnotationFilePath)) return false;
+    fileListModel_->setAnnotated(imageIndex, true);
+    return true;
+}
 
 DetectionAnnotationModel* AnnotationConfig::getAnnotationModel(int index){
-    if(index<0 || index>annotationModelList_.size()) return nullptr;
+    if(index<0 || index > annotationModelList_.size()) return nullptr;
     return annotationModelList_[index];
 }
 

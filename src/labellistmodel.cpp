@@ -120,7 +120,6 @@ void LabelListModel::setSelected(int index, bool selected)
 {
     if (index < 0 || index >= items_.size() || items_.at(index).selected == selected)
         return;
-    qDebug() << index <<": " << selected;
     items_[index].selected = selected;
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex, {SelectedRole});

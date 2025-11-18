@@ -4,7 +4,7 @@ import EasyLabel
 Item {
     id: annotationLayer
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
-    property var listModel: AnnotationConfig.currentAnnotationModel
+    property var listModel: AnnotationConfig.getAnnotationModel(AnnotationConfig.currentImageIndex)
     property int currentLabelID: AnnotationConfig.currentLabelIndex
     property color currentLabelColor: AnnotationConfig.currentLabelColor
     property string currentLabel: AnnotationConfig.currentLabel
@@ -21,6 +21,7 @@ Item {
         anchors.fill: parent
         visible: drawStatus === CanvasEnums.Drawing
         color: currentLabelColor
+        centerPointerSize: AnnotationConfig.centerPointerSize
         lineWidth: AnnotationConfig.currentLineWidth
         showCoordinates: true
         showCenterPoint: true

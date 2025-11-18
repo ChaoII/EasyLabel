@@ -183,7 +183,7 @@ Item{
         RowLayout{
             visible: switch2.checked
             HusIconText{
-                iconSource: HusIcon.LineHeightOutlined
+                iconSource: HusIcon.FontSizeOutlined
             }
             HusCopyableText{
                 text:"标签字体大小"
@@ -202,6 +202,30 @@ Item{
                 }
             }
         }
+
+        RowLayout{
+            HusIconText{
+                iconSource: HusIcon.LineHeightOutlined
+            }
+            HusCopyableText{
+                text:"中心指示器大小"
+            }
+            Item{
+                Layout.fillWidth: true
+            }
+            HusInputNumber{
+                Layout.preferredWidth: 80
+                useWheel: true
+                min: 1
+                max: 20
+                value: 4
+                onValueChanged: {
+                    AnnotationConfig.centerPointerSize = value
+                }
+            }
+        }
+
+
 
         Item{
             Layout.fillHeight: true

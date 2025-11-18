@@ -81,7 +81,7 @@ Item{
                         type: HusButton.Type_Link
                         iconSource: HusIcon.DeleteOutlined
                         onClicked: {
-                            AnnotationConfig.currentAnnotationModel.setSingleSelected(index)
+                            AnnotationConfig.currentAnnotationModel.removeItem(index)
                         }
                     }
                 }

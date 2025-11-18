@@ -1,5 +1,10 @@
 #include "detectionAnnotationmodel.h"
 
+#include <QFile>
+#include <QIODevice>
+#include <QJsonArray>
+#include <QJsonObject>
+
 DetectionAnnotationModel::DetectionAnnotationModel(QObject *parent)
     : QAbstractListModel{parent}{}
 
@@ -171,6 +176,75 @@ int DetectionAnnotationModel::getSelectedIndex(int x, int y){
     return -1;
 }
 
+QJsonArray DetectionAnnotationModel::toJsonArray() const
+{
+    QJsonArray jsonArray;
+    for (const DetectionAnnotationItem& item : items_) {
+        QJsonObject jsonObj;
+        jsonObj["labelID"] = item.labelID;
+        jsonObj["x"] = item.x;
+        jsonObj["y"] = item.y;
+        jsonObj["width"] = item.width;
+        jsonObj["height"] = item.height;
+        jsonObj["zOrder"] = item.zOrder;
+        jsonArray.append(jsonObj);
+    }
+    return jsonArray;
+}
 
+bool DetectionAnnotationModel::saveToFile(const QString& annotationFilePath) const
+{
+    QFile file(annotationFilePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning() << "无法打开文件进行写入:" << annotationFilePath;
+        return false;
+    }
+    QJsonArray jsonArray = toJsonArray();
+    QJsonObject obj;
+    obj["type"] = "detection";
+    obj["boxes"] = jsonArray;
+    QJsonDocument doc(obj);
+    qint64 bytesWritten = file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
+    return bytesWritten > 0;
+}
+
+bool DetectionAnnotationModel::loadFromFile(const QString& annotationFilePath)
+{
+    QFile file(annotationFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "无法打开文件进行读取:" << annotationFilePath;
+        return false;
+    }
+    QByteArray jsonData = file.readAll();
+    file.close();
+    QJsonDocument doc = QJsonDocument::fromJson(jsonData);
+    if (doc.isNull() || !doc.isObject()) {
+        qWarning() << "无效的JSON文件或格式错误: "<<annotationFilePath;
+        return false;
+    }
+    QJsonObject obj = doc.object();
+    QString type = obj["type"].toString();
+    QJsonArray jsonArray = doc["boxes"].toArray();
+    // 清空现有数据并加载新数据
+    beginResetModel();
+    items_.clear();
+    for (const QJsonValue& value : std::as_const(jsonArray)) {
+        if (value.isObject()) {
+            QJsonObject obj = value.toObject();
+            DetectionAnnotationItem item;
+            item.labelID = obj["labelID"].toInt();
+            item.x = obj["x"].toInt();
+            item.y = obj["y"].toInt();
+            item.width = obj["width"].toInt();
+            item.height = obj["height"].toInt();
+            item.zOrder = obj["zOrder"].toInt();
+            item.selected = false;
+            items_.append(item);
+        }
+    }
+    endResetModel();
+    return !items_.isEmpty();
+}
 
 

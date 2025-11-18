@@ -44,11 +44,10 @@ public:
     Q_INVOKABLE void setAnnotated(int index, bool annotated);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE QString getFullPath(int index) const;
-
 signals:
     void folderPathChanged();
 
 private:
     QString folderPath_;
-    QVector<FileInfoItem> fileInfoList_;
+    QVector<FileInfoItem> items_;
 };

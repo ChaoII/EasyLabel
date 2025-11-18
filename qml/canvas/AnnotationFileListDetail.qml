@@ -19,7 +19,7 @@ Item{
             required property string fileName
             required property bool isDir
             required property bool isAnnotation
-            property bool isCurrent: ListView.isCurrentItem
+            property bool isCurrent: AnnotationConfig.currentImageIndex === index
             property bool isHovered: itemMouseArea.containsMouse
             color: {
                 if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
@@ -32,7 +32,7 @@ Item{
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    AnnotationConfig.currentIndex = index
+                    AnnotationConfig.currentImageIndex = index
                 }
             }
 

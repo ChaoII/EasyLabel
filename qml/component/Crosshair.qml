@@ -5,6 +5,7 @@ Item {
 
     property color color: "#00ff00"
     property real lineWidth: 1
+    property int centerPointerSize: 12
     property bool showCoordinates: true
     property bool showCenterPoint: true
     property point mousePosition: Qt.point(0, 0)
@@ -30,11 +31,11 @@ Item {
     // 中心点指示器
     Rectangle {
         visible: crosshairRoot.showCenterPoint
-        x: crosshairRoot.mousePosition.x - 6
-        y: crosshairRoot.mousePosition.y - 6
-        width: 12
-        height: 12
-        radius: 6
+        x: crosshairRoot.mousePosition.x - centerPointerSize/2
+        y: crosshairRoot.mousePosition.y - centerPointerSize/2
+        width: centerPointerSize
+        height: centerPointerSize
+        radius: centerPointerSize/2
         color: crosshairRoot.color
         border.color: "white"
         border.width: 2
