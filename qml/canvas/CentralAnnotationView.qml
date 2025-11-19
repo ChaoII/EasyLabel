@@ -8,10 +8,11 @@ Item{
     id:splitLeft
     property int drawStatus: CanvasEnums.OptionStatus.Select
     property int currentImageIndex: AnnotationConfig.currentImageIndex
-    readonly property int labelNum: drawerLayer.listModel.rowCount()
+    readonly property int labelNum: drawerLayer.listModel? drawerLayer.listModel.rowCount(): 0
 
     Flickable {
         id: flickable
+        visible: AnnotationConfig.fileListModel.rowCount() > 0
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -54,6 +55,9 @@ Item{
                 id: image
                 source: "file:///" + AnnotationConfig.fileListModel.getFullPath(currentImageIndex)
                 anchors.fill: parent
+            }
+            Component.onCompleted: {
+                console.log("123", currentImageIndex)
             }
             DetectionLabelLayer{
                 id: drawerLayer

@@ -5,7 +5,7 @@ import EasyLabel
 
 Item{
     id: splitRight
-    property int annotationType: GlobalEnum.AnnotationType.Detection
+    property int annotationType: AnnotationConfig.annotationType
 
     HusCard{
         id: card
@@ -14,7 +14,7 @@ Item{
         titleDelegate: Item{
             width: parent.width
             height: 40
-            property color colorBase: GlobalEnum.annotationTagColorMap[annotationType]
+            property color colorBase: AnnotationConfig.getAnnotationTypeColor(annotationType)
             RowLayout{
                 anchors.fill: parent
                 anchors.margins: 10
@@ -23,14 +23,14 @@ Item{
                     font.bold: true
                     colorIcon: QmlGlobalHelper.getColor(colorBase, 5)
                     iconSize: 16
-                    iconSource: HusIcon.BorderOutlined
+                    iconSource: GlobalEnum.annotationIconTextMap[annotationType]
                 }
                 HusText{
                     Layout.fillWidth: true
                     font.bold: true
                     font.pixelSize: 16
                     color: QmlGlobalHelper.getColor(colorBase, 5)
-                    text: GlobalEnum.annotationTypeStringMap[annotationType]
+                    text: AnnotationConfig.getAnnotationTypeName(annotationType)
                 }
             }
         }

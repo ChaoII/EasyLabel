@@ -111,7 +111,7 @@ Item{
             resultFolder: dirSelectResultFolder.text,
             outOfTarget: switchOutOfTarget.checked,
             showOrder: switchShowOrder.checked,
-            annotationType: GlobalEnum.AnnotationType.Detection
+            annotationType: AnnotationConfig.Detection
         }
     }
 }

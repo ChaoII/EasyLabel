@@ -42,6 +42,14 @@ QString AnnotationConfig::resultDir(){
     return resultDir_;
 }
 
+QString AnnotationConfig::projectName(){
+    return projectName_;
+}
+
+AnnotationConfig::AnnotationType AnnotationConfig::annotationType(){
+    return type_;
+}
+
 LabelListModel* AnnotationConfig::labelListModel(){
     return labelListModel_;
 }
@@ -50,7 +58,7 @@ FileListModel* AnnotationConfig::fileListModel(){
     return fileListModel_;
 }
 
-DetectionAnnotationModel* AnnotationConfig::currentAnnotationModel(){
+AnnotationModelBase* AnnotationConfig::currentAnnotationModel(){
     if(currentImageIndex_ < 0 || currentImageIndex_ >= annotationModelList_.size())
         return new DetectionAnnotationModel();
     return annotationModelList_[currentImageIndex_];
@@ -174,8 +182,12 @@ void AnnotationConfig::setCenterPointerSize(int pointerSize){
 
 void AnnotationConfig::setImageDir(const QString& imageDir){
     if(imageDir != imageDir_){
+        setCurrentImageIndex(-1);
         imageDir_ = imageDir;
         fileListModel_->setFolderPath(imageDir_);
+        if(fileListModel_->rowCount()>0)  {
+            setCurrentImageIndex(0);
+        }
         emit imageDirChanged();
     }
 }
@@ -189,10 +201,56 @@ void AnnotationConfig::setResultDir(const QString& resultDir){
     }
 }
 
-void AnnotationConfig::setImageAndResultDir(const QString& imageDir, const QString& resultDir){
-    setResultDir(resultDir);
-    setImageDir(imageDir);
+void AnnotationConfig::setProjectName(const QString& projectName){
+    if(projectName_ != projectName){
+        projectName_ = projectName;
+        emit projectNameChanged();
+    }
 }
+
+void AnnotationConfig::setAnnotationType(const AnnotationType& type){
+    if(type != type_){
+        type_ = type;
+        emit annotationTypeChanged();
+    }
+}
+
+void AnnotationConfig::resetAnnotationConfig(){
+
+}
+
+
+QString AnnotationConfig::getAnnotationTypeColor(const AnnotationType& annotationType){
+    static QVector<QString> palletes ={
+        "#F5222D", //red
+        "#FA541C", //volcano
+        "#FA8C16", //orange
+        "#FAAD14", //gold
+        "#FADB14", //yellow
+        "#A0D911", //lime
+        "#52C41A", //green
+        "#13C2C2", //cyan
+        "#1677FF", //blue
+        "#2F54EB", //geekblue
+        "#722ED1", //purple
+        "#EB2F96", //magenta
+        "#666666", //Grey
+    };
+    int index = static_cast<int>(annotationType);
+    if(index < 0){
+        return "black";
+    }
+    return palletes[index % palletes.size()];
+}
+
+
+QString AnnotationConfig::getAnnotationTypeName(const AnnotationType& annotationType){
+    const QMetaObject* metaObject = &AnnotationConfig::staticMetaObject;
+    int enumIndex = metaObject->indexOfEnumerator("AnnotationType");
+    QMetaEnum metaEnum = metaObject->enumerator(enumIndex);
+    return QString(metaEnum.valueToKey(annotationType));
+}
+
 
 void AnnotationConfig::loadAnnotationFiles(){
     QDir dir(resultDir_);
@@ -214,7 +272,7 @@ void AnnotationConfig::loadAnnotationFiles(){
             continue;
         }
         // 如果存在那么加载annotation
-        DetectionAnnotationModel * annotaiton = new DetectionAnnotationModel();
+        AnnotationModelBase * annotaiton = new DetectionAnnotationModel();
         if(annotaiton->loadFromFile(AnnotationFilePath)){
             fileListModel_->setAnnotated(i, true);
         }
@@ -261,7 +319,7 @@ bool AnnotationConfig::saveLabelFile(){
 }
 
 bool AnnotationConfig::saveAnnotationFile(int imageIndex){
-    if(imageIndex<0 || imageIndex > annotationModelList_.size()) return false;
+    if(imageIndex < 0 || imageIndex >= annotationModelList_.size()) return false;
     QString annotationBaseFileName = fileListModel_->getResultFilePath(imageIndex);
     QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
     if(!annotationModelList_[imageIndex]->saveToFile(AnnotationFilePath)) return false;
@@ -269,12 +327,12 @@ bool AnnotationConfig::saveAnnotationFile(int imageIndex){
     return true;
 }
 
-DetectionAnnotationModel* AnnotationConfig::getAnnotationModel(int index){
-    if(index<0 || index > annotationModelList_.size()) return nullptr;
+AnnotationModelBase* AnnotationConfig::getAnnotationModel(int index){
+    if(index<0 || index >= annotationModelList_.size()) return nullptr;
     return annotationModelList_[index];
 }
 
-void AnnotationConfig::setAnnotationModel(int index, DetectionAnnotationModel* annotationModel){
+void AnnotationConfig::setAnnotationModel(int index, AnnotationModelBase* annotationModel){
     if(index<0 || index>annotationModelList_.size()) return;
     annotationModelList_[index] = annotationModel;
 }

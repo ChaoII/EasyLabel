@@ -1,5 +1,7 @@
 pragma Singleton
 import QtQuick
+import EasyLabel
+import HuskarUI.Basic
 
 QtObject {
 
@@ -8,23 +10,11 @@ QtObject {
         Edit = 1
     }
 
-    enum AnnotationType {
-        Detection = 0,
-        RotatedBox = 1,
-        Other = 2
-    }
 
-
-    property var annotationTagColorMap:({
-        [GlobalEnum.AnnotationType.Detection]: "red",
-        [GlobalEnum.AnnotationType.RotatedBox]: "blue",
-        [GlobalEnum.AnnotationType.Other]: "green"
-    })
-
-    property var annotationTypeStringMap: ({
-        [GlobalEnum.AnnotationType.Detection]: "Detection",
-        [GlobalEnum.AnnotationType.RotatedBox]: "RotatedBox",
-        [GlobalEnum.AnnotationType.Other]: "Other"
+    property var annotationIconTextMap:({
+        [AnnotationConfig.Detection]: HusIcon.BorderOutlined,
+        [AnnotationConfig.RotatedBox]: HusIcon.AppleOutlined,
+        [AnnotationConfig.Other]: HusIcon.AliwangwangOutlined
     })
 
 }

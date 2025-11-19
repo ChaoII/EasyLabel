@@ -2,13 +2,11 @@
 
 #include <QRect>
 #include <QColor>
-#include <QAbstractListModel>
+#include "annotationmodelbase.h"
 
-class DetectionAnnotationModel : public QAbstractListModel
+class DetectionAnnotationModel : public AnnotationModelBase
 {
     Q_OBJECT
-    // Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
-    // Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
 
 public:
 
@@ -63,7 +61,7 @@ public:
 
     Q_INVOKABLE QJsonArray toJsonArray() const;
 
-    Q_INVOKABLE bool saveToFile(const QString& AnnotationFilePath) const;
+    Q_INVOKABLE bool saveToFile(const QString& AnnotationFilePath) const override;
 
     Q_INVOKABLE bool loadFromFile(const QString& AnnotationFilePath);
 

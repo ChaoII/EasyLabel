@@ -122,7 +122,7 @@ Item {
         let _limit = pagination.pageSize
         let _offset = pagination.pageSize* pagination.currentPageIndex
         let result = projectDto.getProjectList(searchProjectName, searchStartTime, searchEndTime, _limit,  _offset, "createTime")
-        listModel=result
+        listModel = result
     }
 
     function removeProject(index){
@@ -143,6 +143,8 @@ Item {
             required property int index
             required property var modelData
             property int fontSize: 12
+            property color annotationTypeBaseColor: AnnotationConfig.getAnnotationTypeColor(modelData.annotationType)
+            property string annotationTypeName: AnnotationConfig.getAnnotationTypeName(modelData.annotationType)
             width: 310
             height: 200
             titleDelegate: null
@@ -151,10 +153,9 @@ Item {
                 onClicked: {
                     AnnotationConfig.imageDir = modelData.imageFolder
                     AnnotationConfig.resultDir = modelData.resultFolder
-                    QmlGlobalHelper.mainStackView.push(
-                                "../canvas/MainCanvas.qml",{
-                                    projectName: modelData.projectName,
-                                })
+                    AnnotationConfig.projectName = modelData.projectName
+                    AnnotationConfig.annotationType = modelData.annotationType
+                    QmlGlobalHelper.mainStackView.push("../canvas/MainCanvas.qml")
                 }
             }
 
@@ -214,7 +215,8 @@ Item {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     iconSize: 40
-                    iconSource: HusIcon.BorderOutlined
+                    iconSource: GlobalEnum.annotationIconTextMap[modelData.annotationType]
+                    colorIcon: annotationTypeBaseColor
                 }
                 ColumnLayout{
                     anchors.left: avator.right
@@ -224,8 +226,8 @@ Item {
                     anchors.leftMargin: 10
                     HusTag{
                         id: textType
-                        text: GlobalEnum.annotationTypeStringMap[modelData.annotationType]
-                        presetColor: GlobalEnum.annotationTagColorMap[modelData.annotationType]
+                        text: annotationTypeName
+                        presetColor: annotationTypeBaseColor
                     }
                     RowLayout{
                         height: 20

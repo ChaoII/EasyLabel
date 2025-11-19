@@ -6,7 +6,7 @@
 #include <QJsonObject>
 
 DetectionAnnotationModel::DetectionAnnotationModel(QObject *parent)
-    : QAbstractListModel{parent}{}
+    : AnnotationModelBase{parent}{}
 
 int DetectionAnnotationModel::rowCount(const QModelIndex &parent) const {
     return parent.isValid() ? 0 : items_.size();

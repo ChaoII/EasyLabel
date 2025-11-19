@@ -30,7 +30,7 @@ PopupStandardWindow{
         Item{
             id: content
             anchors.fill: parent
-            property int annotationType: GlobalEnum.AnnotationType.Detection
+            property int annotationType: AnnotationConfig.Detection
             property Item loaderItem: detailLoader.item
             onAnnotationTypeChanged:{
                 gotoMenuByAnnotationType()
@@ -42,14 +42,14 @@ PopupStandardWindow{
                 defaultMenuWidth: 200
                 height: parent.height
                 initModel: [
-                    {key:"Detection", label: qsTr('目标检测'), value: GlobalEnum.AnnotationType.Detection },
-                    {key:"RotatedBox", label: qsTr('旋转框检测'), value: GlobalEnum.AnnotationType.RotatedBox },
-                    {key:"Other", label: qsTr('其它'), value: GlobalEnum.AnnotationType.Other }
+                    {key:"Detection", label: qsTr('目标检测'), value: AnnotationConfig.Detection },
+                    {key:"RotatedBox", label: qsTr('旋转框检测'), value: AnnotationConfig.RotatedBox },
+                    {key:"Other", label: qsTr('其它'), value: AnnotationConfig.Other }
                 ]
                 onClickMenu: function(deep, key, keyPath, data) {
-                    if(data.value===GlobalEnum.AnnotationType.Detection){
+                    if(data.value===AnnotationConfig.Detection){
                         detailLoader.source = "DetectionDetailComponent.qml"
-                    }else if(data.value===GlobalEnum.AnnotationType.RotatedBox){
+                    }else if(data.value===AnnotationConfig.RotatedBox){
                         detailLoader.source = "RotatedBoxDetailComponent.qml"
                     }else{
                         detailLoader.source = "OtherDetailComponent.qml"
@@ -69,11 +69,11 @@ PopupStandardWindow{
             }
             function selsetComponentByAnnotation(annotationType){
                 switch (annotationType){
-                case GlobalEnum.AnnotationType.Detection:
+                case AnnotationConfig.Detection:
                     return "DetectionDetailComponent.qml"
-                case GlobalEnum.AnnotationType.RotatedBox:
+                case AnnotationConfig.RotatedBox:
                     return "RotatedBoxDetailComponent.qml"
-                case GlobalEnum.AnnotationType.Other:
+                case AnnotationConfig.Other:
                     return "OtherDetailComponent.qml"
                 default:
                     return "DetectionDetailComponent.qml"
@@ -81,10 +81,10 @@ PopupStandardWindow{
             }
 
             function gotoMenuByAnnotationType(){
-                if(annotationType===GlobalEnum.AnnotationType.Detection){
+                if(annotationType===AnnotationConfig.Detection){
                     _menu.gotoMenu("Detection")
                 }
-                else if(annotationType===GlobalEnum.AnnotationType.RotatedBox){
+                else if(annotationType===AnnotationConfig.RotatedBox){
                     _menu.gotoMenu("RotatedBox")
                 }else{
                     _menu.gotoMenu("Other")
