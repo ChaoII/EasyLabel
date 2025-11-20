@@ -247,4 +247,13 @@ bool DetectionAnnotationModel::loadFromFile(const QString& annotationFilePath)
     return !items_.isEmpty();
 }
 
+void DetectionAnnotationModel::setLabelID(int index, int labelID){
+    if (index < 0 || index >= items_.size())
+        return;
+    items_[index].labelID = labelID;
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex, {LabelIDRole});
+};
+
+
 

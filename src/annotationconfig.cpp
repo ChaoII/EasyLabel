@@ -1,4 +1,5 @@
 #include "annotationconfig.h"
+#include "detectionAnnotationmodel.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -10,7 +11,6 @@
 #include <QModelIndex>
 
 
-AnnotationConfig* AnnotationConfig::instance_ = nullptr;
 
 AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
     labelListModel_(new LabelListModel(this)),
@@ -21,17 +21,6 @@ AnnotationConfig::AnnotationConfig(QObject* parent):QObject(parent),
         emit currentLabelChanged();
         emit currentLabelColorChanged();
     });
-}
-
-AnnotationConfig* AnnotationConfig::instance(){
-    if(!instance_){
-        instance_ = new AnnotationConfig();
-    }
-    return instance_;
-}
-
-AnnotationConfig *AnnotationConfig::create(QQmlEngine *, QJSEngine *){
-    return instance();
 }
 
 QString AnnotationConfig::imageDir(){
@@ -47,8 +36,17 @@ QString AnnotationConfig::projectName(){
 }
 
 AnnotationConfig::AnnotationType AnnotationConfig::annotationType(){
-    return type_;
+    return annotationType_;
 }
+
+int AnnotationConfig::totalImageNum(){
+    return totalImageNum_;
+}
+
+int AnnotationConfig::annotatedImageNum(){
+    return annotatedImageNum_;
+}
+
 
 LabelListModel* AnnotationConfig::labelListModel(){
     return labelListModel_;
@@ -185,7 +183,8 @@ void AnnotationConfig::setImageDir(const QString& imageDir){
         setCurrentImageIndex(-1);
         imageDir_ = imageDir;
         fileListModel_->setFolderPath(imageDir_);
-        if(fileListModel_->rowCount()>0)  {
+        setTotalImageNum(fileListModel_->rowCount());
+        if(fileListModel_->rowCount() > 0)  {
             setCurrentImageIndex(0);
         }
         emit imageDirChanged();
@@ -208,19 +207,28 @@ void AnnotationConfig::setProjectName(const QString& projectName){
     }
 }
 
-void AnnotationConfig::setAnnotationType(const AnnotationType& type){
-    if(type != type_){
-        type_ = type;
+void AnnotationConfig::setAnnotationType(const AnnotationType& annotationType){
+    if(annotationType_ != annotationType){
+        annotationType_ = annotationType;
         emit annotationTypeChanged();
     }
 }
 
-void AnnotationConfig::resetAnnotationConfig(){
-
+void AnnotationConfig::setTotalImageNum(int totalNum){
+    if(totalImageNum_ != totalNum){
+        totalImageNum_ = totalNum;
+        emit totalImageNumChanged();
+    }
+}
+void AnnotationConfig::setAnnotatedImageNum(int annotatedNum){
+    if(annotatedImageNum_ != annotatedNum){
+        annotatedImageNum_ = annotatedNum;
+        emit annotatedImageNumChanged();
+    }
 }
 
 
-QString AnnotationConfig::getAnnotationTypeColor(const AnnotationType& annotationType){
+QString AnnotationConfig::getAnnotationTypeColor(){
     static QVector<QString> palletes ={
         "#F5222D", //red
         "#FA541C", //volcano
@@ -236,7 +244,8 @@ QString AnnotationConfig::getAnnotationTypeColor(const AnnotationType& annotatio
         "#EB2F96", //magenta
         "#666666", //Grey
     };
-    int index = static_cast<int>(annotationType);
+    int index = static_cast<int>(annotationType_);
+    qDebug() <<"index: "<< index;
     if(index < 0){
         return "black";
     }
@@ -244,11 +253,11 @@ QString AnnotationConfig::getAnnotationTypeColor(const AnnotationType& annotatio
 }
 
 
-QString AnnotationConfig::getAnnotationTypeName(const AnnotationType& annotationType){
+QString AnnotationConfig::getAnnotationTypeName(){
     const QMetaObject* metaObject = &AnnotationConfig::staticMetaObject;
     int enumIndex = metaObject->indexOfEnumerator("AnnotationType");
     QMetaEnum metaEnum = metaObject->enumerator(enumIndex);
-    return QString(metaEnum.valueToKey(annotationType));
+    return QString(metaEnum.valueToKey(annotationType_));
 }
 
 
@@ -258,6 +267,7 @@ void AnnotationConfig::loadAnnotationFiles(){
         qDebug() << "目录不存在："<< dir;
         return;
     }
+    annotationModelList_.clear();
     for(int i=0; i < fileListModel_->rowCount(); i++){
         QString annotationBaseFileName = fileListModel_->getResultFilePath(i);
         QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
@@ -278,6 +288,7 @@ void AnnotationConfig::loadAnnotationFiles(){
         }
         annotationModelList_.append(annotaiton);
     }
+    setAnnotatedImageNum(fileListModel_->getAnnotatedNum());
 }
 
 
@@ -324,6 +335,7 @@ bool AnnotationConfig::saveAnnotationFile(int imageIndex){
     QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
     if(!annotationModelList_[imageIndex]->saveToFile(AnnotationFilePath)) return false;
     fileListModel_->setAnnotated(imageIndex, true);
+    setAnnotatedImageNum(fileListModel_->getAnnotatedNum());
     return true;
 }
 

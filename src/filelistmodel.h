@@ -44,6 +44,9 @@ public:
     Q_INVOKABLE void setAnnotated(int index, bool annotated);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE QString getFullPath(int index) const;
+    Q_INVOKABLE int getAnnotatedNum() const ;
+
+
 signals:
     void folderPathChanged();
 

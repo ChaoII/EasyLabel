@@ -11,6 +11,8 @@ public:
 
     Q_INVOKABLE virtual bool loadFromFile(const QString& AnnotationFilePath) = 0;
 
+    Q_INVOKABLE virtual void setLabelID(int index, int labelID) = 0;
+
 
 signals:
 };

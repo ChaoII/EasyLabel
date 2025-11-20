@@ -5,7 +5,10 @@ import EasyLabel
 
 Item{
     id: splitRight
-    property int annotationType: AnnotationConfig.annotationType
+    required property AnnotationConfig annotationConfig
+    readonly property color annotationTypeColor: QmlGlobalHelper.getColor(annotationConfig.getAnnotationTypeColor(),5)
+    readonly property string annotationTypeName: annotationConfig.getAnnotationTypeName()
+    readonly property int annotationTypeIconSource: GlobalEnum.annotationIconTextMap[annotationConfig.annotationType]
 
     HusCard{
         id: card
@@ -14,23 +17,22 @@ Item{
         titleDelegate: Item{
             width: parent.width
             height: 40
-            property color colorBase: AnnotationConfig.getAnnotationTypeColor(annotationType)
             RowLayout{
                 anchors.fill: parent
                 anchors.margins: 10
                 HusIconText{
                     id: logo
                     font.bold: true
-                    colorIcon: QmlGlobalHelper.getColor(colorBase, 5)
+                    colorIcon: annotationTypeColor
                     iconSize: 16
-                    iconSource: GlobalEnum.annotationIconTextMap[annotationType]
+                    iconSource: annotationTypeIconSource
                 }
                 HusText{
                     Layout.fillWidth: true
                     font.bold: true
                     font.pixelSize: 16
-                    color: QmlGlobalHelper.getColor(colorBase, 5)
-                    text: AnnotationConfig.getAnnotationTypeName(annotationType)
+                    color: annotationTypeColor
+                    text: annotationTypeName
                 }
             }
         }
@@ -60,8 +62,7 @@ Item{
                 }
             }
             Component.onCompleted: {
-                console.log( annotaionDetail.get(2).title)
-                console.log( annotaionDetail.height)
+
             }
         }
     }
@@ -70,19 +71,21 @@ Item{
     Component{
         id:aaa
         AnnotationStyleDetail{
+            annotationConfig:splitRight.annotationConfig
         }
     }
 
     Component{
         id:bbb
         AnnotationLabelDetail{
-            // dataModel: AnnotationConfig.loadLabelFile()
+            annotationConfig:splitRight.annotationConfig
         }
     }
 
     Component{
         id:ccc
         AnnotationListDetail{
+            annotationConfig:splitRight.annotationConfig
 
         }
     }
@@ -90,6 +93,7 @@ Item{
     Component{
         id:ddd
         AnnotationFileListDetail{
+            annotationConfig:splitRight.annotationConfig
 
         }
     }

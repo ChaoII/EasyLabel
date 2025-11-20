@@ -7,7 +7,7 @@ import EasyLabel
 
 Item {
     id:root
-    property alias projectName: textProjectName.text
+    required property AnnotationConfig annotationConfig
     Item{
         id: header
         height:30
@@ -33,12 +33,12 @@ Item {
             }
         }
         HusText{
+            id:textProjectName
             anchors.left: btnBack.right
             anchors.leftMargin: 10
             anchors.verticalCenter: btnBack.verticalCenter
-            id:textProjectName
+            text:annotationConfig.projectName
         }
-
     }
 
     SplitView{
@@ -56,6 +56,7 @@ Item {
             id: splitLeft
             SplitView.fillWidth: true
             SplitView.fillHeight: true
+            annotationConfig: root.annotationConfig
         }
 
         AnnotationDetailPanel{
@@ -63,6 +64,7 @@ Item {
             SplitView.fillHeight: true
             SplitView.preferredWidth: 280
             SplitView.maximumWidth: 400
+            annotationConfig: root.annotationConfig
             Component.onCompleted: {
 
             }

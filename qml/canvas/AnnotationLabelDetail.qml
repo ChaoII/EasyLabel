@@ -5,6 +5,8 @@ import QtQuick.Dialogs
 import EasyLabel
 
 Item{
+    required property AnnotationConfig annotationConfig
+
     implicitHeight: 200
     width: parent.width
     ColumnLayout{
@@ -21,7 +23,7 @@ Item{
                 type: HusButton.Type_Link
                 iconSource: HusIcon.PlusOutlined
                 onClicked: {
-                    AnnotationConfig.labelListModel.addItem("untitled", "black")
+                    annotationConfig.labelListModel.addItem("untitled", "black")
                 }
             }
         }
@@ -32,10 +34,10 @@ Item{
             clip: true
             Layout.fillWidth: true
             Layout.fillHeight: true
-            highlightMoveDuration: 0 // 取消高亮移动动画
-            keyNavigationEnabled: true // 启用键盘导航
-            model: AnnotationConfig.labelListModel
-            delegate: Item {
+            highlightMoveDuration: 0
+            keyNavigationEnabled: true
+            model: annotationConfig.labelListModel
+            delegate: HusRectangle {
                 id: listViewDelegate
                 width: listView.width
                 height: 30
@@ -46,62 +48,60 @@ Item{
                 property bool isCurrent: selected
                 property bool isHovered: itemMouseArea.containsMouse || colorButton.hovered || btnDelete.hovered
                 property bool isEditing: false
-                HusRectangle {
-                    color: {
-                        if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
-                        else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
-                        else return index % 2 !== 0 ? HusTheme.HusTableView.colorCellBgHover : HusTheme.HusTableView.colorCellBg;
-                    }
+
+                color: {
+                    if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
+                    else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
+                    else return index % 2 !== 0 ? HusTheme.HusTableView.colorCellBgHover : HusTheme.HusTableView.colorCellBg;
+                }
+                MouseArea {
+                    id: itemMouseArea
                     anchors.fill: parent
-                    MouseArea {
-                        id: itemMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            AnnotationConfig.labelListModel.setSingleSelected(index)
+                    hoverEnabled: true
+                    onClicked: {
+                        annotationConfig.labelListModel.setSingleSelected(index)
+                    }
+                    onDoubleClicked: {
+                        isEditing = true
+                    }
+                }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    ColorButton {
+                        id: colorButton
+                        width: 16
+                        height: 16
+                        currentColor: labelColor
+                        onClicked:{
+                            annotationConfig.labelListModel.setSingleSelected(index)
+                            colorDialog.selectedColor = labelColor
+                            colorDialog.open()
                         }
-                        onDoubleClicked: {
-                            isEditing = true
+                        ColorDialog {
+                            id: colorDialog
+                            onAccepted: {
+                                // 更新数据模型
+                                annotationConfig.labelListModel.setLabelColor(index, selectedColor.toString())
+                            }
                         }
                     }
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        ColorButton {
-                            id: colorButton
-                            width: 16
-                            height: 16
-                            currentColor: labelColor
-                            onClicked:{
-                                AnnotationConfig.labelListModel.setSingleSelected(index)
-                                colorDialog.selectedColor = labelColor
-                                colorDialog.open()
-                            }
-                            ColorDialog {
-                                id: colorDialog
-                                onAccepted: {
-                                    // 更新数据模型
-                                    AnnotationConfig.labelListModel.setLabelColor(index, selectedColor.toString())
-                                }
-                            }
-                        }
-                        // 根据编辑状态切换显示
-                        Loader {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            sourceComponent: isEditing ? editComponent : displayComponent
-                        }
-                        HusIconButton {
-                            id:btnDelete
-                            visible: isHovered || hovered
-                            Layout.preferredWidth:  24
-                            Layout.preferredHeight:  24
-                            type: HusButton.Type_Link
-                            iconSource: HusIcon.DeleteOutlined
-                            onClicked: {
-                                AnnotationConfig.labelListModel.removeItem(index)
-                            }
+                    // 根据编辑状态切换显示
+                    Loader {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        sourceComponent: isEditing ? editComponent : displayComponent
+                    }
+                    HusIconButton {
+                        id:btnDelete
+                        visible: isHovered || hovered
+                        Layout.preferredWidth:  24
+                        Layout.preferredHeight:  24
+                        type: HusButton.Type_Link
+                        iconSource: HusIcon.DeleteOutlined
+                        onClicked: {
+                            annotationConfig.labelListModel.removeItem(index)
                         }
                     }
                 }
@@ -147,7 +147,7 @@ Item{
                         function confirmEdit() {
                             if (text.trim() !== "" && text !== label) {
                                 // 更新数据模型
-                                AnnotationConfig.labelListModel.setLabel(index, text)
+                                annotationConfig.labelListModel.setLabel(index, text)
                             }
                             isEditing = false
                         }
@@ -160,9 +160,10 @@ Item{
                 }
             }
         }
+
         Component.onCompleted: {
             if(listView.count > 0){
-                AnnotationConfig.labelListModel.setSingleSelected(0)
+                annotationConfig.labelListModel.setSingleSelected(0)
             }
         }
     }

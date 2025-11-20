@@ -3,11 +3,13 @@ import HuskarUI.Basic
 import EasyLabel
 Item {
     id: annotationLayer
+    required property AnnotationConfig annotationConfig
+
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
-    property var listModel: AnnotationConfig.getAnnotationModel(AnnotationConfig.currentImageIndex)
-    property int currentLabelID: AnnotationConfig.currentLabelIndex
-    property color currentLabelColor: AnnotationConfig.currentLabelColor
-    property string currentLabel: AnnotationConfig.currentLabel
+    property var listModel: annotationConfig.getAnnotationModel(annotationConfig.currentImageIndex)
+    property int currentLabelID: annotationConfig.currentLabelIndex
+    property color currentLabelColor: annotationConfig.currentLabelColor
+    property string currentLabel: annotationConfig.currentLabel
     property int selectedIndex: -1
     property real scaleFactor: 1.0
     property int zOrder: -1
@@ -22,8 +24,8 @@ Item {
         anchors.fill: parent
         visible: drawStatus === CanvasEnums.Drawing
         color: currentLabelColor
-        centerPointerSize: AnnotationConfig.centerPointerSize/scaleFactor
-        lineWidth: AnnotationConfig.currentLineWidth/scaleFactor
+        centerPointerSize: annotationConfig.centerPointerSize/scaleFactor
+        lineWidth: annotationConfig.currentLineWidth/scaleFactor
         showCoordinates: true
         showCenterPoint: true
     }
@@ -209,22 +211,22 @@ Item {
         delegate: HusRectangle {
             id: obj
             property bool showHandlers: model.selected
-            property color annotationColor: AnnotationConfig.labelListModel.getLabelColor(model.labelID)
-            property string annotationLabel: AnnotationConfig.labelListModel.getLabel(model.labelID)
+            property color annotationColor: annotationConfig.labelListModel.getLabelColor(model.labelID)
+            property string annotationLabel: annotationConfig.labelListModel.getLabel(model.labelID)
             x: model.boxX
             y: model.boxY
             width: model.boxWidth
             height: model.boxHeight
             border.color: annotationColor
-            border.width: AnnotationConfig.currentLineWidth/scaleFactor
+            border.width: annotationConfig.currentLineWidth/scaleFactor
             border.style: model.selected ? Qt.DashDotLine : Qt.SolidLine
-            color: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, AnnotationConfig.currentFillOpacity)
+            color: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, annotationConfig.currentFillOpacity)
 
             Connections{
-                target: AnnotationConfig.labelListModel
+                target: annotationConfig.labelListModel
                 function onDataChanged(){
-                    annotationColor = AnnotationConfig.labelListModel.getLabelColor(model.labelID)
-                    annotationLabel = AnnotationConfig.labelListModel.getLabel(model.labelID)
+                    annotationColor = annotationConfig.labelListModel.getLabelColor(model.labelID)
+                    annotationLabel = annotationConfig.labelListModel.getLabel(model.labelID)
                 }
             }
 
@@ -234,11 +236,11 @@ Item {
                 y: -text.height
                 width: text.width
                 height: text.height
-                visible: AnnotationConfig.showLabel
+                visible: annotationConfig.showLabel
                 color: annotationColor
                 HusText{
                     id: text
-                    font.pixelSize: AnnotationConfig.fontPointSize / scaleFactor
+                    font.pixelSize: annotationConfig.fontPointSize / scaleFactor
                     color: QmlGlobalHelper.revertColor(annotationColor)
                     text: annotationLabel
                 }
@@ -246,7 +248,7 @@ Item {
 
             MouseArea{
                 anchors.fill: parent
-                anchors.margins: -Math.max(AnnotationConfig.currentCornerRadius, AnnotationConfig.currentEdgeHeight)
+                anchors.margins: -Math.max(annotationConfig.currentCornerRadius, annotationConfig.currentEdgeHeight)
                 hoverEnabled: true
                 propagateComposedEvents: true
                 onEntered: {
@@ -266,8 +268,8 @@ Item {
 
             // 角控制点
             Repeater {
-                property int handlerWidth: AnnotationConfig.currentCornerRadius/scaleFactor
-                property int handlerHeight: AnnotationConfig.currentCornerRadius/scaleFactor
+                property int handlerWidth: annotationConfig.currentCornerRadius/scaleFactor
+                property int handlerHeight: annotationConfig.currentCornerRadius/scaleFactor
                 model: obj.showHandlers ? getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: cornerHandler
@@ -330,8 +332,8 @@ Item {
 
             // 边控制点
             Repeater {
-                property int handlerWidth: AnnotationConfig.currentEdgeWidth/scaleFactor
-                property int handlerHeight: AnnotationConfig.currentEdgeHeight/scaleFactor
+                property int handlerWidth: annotationConfig.currentEdgeWidth/scaleFactor
+                property int handlerHeight: annotationConfig.currentEdgeHeight/scaleFactor
                 model: obj.showHandlers ? getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: edgeHandler

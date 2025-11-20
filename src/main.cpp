@@ -1,7 +1,7 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
-#include "husapp.h"
+#include "HuskarUI/husapp.h"
 #include "src/db/dbHelper.h"
 
 int main(int argc, char *argv[])

@@ -10,11 +10,8 @@ set(HuskarUI_DIR "D:/HuskarUI")
 set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(SqliteOrm CONFIG REQUIRED)
+find_package(HuskarUI REQUIRED)
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
 qt_add_executable(appEasyLabel
@@ -88,20 +85,9 @@ set_target_properties(appEasyLabel PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-target_include_directories(appEasyLabel PRIVATE
-    "${HuskarUI_DIR}/HuskarUI/include")
-
-target_link_directories(appEasyLabel PRIVATE
-    ${HuskarUI_DIR}/HuskarUI/lib
-)
-
 target_link_libraries(appEasyLabel
-    PRIVATE Qt6::Quick HuskarUIBasic Qt6::Core sqlite_orm::sqlite_orm
+    PRIVATE Qt6::Quick HuskarUI::Basic Qt6::Core sqlite_orm::sqlite_orm
 )
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 install(TARGETS appEasyLabel

@@ -6,13 +6,14 @@ import EasyLabel
 
 Item{
     id:splitLeft
+    required property AnnotationConfig annotationConfig
     property int drawStatus: CanvasEnums.OptionStatus.Select
-    property int currentImageIndex: AnnotationConfig.currentImageIndex
+    readonly property int currentImageIndex: annotationConfig.currentImageIndex
     readonly property int labelNum: drawerLayer.listModel? drawerLayer.listModel.rowCount(): 0
 
     Flickable {
         id: flickable
-        visible: AnnotationConfig.fileListModel.rowCount() > 0
+        visible: annotationConfig.fileListModel.rowCount() > 0
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -49,18 +50,24 @@ Item{
             height: image.sourceSize.height
             transformOrigin: Item.Center
             anchors.centerIn: parent
+            property string imageSource : annotationConfig.fileListModel.getFullPath(currentImageIndex)
             // 初始缩放比例设置为适合窗口
-            scale: Math.min(flickable.width/width, flickable.height/height)
+            scale:Math.min(flickable.width / width, flickable.height / height);
+
             Image {
                 id: image
-                source: "file:///" + AnnotationConfig.fileListModel.getFullPath(currentImageIndex)
+                source: imageContainer.imageSource ? "file:///" + imageContainer.imageSource: ""
                 anchors.fill: parent
             }
             Component.onCompleted: {
-                console.log("123", currentImageIndex)
+                console.log("currentImageIndex: ", currentImageIndex)
+                if(imageContainer.width<=0 ||imageContainer.height<=0 ){
+                    imageContainer.scale = 1.0
+                }
             }
             DetectionLabelLayer{
                 id: drawerLayer
+                annotationConfig: splitLeft.annotationConfig
                 anchors.fill: parent
                 drawStatus: splitLeft.drawStatus
                 scaleFactor: imageContainer.scale
@@ -111,9 +118,7 @@ Item{
         }
         onHeightChanged: {
             flickable.fitToWindow()
-
         }
-
     }
 
     Item{
@@ -123,9 +128,9 @@ Item{
         anchors.bottom: parent.bottom
         height:40
         Connections{
-            target:AnnotationConfig
+            target: annotationConfig
             function onCurrentImageIndexChanged(pre, next){
-                if(AnnotationConfig.saveAnnotationFile(pre)){
+                if(annotationConfig.saveAnnotationFile(pre)){
                     QmlGlobalHelper.message.success("标注保存成功")
                 }
                 flickable.fitToWindow()
@@ -200,21 +205,21 @@ Item{
                 }
 
                 HusIconButton{
-                    enabled: AnnotationConfig.currentImageIndex > 0
+                    enabled: annotationConfig.currentImageIndex > 0
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.LeftOutlined
                     radiusBg.all: 0
                     onClicked: {
-                        AnnotationConfig.currentImageIndex -= 1
+                        annotationConfig.currentImageIndex -= 1
                     }
                 }
 
                 HusInput{
                     Layout.minimumWidth: 30
                     Layout.maximumWidth: 60
-                    text: AnnotationConfig.currentImageIndex + 1
+                    text: annotationConfig.currentImageIndex + 1
                     background: HusRectangle {
                         anchors.bottom: parent.bottom
                         height: 1
@@ -224,19 +229,19 @@ Item{
                     validator: IntValidator {
                         id: indexValidator
                         bottom: 1
-                        top: Math.max(1, AnnotationConfig.fileListModel.rowCount())
+                        top: Math.max(1, annotationConfig.fileListModel.rowCount())
                     }
                     Keys.onPressed: function(event)  {
                         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             if(parseInt(text) === 0) return
-                            AnnotationConfig.currentImageIndex = parseInt(text) - 1
+                            annotationConfig.currentImageIndex = parseInt(text) - 1
                         }
                     }
 
                     onFocusChanged: {
                         if(!focus){
-                            if(parseInt(text) === 0) return
-                            AnnotationConfig.currentImageIndex = parseInt(text) - 1
+                            if(text === "" || parseInt(text) === 0) return
+                            annotationConfig.currentImageIndex = parseInt(text) - 1
                         }
                     }
                 }
@@ -246,18 +251,18 @@ Item{
                 }
 
                 HusText{
-                    text: AnnotationConfig.fileListModel.rowCount()
+                    text: annotationConfig.fileListModel.rowCount()
                 }
 
                 HusIconButton{
-                    enabled: AnnotationConfig.currentImageIndex < AnnotationConfig.fileListModel.rowCount() -1
+                    enabled: annotationConfig.currentImageIndex < annotationConfig.fileListModel.rowCount() -1
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
                     iconSource: HusIcon.RightOutlined
                     radiusBg.all: 0
                     onClicked: {
-                        AnnotationConfig.currentImageIndex += 1
+                        annotationConfig.currentImageIndex += 1
                     }
                 }
 
@@ -299,16 +304,15 @@ Item{
                     iconSource: HusIcon.SaveOutlined
                     radiusBg.all: 0
                     onClicked: {
-                        AnnotationConfig.saveAnnotationFile(AnnotationConfig.currentImageIndex)
+                        annotationConfig.saveAnnotationFile(annotationConfig.currentImageIndex)
                     }
                 }
-
 
                 Item{
                     Layout.fillWidth: true
                 }
                 HusTag{
-                    text: AnnotationConfig.fileListModel.getFullPath(currentImageIndex)
+                    text: annotationConfig.fileListModel.getFullPath(currentImageIndex)
                 }
             }
         }

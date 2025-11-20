@@ -5,13 +5,14 @@ import EasyLabel
 
 
 Item{
+    required property AnnotationConfig annotationConfig
     implicitHeight: 200
     width: parent.width
     ListView {
         id: listView
         anchors.fill: parent
-        model: AnnotationConfig.fileListModel
-        currentIndex: AnnotationConfig.currentImageIndex
+        model: annotationConfig.fileListModel
+        currentIndex: annotationConfig.currentImageIndex
         delegate: Rectangle {
             width: ListView.view.width
             height: 30
@@ -19,7 +20,7 @@ Item{
             required property string fileName
             required property bool isDir
             required property bool isAnnotation
-            property bool isCurrent: AnnotationConfig.currentImageIndex === index
+            property bool isCurrent: annotationConfig.currentImageIndex === index
             property bool isHovered: itemMouseArea.containsMouse
             color: {
                 if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
@@ -32,7 +33,7 @@ Item{
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    AnnotationConfig.currentImageIndex = index
+                    annotationConfig.currentImageIndex = index
                 }
             }
 

@@ -4,21 +4,21 @@
 #include <QQmlEngine>
 #include "filelistmodel.h"
 #include "labellistmodel.h"
-#include "detectionAnnotationmodel.h"
+#include "annotationmodelbase.h"
 
 class AnnotationConfig: public QObject
 {
 
-
     Q_OBJECT
-    QML_SINGLETON
     QML_ELEMENT
-
 
     Q_PROPERTY(QString imageDir READ imageDir WRITE setImageDir NOTIFY imageDirChanged FINAL)
     Q_PROPERTY(QString resultDir READ resultDir WRITE setResultDir NOTIFY resultDirChanged FINAL)
     Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectNameChanged FINAL)
     Q_PROPERTY(AnnotationType annotationType READ annotationType WRITE setAnnotationType NOTIFY annotationTypeChanged FINAL)
+    Q_PROPERTY(int totalImageNum READ totalImageNum  WRITE setTotalImageNum NOTIFY totalImageNumChanged FINAL)
+    Q_PROPERTY(int annotatedImageNum READ annotatedImageNum  WRITE setAnnotatedImageNum NOTIFY annotatedImageNumChanged FINAL)
+
     Q_PROPERTY(LabelListModel* labelListModel READ labelListModel CONSTANT)
     Q_PROPERTY(FileListModel* fileListModel READ fileListModel CONSTANT)
     Q_PROPERTY(AnnotationModelBase* currentAnnotationModel READ currentAnnotationModel CONSTANT)
@@ -35,6 +35,7 @@ class AnnotationConfig: public QObject
     Q_PROPERTY(int fontPointSize READ fontPointSize  WRITE setFontPointSize NOTIFY fontPointSizeChanged FINAL)
     Q_PROPERTY(int centerPointerSize READ centerPointerSize  WRITE setCenterPointerSize NOTIFY centerPointerSizeChanged FINAL)
 
+
 public:
     enum AnnotationType {
         Detection = 0,
@@ -42,18 +43,14 @@ public:
         Other = 2
     };
 
-
-
     Q_ENUM(AnnotationType)
-
-    static AnnotationConfig *instance();
-
-    static AnnotationConfig *create(QQmlEngine *, QJSEngine *);
-
+    AnnotationConfig(QObject* parent=nullptr);
     QString imageDir();
     QString resultDir();
     QString projectName();
     AnnotationType annotationType();
+    int totalImageNum();
+    int annotatedImageNum();
 
     // style
     int currentLineWidth();
@@ -79,7 +76,8 @@ public:
     void setResultDir(const QString& resultDir);
     void setProjectName(const QString& projectName);
     void setAnnotationType(const AnnotationType& type);
-
+    void setTotalImageNum(int totalNum);
+    void setAnnotatedImageNum(int annotatedNum);
     //
     void setCurrentLineWidth(int lineWidth);
     void setCurrentFillOpacity(double fillOpacity);
@@ -89,12 +87,10 @@ public:
     void setShowLabel(bool showLabel);
     void setFontPointSize(int fontPointSize);
     void setCenterPointerSize(int pointerSize);
-
     void setCurrentImageIndex(int index);
 
-    Q_INVOKABLE void resetAnnotationConfig();
-    Q_INVOKABLE QString getAnnotationTypeColor(const AnnotationType& annotationType);
-    Q_INVOKABLE QString getAnnotationTypeName(const AnnotationType& annotationType);
+    Q_INVOKABLE QString getAnnotationTypeColor();
+    Q_INVOKABLE QString getAnnotationTypeName();
 
     Q_INVOKABLE bool loadLabelFile();
     Q_INVOKABLE bool saveLabelFile();
@@ -108,8 +104,11 @@ public:
 signals:
     void imageDirChanged();
     void resultDirChanged();
-    void annotationTypeChanged();
     void projectNameChanged();
+    void annotationTypeChanged();
+    void totalImageNumChanged ();
+    void annotatedImageNumChanged();
+
     // style
     void currentLineWidthChanged();
     void currentFillOpacityChanged();
@@ -128,10 +127,12 @@ signals:
 
 
 private:
-    AnnotationConfig(QObject* parent=nullptr);
-    static AnnotationConfig* instance_;
     QString imageDir_;
     QString resultDir_;
+    int totalImageNum_;
+    int annotatedImageNum_;
+    QString projectName_;
+    AnnotationType annotationType_ = AnnotationType::Detection;
 
     // style
     int currentLineWidth_ = 1;
@@ -144,13 +145,12 @@ private:
     bool showLabel_ = true;
 
     // label
-    QString projectName_;
+
     int currentLabelIndex_ = -1;
     int currentImageIndex_ = -1;
     bool isDirty_ = false;
     LabelListModel* labelListModel_;
     FileListModel* fileListModel_;
     QVector<AnnotationModelBase*> annotationModelList_;
-    AnnotationType type_ = AnnotationType::Detection;
 };
 

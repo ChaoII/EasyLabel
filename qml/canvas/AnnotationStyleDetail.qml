@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import EasyLabel
 
 Item{
+    required property AnnotationConfig annotationConfig
+
     height: parent.height
     width: parent.width
     ColumnLayout{
@@ -32,7 +34,7 @@ Item{
             value: 2
             stepSize: 1
             onCurrentValueChanged: {
-                AnnotationConfig.currentLineWidth = currentValue
+                annotationConfig.currentLineWidth = currentValue
             }
         }
         RowLayout{
@@ -82,7 +84,7 @@ Item{
             max: 1.0
             stepSize: 0.01
             onCurrentValueChanged: {
-                AnnotationConfig.currentFillOpacity = currentValue
+                annotationConfig.currentFillOpacity = currentValue
             }
         }
 
@@ -103,7 +105,7 @@ Item{
                 max: 40
                 value: 10
                 onValueChanged: {
-                    AnnotationConfig.currentCornerRadius = value
+                    annotationConfig.currentCornerRadius = value
                 }
             }
         }
@@ -125,7 +127,7 @@ Item{
                 max: 40
                 value: 12
                 onValueChanged: {
-                    AnnotationConfig.currentEdgeWidth = value
+                    annotationConfig.currentEdgeWidth = value
                 }
             }
         }
@@ -147,7 +149,7 @@ Item{
                 max: 40
                 value: 6
                 onValueChanged: {
-                    AnnotationConfig.currentEdgeHeight = value
+                    annotationConfig.currentEdgeHeight = value
                 }
             }
         }
@@ -171,11 +173,11 @@ Item{
                     radius: 2
                     color: switch2.colorHandle
                 }
-                checked: AnnotationConfig.showLabel
+                checked: annotationConfig.showLabel
                 checkedText: "是"
                 uncheckedText: "否"
                 onCheckedChanged: {
-                    AnnotationConfig.showLabel = checked
+                    annotationConfig.showLabel = checked
                 }
             }
         }
@@ -198,7 +200,7 @@ Item{
                 max: 60
                 value: 16
                 onValueChanged: {
-                    AnnotationConfig.fontPointSize = value
+                    annotationConfig.fontPointSize = value
                 }
             }
         }
@@ -220,7 +222,7 @@ Item{
                 max: 20
                 value: 4
                 onValueChanged: {
-                    AnnotationConfig.centerPointerSize = value
+                    annotationConfig.centerPointerSize = value
                 }
             }
         }

@@ -143,19 +143,27 @@ Item {
             required property int index
             required property var modelData
             property int fontSize: 12
-            property color annotationTypeBaseColor: AnnotationConfig.getAnnotationTypeColor(modelData.annotationType)
-            property string annotationTypeName: AnnotationConfig.getAnnotationTypeName(modelData.annotationType)
+            property AnnotationConfig annotationConfig: AnnotationConfig{
+                annotationType: modelData.annotationType
+            }
+            property color annotationTypeBaseColor
+            property string annotationTypeName
             width: 310
             height: 200
             titleDelegate: null
+            Component.onCompleted: {
+                annotationTypeBaseColor = annotationConfig.getAnnotationTypeColor()
+                annotationTypeName = annotationConfig.getAnnotationTypeName()
+            }
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
-                    AnnotationConfig.imageDir = modelData.imageFolder
-                    AnnotationConfig.resultDir = modelData.resultFolder
-                    AnnotationConfig.projectName = modelData.projectName
-                    AnnotationConfig.annotationType = modelData.annotationType
-                    QmlGlobalHelper.mainStackView.push("../canvas/MainCanvas.qml")
+                    annotationConfig.imageDir = modelData.imageFolder
+                    annotationConfig.resultDir = modelData.resultFolder
+                    annotationConfig.projectName = modelData.projectName
+                    QmlGlobalHelper.mainStackView.push("../canvas/MainCanvas.qml",{
+                                                           annotationConfig:annotationConfig
+                                                       })
                 }
             }
 
@@ -167,6 +175,13 @@ Item {
                 anchors.margins: 10
                 height:20
 
+                Connections{
+                    target: annotationConfig
+                    function onAnnotatedImageNumChanged(){
+                        console.log("onAnnotatedImageNumChanged", annotationConfig.annotatedImageNum)
+                        progressBar.percent = annotationConfig.annotatedImageNum/annotationConfig.totalImageNum *100
+                    }
+                }
                 HusText{
                     id: txtTitle
                     width: parent.width * 0.6 - 10
@@ -177,6 +192,7 @@ Item {
                     elide: HusText.ElideRight
                 }
                 HusProgress {
+                    id: progressBar
                     anchors.right: parent.right
                     width: parent.width * 0.4
                     barThickness: 2

@@ -102,4 +102,14 @@ QString FileListModel::getFullPath(int index) const {
     return items_.at(index).filePath;
 }
 
+int FileListModel::getAnnotatedNum() const {
+    int annotatedNum = 0;
+    for(auto &item: items_){
+        if(item.isAnnotated){
+            annotatedNum += 1;
+        }
+    }
+    return annotatedNum;
+}
+
 

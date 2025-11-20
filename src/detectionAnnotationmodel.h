@@ -63,7 +63,9 @@ public:
 
     Q_INVOKABLE bool saveToFile(const QString& AnnotationFilePath) const override;
 
-    Q_INVOKABLE bool loadFromFile(const QString& AnnotationFilePath);
+    Q_INVOKABLE bool loadFromFile(const QString& AnnotationFilePath) override;
+
+    Q_INVOKABLE void setLabelID(int index, int labelID) override;
 
 private:
 
