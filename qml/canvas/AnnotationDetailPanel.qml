@@ -1,3 +1,4 @@
+
 import QtQuick
 import QtQuick.Layouts
 import HuskarUI.Basic
@@ -23,16 +24,16 @@ Item{
                 HusIconText{
                     id: logo
                     font.bold: true
-                    colorIcon: annotationTypeColor
+                    colorIcon: splitRight.annotationTypeColor
                     iconSize: 16
-                    iconSource: annotationTypeIconSource
+                    iconSource: splitRight.annotationTypeIconSource
                 }
                 HusText{
                     Layout.fillWidth: true
                     font.bold: true
                     font.pixelSize: 16
-                    color: annotationTypeColor
-                    text: annotationTypeName
+                    color: splitRight.annotationTypeColor
+                    text: splitRight.annotationTypeName
                 }
             }
         }
@@ -48,10 +49,10 @@ Item{
             radiusBg.topRight: 0
             defaultActiveKey: ["A"]
             initModel: [
-                {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: aaa },
-                {key:"B", title: qsTr('标签'), value: 2 , contentDelegate: bbb },
-                {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: ccc },
-                {key:"D", title: qsTr('文件列表'), value: 4 , contentDelegate: ddd }
+                {key:"A", title: qsTr('样式'), value: 1 , contentDelegate: annotationStyleDetailComponent },
+                {key:"B", title: qsTr('标签'), value: 2 , contentDelegate: annotationLabelDetailComponent },
+                {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: annotationListDetailComponent },
+                {key:"D", title: qsTr('文件列表'), value: 4 , contentDelegate: annotationFileListDetailComponent }
             ]
             contentDelegate:Item{
                 height: splitRight.height - 40 * annotaionDetail.count - 37
@@ -69,31 +70,31 @@ Item{
 
 
     Component{
-        id:aaa
+        id: annotationStyleDetailComponent
         AnnotationStyleDetail{
-            annotationConfig:splitRight.annotationConfig
+            annotationConfig: splitRight.annotationConfig
         }
     }
 
     Component{
-        id:bbb
+        id: annotationLabelDetailComponent
         AnnotationLabelDetail{
-            annotationConfig:splitRight.annotationConfig
+            annotationConfig: splitRight.annotationConfig
         }
     }
 
     Component{
-        id:ccc
+        id: annotationListDetailComponent
         AnnotationListDetail{
-            annotationConfig:splitRight.annotationConfig
+            annotationConfig: splitRight.annotationConfig
 
         }
     }
 
     Component{
-        id:ddd
+        id:annotationFileListDetailComponent
         AnnotationFileListDetail{
-            annotationConfig:splitRight.annotationConfig
+            annotationConfig: splitRight.annotationConfig
 
         }
     }

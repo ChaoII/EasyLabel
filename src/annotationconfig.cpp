@@ -245,7 +245,6 @@ QString AnnotationConfig::getAnnotationTypeColor(){
         "#666666", //Grey
     };
     int index = static_cast<int>(annotationType_);
-    qDebug() <<"index: "<< index;
     if(index < 0){
         return "black";
     }
@@ -348,3 +347,4 @@ void AnnotationConfig::setAnnotationModel(int index, AnnotationModelBase* annota
     if(index<0 || index>annotationModelList_.size()) return;
     annotationModelList_[index] = annotationModel;
 }
+

@@ -1,3 +1,4 @@
+
 import QtQuick
 import HuskarUI.Basic
 import QtQuick.Layouts
@@ -5,6 +6,7 @@ import QtQuick.Dialogs
 import EasyLabel
 
 Item{
+    id: annotationLabelDetail
     required property AnnotationConfig annotationConfig
 
     implicitHeight: 200
@@ -23,7 +25,7 @@ Item{
                 type: HusButton.Type_Link
                 iconSource: HusIcon.PlusOutlined
                 onClicked: {
-                    annotationConfig.labelListModel.addItem("untitled", "black")
+                    annotationLabelDetail.annotationConfig.labelListModel.addItem("untitled", "black")
                 }
             }
         }
@@ -36,10 +38,10 @@ Item{
             Layout.fillHeight: true
             highlightMoveDuration: 0
             keyNavigationEnabled: true
-            model: annotationConfig.labelListModel
+            model: annotationLabelDetail.annotationConfig.labelListModel
             delegate: HusRectangle {
                 id: listViewDelegate
-                width: listView.width
+                width: ListView.view.width
                 height: 30
                 required property string label
                 required property color labelColor
@@ -59,10 +61,10 @@ Item{
                     anchors.fill: parent
                     hoverEnabled: true
                     onClicked: {
-                        annotationConfig.labelListModel.setSingleSelected(index)
+                        annotationLabelDetail.annotationConfig.labelListModel.setSingleSelected(listViewDelegate.index)
                     }
                     onDoubleClicked: {
-                        isEditing = true
+                        listViewDelegate.isEditing = true
                     }
                 }
                 RowLayout {
@@ -71,19 +73,19 @@ Item{
                     anchors.rightMargin: 10
                     ColorButton {
                         id: colorButton
-                        width: 16
-                        height: 16
-                        currentColor: labelColor
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
+                        currentColor: listViewDelegate.labelColor
                         onClicked:{
-                            annotationConfig.labelListModel.setSingleSelected(index)
-                            colorDialog.selectedColor = labelColor
+                            annotationLabelDetail.annotationConfig.labelListModel.setSingleSelected(listViewDelegate.index)
+                            colorDialog.selectedColor = listViewDelegate.labelColor
                             colorDialog.open()
                         }
                         ColorDialog {
                             id: colorDialog
                             onAccepted: {
                                 // 更新数据模型
-                                annotationConfig.labelListModel.setLabelColor(index, selectedColor.toString())
+                                annotationLabelDetail.annotationConfig.labelListModel.setLabelColor(listViewDelegate.index, selectedColor.toString())
                             }
                         }
                     }
@@ -91,17 +93,17 @@ Item{
                     Loader {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        sourceComponent: isEditing ? editComponent : displayComponent
+                        sourceComponent: listViewDelegate.isEditing ? editComponent : displayComponent
                     }
                     HusIconButton {
                         id:btnDelete
-                        visible: isHovered || hovered
+                        visible: listViewDelegate.isHovered || hovered
                         Layout.preferredWidth:  24
                         Layout.preferredHeight:  24
                         type: HusButton.Type_Link
                         iconSource: HusIcon.DeleteOutlined
                         onClicked: {
-                            annotationConfig.labelListModel.removeItem(index)
+                            annotationLabelDetail.annotationConfig.labelListModel.removeItem(listViewDelegate.index)
                         }
                     }
                 }
@@ -109,7 +111,7 @@ Item{
                 Component {
                     id: displayComponent
                     HusText {
-                        text: label
+                        text: listViewDelegate.label
                         verticalAlignment: Text.AlignVCenter
                     }
                 }
@@ -119,7 +121,7 @@ Item{
                     id: editComponent
                     HusInput {
                         id: textInput
-                        text: label
+                        text: listViewDelegate.label
                         verticalAlignment: Text.AlignVCenter
                         selectByMouse: true
                         // 自动获取焦点并全选文本
@@ -139,22 +141,22 @@ Item{
                         }
                         // 失去焦点时确认编辑
                         onActiveFocusChanged: {
-                            if (!activeFocus && isEditing) {
+                            if (!activeFocus && listViewDelegate.isEditing) {
                                 confirmEdit()
                             }
                         }
                         // 确认编辑
                         function confirmEdit() {
-                            if (text.trim() !== "" && text !== label) {
+                            if (text.trim() !== "" && text !== listViewDelegate.label) {
                                 // 更新数据模型
-                                annotationConfig.labelListModel.setLabel(index, text)
+                                annotationLabelDetail.annotationConfig.labelListModel.setLabel(listViewDelegate.index, text)
                             }
-                            isEditing = false
+                            listViewDelegate.isEditing = false
                         }
                         // 取消编辑
                         function cancelEdit() {
-                            text = label
-                            isEditing = false
+                            text = listViewDelegate.label
+                            listViewDelegate.isEditing = false
                         }
                     }
                 }
@@ -163,7 +165,7 @@ Item{
 
         Component.onCompleted: {
             if(listView.count > 0){
-                annotationConfig.labelListModel.setSingleSelected(0)
+                annotationLabelDetail.annotationConfig.labelListModel.setSingleSelected(0)
             }
         }
     }

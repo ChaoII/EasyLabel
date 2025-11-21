@@ -2,6 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QColor>
+#include <QQmlEngine>
 #include <QTimer>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -9,6 +10,7 @@
 class LabelListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
     struct LabelItem {

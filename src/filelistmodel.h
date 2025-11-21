@@ -2,10 +2,11 @@
 
 #include <QAbstractListModel>
 #include <QFileInfoList>
-
+#include <QQmlEngine>
 class FileListModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
     Q_PROPERTY(QString folderPath READ folderPath WRITE setFolderPath NOTIFY folderPathChanged)
 
 public:

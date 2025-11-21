@@ -21,9 +21,9 @@ QtObject {
         id: messageComponent
         HusMessage {
             z: 999
-            width: root.rootWindow ? root.rootWindow.width : 0
-            anchors.horizontalCenter: root.rootWindow ? root.rootWindow.horizontalCenter : undefined
-            anchors.top: root.rootWindow ? root.rootWindow.top : undefined
+            width: parent ? parent.width : 0
+            anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
+            anchors.top: parent ? parent.top : undefined
         }
     }
 

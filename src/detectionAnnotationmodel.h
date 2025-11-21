@@ -2,11 +2,13 @@
 
 #include <QRect>
 #include <QColor>
+#include <QQmlEngine>
 #include "annotationmodelbase.h"
 
 class DetectionAnnotationModel : public AnnotationModelBase
 {
     Q_OBJECT
+    QML_ELEMENT
 
 public:
 

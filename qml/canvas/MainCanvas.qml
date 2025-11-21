@@ -1,12 +1,10 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import HuskarUI.Basic
 import EasyLabel
 
-
 Item {
-    id:root
+    id: root
     required property AnnotationConfig annotationConfig
     Item{
         id: header
@@ -19,7 +17,7 @@ Item {
             anchors.fill: parent
             bodyDelegate: null
             titleDelegate: null
-            border.color:"transparent"
+            border.color: "transparent"
         }
 
         // 返回按钮
@@ -28,16 +26,14 @@ Item {
             anchors.left: parent.left
             type: HusButton.Type_Link
             iconSource: HusIcon.LeftOutlined
-            onClicked: {
-                QmlGlobalHelper.mainStackView.pop()
-            }
+            onClicked: QmlGlobalHelper.mainStackView.pop()
         }
         HusText{
             id:textProjectName
             anchors.left: btnBack.right
             anchors.leftMargin: 10
             anchors.verticalCenter: btnBack.verticalCenter
-            text:annotationConfig.projectName
+            text:root.annotationConfig.projectName
         }
     }
 
@@ -72,7 +68,6 @@ Item {
     }
 
     Component.onCompleted: {
-
 
     }
 }

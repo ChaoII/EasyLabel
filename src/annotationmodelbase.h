@@ -1,9 +1,12 @@
 #pragma once
+
+#include <QQmlEngine>
 #include <QAbstractListModel>
 
 class AnnotationModelBase : public QAbstractListModel
 {
     Q_OBJECT
+
 public:
     explicit AnnotationModelBase(QObject *parent = nullptr);
 

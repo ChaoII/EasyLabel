@@ -167,6 +167,7 @@ Item {
                 }
             }
 
+
             Item{
                 id:itemTitle
                 anchors.left: parent.left
@@ -178,7 +179,6 @@ Item {
                 Connections{
                     target: annotationConfig
                     function onAnnotatedImageNumChanged(){
-                        console.log("onAnnotatedImageNumChanged", annotationConfig.annotatedImageNum)
                         progressBar.percent = annotationConfig.annotatedImageNum/annotationConfig.totalImageNum *100
                     }
                 }

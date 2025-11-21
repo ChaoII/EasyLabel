@@ -4,8 +4,9 @@ import QtQuick.Layouts
 import EasyLabel
 
 Item{
-    required property AnnotationConfig annotationConfig
+    id: annotationStyleDetail
 
+    required property AnnotationConfig annotationConfig
     height: parent.height
     width: parent.width
     ColumnLayout{
@@ -28,13 +29,13 @@ Item{
             id: lineWidthSlider
             Layout.fillWidth: true
             snapMode: HusSlider.SnapAlways
-            height: 50
+            Layout.preferredHeight: 50
             min: 1
             max: 5
             value: 2
             stepSize: 1
             onCurrentValueChanged: {
-                annotationConfig.currentLineWidth = currentValue
+                annotationStyleDetail.annotationConfig.currentLineWidth = currentValue
             }
         }
         RowLayout{
@@ -48,14 +49,14 @@ Item{
                 Layout.fillWidth: true
             }
             HusTag{
-                text:colorSlider.currentColor
-                presetColor:colorSlider.currentColor
+                text: colorSlider.currentColor.toString()
+                presetColor:colorSlider.currentColor.toString()
             }
         }
         ColorSlider {
             id:colorSlider
             Layout.fillWidth: true
-            height: 30
+            Layout.preferredHeight: 30
             value: 3
             min:1
             max:100
@@ -78,13 +79,13 @@ Item{
         OpacitySlider {
             id: opacitySlider
             Layout.fillWidth: true
-            height: 30
+            Layout.preferredHeight: 30
             value: 0.25
             min: 0.0
             max: 1.0
             stepSize: 0.01
             onCurrentValueChanged: {
-                annotationConfig.currentFillOpacity = currentValue
+                annotationStyleDetail.annotationConfig.currentFillOpacity = currentValue
             }
         }
 
@@ -105,7 +106,7 @@ Item{
                 max: 40
                 value: 10
                 onValueChanged: {
-                    annotationConfig.currentCornerRadius = value
+                    annotationStyleDetail.annotationConfig.currentCornerRadius = value
                 }
             }
         }
@@ -127,7 +128,7 @@ Item{
                 max: 40
                 value: 12
                 onValueChanged: {
-                    annotationConfig.currentEdgeWidth = value
+                    annotationStyleDetail.annotationConfig.currentEdgeWidth = value
                 }
             }
         }
@@ -149,7 +150,7 @@ Item{
                 max: 40
                 value: 6
                 onValueChanged: {
-                    annotationConfig.currentEdgeHeight = value
+                    annotationStyleDetail.annotationConfig.currentEdgeHeight = value
                 }
             }
         }
@@ -171,13 +172,13 @@ Item{
                 animationEnabled: false
                 handleDelegate: Rectangle {
                     radius: 2
-                    color: switch2.colorHandle
+                    color: switch2.colorHandle.toString()
                 }
-                checked: annotationConfig.showLabel
+                checked: annotationStyleDetail.annotationConfig.showLabel
                 checkedText: "是"
                 uncheckedText: "否"
                 onCheckedChanged: {
-                    annotationConfig.showLabel = checked
+                    annotationStyleDetail.annotationConfig.showLabel = checked
                 }
             }
         }
@@ -200,7 +201,7 @@ Item{
                 max: 60
                 value: 16
                 onValueChanged: {
-                    annotationConfig.fontPointSize = value
+                    annotationStyleDetail.annotationConfig.fontPointSize = value
                 }
             }
         }
@@ -222,7 +223,7 @@ Item{
                 max: 20
                 value: 4
                 onValueChanged: {
-                    annotationConfig.centerPointerSize = value
+                    annotationStyleDetail.annotationConfig.centerPointerSize = value
                 }
             }
         }

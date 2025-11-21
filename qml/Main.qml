@@ -31,6 +31,7 @@ HusWindow {
         QmlGlobalHelper.initialize(root)
         QmlGlobalHelper.mainStackView = stackView
     }
+    onClosing: QmlGlobalHelper.message?.destroy()
     Item{
         id: content
         anchors.top: root.captionBar.bottom

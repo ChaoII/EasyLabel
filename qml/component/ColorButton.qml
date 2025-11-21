@@ -45,7 +45,7 @@ T.Button {
             visible: control.effectEnabled
             color: 'transparent'
             border.width: 0
-            border.color: colorBorder
+            border.color: control.colorBorder
 
             ParallelAnimation {
                 id: __animation
@@ -86,8 +86,8 @@ T.Button {
             topRightRadius:  control.radiusBg.topRight
             bottomLeftRadius:  control.radiusBg.bottomLeft
             bottomRightRadius:  control.radiusBg.bottomRight
-            color: colorBg
-            border.width:  1
+            color: control.colorBg
+            border.width: 1
             border.color: control.enabled ? control.colorBorder : 'transparent'
             Behavior on color { enabled: control.animationEnabled; ColorAnimation { duration: HusTheme.Primary.durationMid } }
             Behavior on border.color { enabled: control.animationEnabled; ColorAnimation { duration: HusTheme.Primary.durationMid } }

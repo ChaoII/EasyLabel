@@ -1,11 +1,12 @@
+
 import QtQuick
 import HuskarUI.Basic
 import QtQuick.Layouts
 import EasyLabel
 
 Item{
+    id: annotationListDetail
     required property AnnotationConfig annotationConfig
-
     implicitHeight: 200
     width: parent.width
     property int currentEditingIndex: -1
@@ -16,24 +17,24 @@ Item{
         highlightMoveDuration: 0
         keyNavigationEnabled: true
         currentIndex: -1  // 默认不选中任何项
-        model: annotationConfig.currentAnnotationModel
+        model: annotationListDetail.annotationConfig.currentAnnotationModel
         delegate: HusRectangle {
-            id:ccc
-            width: listView.width
+            id: listDelegate
+            width: ListView.view.width
             height: 30
             required property int labelID
             required property int index
             required property bool selected
-            property color labelColor : annotationConfig.labelListModel.getLabelColor(labelID)
-            property string label: annotationConfig.labelListModel.getLabel(labelID)
+            property color labelColor : annotationListDetail.annotationConfig.labelListModel.getLabelColor(labelID)
+            property string label: annotationListDetail.annotationConfig.labelListModel.getLabel(labelID)
             property bool isCurrent: selected
-            property bool isHovered: itemMouseArea.containsMouse ||btnDelete.hovered || btnEdit.hovered
+            property bool isHovered: itemMouseArea.containsMouse || btnDelete.hovered
             property bool isEditing: false
             Connections{
-                target:annotationConfig.labelListModel
+                target: annotationListDetail.annotationConfig.labelListModel
                 function onDataChanged(){
-                    labelColor = annotationConfig.labelListModel.getLabelColor(labelID)
-                    label= annotationConfig.labelListModel.getLabel(labelID)
+                    listDelegate.labelColor = annotationListDetail.annotationConfig.labelListModel.getLabelColor(listDelegate.labelID)
+                    listDelegate.label = annotationListDetail.annotationConfig.labelListModel.getLabel(listDelegate.labelID)
                 }
             }
 
@@ -47,29 +48,29 @@ Item{
                 id: itemMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: annotationConfig.currentAnnotationModel.setSingleSelected(index)
-                onDoubleClicked: isEditing = true
+                onClicked: annotationListDetail.annotationConfig.currentAnnotationModel.setSingleSelected(listDelegate.index)
+                onDoubleClicked: listDelegate.isEditing = true
             }
             RowLayout{
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
                 HusRectangle {
-                    width: 16
-                    height: 16
-                    color:labelColor
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
+                    color: listDelegate.labelColor
                 }
                 // 根据编辑状态切换显示
                 Loader {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    sourceComponent: isEditing ? editComponent : displayComponent
+                    sourceComponent: listDelegate.isEditing ? editComponent : displayComponent
                 }
 
                 Component{
                     id:displayComponent
                     HusText {
-                        text: label
+                        text: listDelegate.label
                         verticalAlignment: HusText.AlignVCenter
                     }
                 }
@@ -79,43 +80,35 @@ Item{
                     HusSelect {
                         editable: false
                         clearEnabled: false
-                        model:annotationConfig.labelListModel
+                        model: annotationListDetail.annotationConfig.labelListModel
                         textRole: "label"
-                        currentIndex: labelID
-                        onCurrentIndexChanged: {
-                            ccc.isEditing = false
+                        currentIndex: listDelegate.labelID
+                        property bool initialized: false
 
-                            annotationConfig.currentAnnotationModel.setLabelID(index, currentIndex)
+                        Component.onCompleted: {
+                            initialized = true
+                        }
+                        onCurrentIndexChanged: {
+                            if(initialized){
+                                annotationListDetail.annotationConfig.currentAnnotationModel.setLabelID(listDelegate.index, currentIndex)
+                                listDelegate.isEditing = false
+                            }
                         }
                     }
                 }
-
 
                 Item{
                     Layout.fillWidth: true
                 }
                 HusIconButton {
-                    id: btnEdit
-                    Layout.preferredWidth:  24
-                    Layout.preferredHeight:  24
-                    type: HusButton.Type_Link
-                    iconSource: HusIcon.EditOutlined
-                    onClicked: {
-                        annotationConfig.currentAnnotationModel.setSingleSelected(index)
-                    }
-                }
-                HusIconButton {
                     id:btnDelete
+                    visible: listDelegate.isHovered
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 24
                     type: HusButton.Type_Link
                     iconSource: HusIcon.DeleteOutlined
-
-
-
-
                     onClicked: {
-                        annotationConfig.currentAnnotationModel.removeItem(index)
+                        annotationListDetail.annotationConfig.currentAnnotationModel.removeItem(listDelegate.index)
                     }
                 }
             }
