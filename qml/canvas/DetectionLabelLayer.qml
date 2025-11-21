@@ -30,6 +30,9 @@ Item {
         showCenterPoint: true
     }
 
+
+
+
     onMousePositionChanged: {
         crosshair.mousePosition = mousePosition
     }
@@ -217,8 +220,8 @@ Item {
             required property int boxHeight
             required property bool selected
             readonly property bool showHandlers: selected
-            readonly property color annotationColor: detectionLabelLayer.annotationConfig.labelListModel.getLabelColor(labelID)
-            readonly property string annotationLabel: detectionLabelLayer.annotationConfig.labelListModel.getLabel(labelID)
+            property color annotationColor: detectionLabelLayer.annotationConfig.labelListModel.getLabelColor(labelID)
+            property string annotationLabel: detectionLabelLayer.annotationConfig.labelListModel.getLabel(labelID)
 
             x: boxX
             y: boxY
