@@ -6,7 +6,7 @@ Item {
     id: detectionLabelLayer
     required property AnnotationConfig annotationConfig
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
-    property var listModel: annotationConfig.getAnnotationModel(annotationConfig.currentImageIndex)
+    property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
     property color currentLabelColor: annotationConfig.currentLabelColor
     property string currentLabel: annotationConfig.currentLabel

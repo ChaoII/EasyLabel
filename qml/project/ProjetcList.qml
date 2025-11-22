@@ -10,8 +10,7 @@ Item {
     property alias searchProjectName: inputSecrch.text
     property string searchStartTime:""
     property string searchEndTime:""
-    property var projectDto:ProjectDto{}
-    property var listModel: []
+    property var listModel: ProjectListModel{ }
     Component.onCompleted: {
         searchProject()
     }
@@ -118,11 +117,10 @@ Item {
     }
 
     function searchProject(){
-        pagination.total = projectDto.getProjectCount(searchProjectName, searchStartTime, searchEndTime)
-        let _limit = pagination.pageSize
-        let _offset = pagination.pageSize* pagination.currentPageIndex
-        let result = projectDto.getProjectList(searchProjectName, searchStartTime, searchEndTime, _limit,  _offset, "createTime")
-        listModel = result
+        pagination.total = listModel.getProjectCount(searchProjectName, searchStartTime, searchEndTime)
+        listModel.pageSize = pagination.pageSize
+        listModel.currentPage = pagination.currentPageIndex
+        listModel.filterProjectListModel(searchProjectName, searchStartTime, searchEndTime);
     }
 
     function removeProject(index){
@@ -152,6 +150,7 @@ Item {
             height: 200
             titleDelegate: null
             Component.onCompleted: {
+                console.log("++++",index)
                 annotationTypeBaseColor = annotationConfig.getAnnotationTypeColor()
                 annotationTypeName = annotationConfig.getAnnotationTypeName()
             }

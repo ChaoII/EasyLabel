@@ -1,131 +1,264 @@
 #include "src/projectdto.h"
 
-ProjectDto::ProjectDto(QObject* parent)
-    : QObject{parent} {
-}
+ProjectDto::ProjectDto(QObject *parent) : QObject{parent} {}
 
-
-size_t ProjectDto::getProjectCount(const QString& projectName, const QString& startTime,
-                                   const QString& endTime) {
+size_t ProjectDto::getProjectCount(const QString &projectName,
+                                   const QString &startTime,
+                                   const QString &endTime) {
     try {
-        const QString _projectName = projectName.isEmpty() ? "%" : "%" + projectName + "%";
-        const QString _startTime = startTime.isEmpty()
-                                       ? QDateTime::currentDateTime().addYears(-100)
-                                             .toString("yyyy-MM-ddTHH:mm:ss.zzz"): startTime;
-        const QString _endTime = startTime.isEmpty()
-                                     ? QDateTime::currentDateTime().addYears(100)
-                                           .toString("yyyy-MM-ddTHH:mm:ss.zzz"): endTime;
+        const QString _projectName = buildLikePattern(projectName);
+        const QString _startTime =
+            startTime.isEmpty() ? getDefaultStartTime() : startTime;
+        const QString _endTime =
+            startTime.isEmpty() ? getDefaultEndTime() : endTime;
         const auto projects = DBHelper::getStorage().get_all<Project>(
-            where(like(&Project::projectName, _projectName.toStdString())
-                  and c(&Project::createTime) >= _startTime.toStdString()
-                  and c(&Project::createTime) <= _endTime.toStdString()));
+            where(like(&Project::projectName, _projectName.toStdString()) and
+                  c(&Project::createTime) >= _startTime.toStdString() and
+                  c(&Project::createTime) <= _endTime.toStdString()));
         return projects.size();
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         qDebug() << "get project count failed: " << e.what();
         return 0;
     }
 }
 
-bool ProjectDto::insertProject(const QVariantMap& projectMap) {
-    try {
-        const auto project = mapToProject(projectMap);
-        return DBHelper::getStorage().insert(project);
-    }
-    catch (const std::exception& e) {
-        qDebug() << "insert project failed: " << e.what();
-        return false;
-    }
-}
 
-bool ProjectDto::updateProject(const QVariantMap& projectMap) {
+std::vector<Project> ProjectDto::getProjectList(const QString &projectName,
+                                                const QString &startTime,
+                                                const QString &endTime,
+                                                int _limit, int _offset,
+                                                const QString &_orderField,
+                                                bool descending) {
     try {
-        const auto project = mapToProject(projectMap);
-        DBHelper::getStorage().update(project);
-        return true;
-    }
-    catch (const std::exception& e) {
-        qDebug() << "update project failed: " << e.what();
-        return false;
-    }
-}
-
-bool ProjectDto::removeProject(const int projectID) {
-    try {
-        DBHelper::getStorage().remove<Project>(projectID);
-        return true;
-    }
-    catch (const std::exception& e) {
-        qDebug() << "remove project failed: " << e.what();
-        return false;
-    }
-}
-
-QVariantList ProjectDto::getProjectList(const QString& projectName, const QString& startTime,
-                                        const QString& endTime, int _limit, int _offset,
-                                        const QString& _orderField, bool descending) {
-    try {
-        const auto orderField = _orderField == "projectName"
-                                    ? &Project::projectName
-                                    : &Project::createTime;
+        const auto orderField = _orderField == "projectName" ? &Project::projectName
+                                                             : &Project::createTime;
         const auto query = order_by(orderField);
         auto orderedQuery = descending ? query.desc() : query.asc();
-        const QString _projectName = projectName.isEmpty() ? "%" : "%" + projectName + "%";
-        const QString _startTime = startTime.isEmpty()
-                                       ? QDateTime::currentDateTime().addYears(-100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
-                                       : startTime;
-        const QString _endTime = startTime.isEmpty()
-                                     ? QDateTime::currentDateTime().addYears(100).toString("yyyy-MM-ddTHH:mm:ss.zzz")
-                                     : endTime;
+        const QString _projectName = buildLikePattern(projectName);
+        const QString _startTime =
+            startTime.isEmpty() ? getDefaultStartTime() : startTime;
+        const QString _endTime =
+            startTime.isEmpty() ? getDefaultEndTime() : endTime;
         const auto projects = DBHelper::getStorage().get_all<Project>(
-            where(like(&Project::projectName, _projectName.toStdString())
-                  and c(&Project::createTime) >= _startTime.toStdString()
-                  and c(&Project::createTime) <= _endTime.toStdString()),
+            where(like(&Project::projectName, _projectName.toStdString()) and
+                  c(&Project::createTime) >= _startTime.toStdString() and
+                  c(&Project::createTime) <= _endTime.toStdString()),
             orderedQuery, limit(_limit, offset(_offset)));
-        return projectsToVariantList(projects);
-    }
-    catch (const std::exception& e) {
+        return projects;
+    } catch (const std::exception &e) {
         qDebug() << "get project list failed: " << e.what();
         return {};
     }
 }
 
-QVariantMap ProjectDto::projectToMap(const Project& project) {
-    QVariantMap map;
-    map.insert("id", project.id);
-    map.insert("projectName", QString::fromStdString(project.projectName));
-    map.insert("imageFolder", QString::fromStdString(project.imageFolder));
-    map.insert("resultFolder", QString::fromStdString(project.resultFolder));
-    map.insert("annotationType", project.annotationType);
-    map.insert("outOfTarget", project.outOfTarget);
-    map.insert("showOrder", project.showOrder);
-    map.insert("current", project.current);
-    map.insert("total", project.total);
-    map.insert("createTime", QString::fromStdString(project.createTime));
-    map.insert("updateTime", QString::fromStdString(project.updateTime));
-    return map;
-}
 
-Project ProjectDto::mapToProject(const QVariantMap& projectMap) {
-    Project project;
-    project.id = projectMap.value("id").toInt();
-    project.projectName = projectMap.value("projectName").toString().toStdString();
-    project.imageFolder = projectMap.value("imageFolder").toString().toStdString();
-    project.resultFolder = projectMap.value("resultFolder").toString().toStdString();
-    project.annotationType = projectMap.value("annotationType").toInt();
-    project.outOfTarget = projectMap.value("outOfTarget").toBool();
-    project.showOrder = projectMap.value("showOrder").toBool();
-    project.current = projectMap.value("current").toBool();
-    project.total = projectMap.value("total").toBool();
-    project.createTime = projectMap.value("createTime").toString().toStdString();
-    project.updateTime = projectMap.value("updateTime").toString().toStdString();
-    return project;
-}
-
-QVariantList ProjectDto::projectsToVariantList(const std::vector<Project>& projects) {
-    QVariantList list;
-    for (const auto& project : projects) {
-        list.append(projectToMap(project));
+Project ProjectDto::getProjectById(int projectId) {
+    try {
+        auto project = DBHelper::getStorage().get<Project>(projectId);
+        return project;
+    } catch (const std::exception &e) {
+        qDebug() << "Get project by ID failed:" << e.what();
+        return {};
     }
-    return list;
+}
+
+bool ProjectDto::existsProjectByName(const QString &projectName) {
+    try {
+        auto projects = DBHelper::getStorage().get_all<Project>(
+            where(c(&Project::projectName) == projectName.toStdString()));
+        return !projects.empty();
+    } catch (const std::exception &e) {
+        qDebug() << "Check project exists failed:" << e.what();
+        return false;
+    }
+}
+
+int ProjectDto::addProject(const Project &project) {
+    try {
+        Project _project = project;
+        QString currentTime =
+            QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz");
+        _project.createTime = currentTime.toStdString();
+        _project.updateTime = currentTime.toStdString();
+        return DBHelper::getStorage().insert(_project);
+    } catch (const std::exception &e) {
+        qDebug() << "Add project failed:" << e.what();
+        return -1;
+    }
+}
+
+bool ProjectDto::updateProject(const Project &project) {
+    try {
+        Project _project = project;
+        // 更新修改时间
+        _project.updateTime = QDateTime::currentDateTime()
+                                  .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                  .toStdString();
+        DBHelper::getStorage().update(_project);
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update project failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::removeProject(int projectId) {
+    try {
+        DBHelper::getStorage().remove<Project>(projectId);
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Remove project failed:" << e.what();
+        return false;
+    }
+}
+
+// 字段更新方法
+bool ProjectDto::updateProjectName(int projectId, const QString &projectName) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::projectName) = projectName.toStdString(),
+                c(&Project::updateTime)=QDateTime::currentDateTime()
+                                              .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                              .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update project name failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateImageFolder(int projectId, const QString &imageFolder) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::imageFolder)=imageFolder.toStdString(),
+                c(&Project::updateTime)=QDateTime::currentDateTime()
+                                              .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                              .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update image folder failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateResultFolder(int projectId,
+                                    const QString &resultFolder) {
+    // 类似上面的实现
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::resultFolder)= resultFolder.toStdString(),
+                c(&Project::updateTime)=
+                QDateTime::currentDateTime()
+                    .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                    .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update result folder failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateAnnotationType(int projectId, int annotationType) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::annotationType)= annotationType, c(&Project::updateTime)=
+                                                              QDateTime::currentDateTime()
+                                                                  .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                                                  .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update annotation type failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateOutOfTarget(int projectId, bool outOfTarget) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::outOfTarget)= outOfTarget, c(&Project::updateTime)=
+                                                        QDateTime::currentDateTime()
+                                                            .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                                            .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update out of target failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateShowOrder(int projectId, bool showOrder) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::showOrder)=showOrder, c(&Project::updateTime)=
+                                                    QDateTime::currentDateTime()
+                                                        .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                                        .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update show order failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateCurrent(int projectId, int current) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::current)= current, c(&Project::updateTime)=
+                                                QDateTime::currentDateTime()
+                                                    .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                                    .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update current failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateTotal(int projectId, int total) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::total)= total, c(&Project::updateTime)=
+                                            QDateTime::currentDateTime()
+                                                .toString("yyyy-MM-ddTHH:mm:ss.zzz")
+                                                .toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update total failed:" << e.what();
+        return false;
+    }
+}
+
+bool ProjectDto::updateUpdateTime(int projectId, const QString &updateTime) {
+    try {
+        DBHelper::getStorage().update_all(
+            set(c(&Project::updateTime)= updateTime.toStdString()),
+            where(c(&Project::id) == projectId));
+        return true;
+    } catch (const std::exception &e) {
+        qDebug() << "Update update time failed:" << e.what();
+        return false;
+    }
+}
+
+// 私有辅助方法
+QString ProjectDto::buildLikePattern(const QString &pattern) const {
+    return pattern.isEmpty() ? "%" : "%" + pattern + "%";
+}
+
+QString ProjectDto::getDefaultStartTime() const {
+    return QDateTime::currentDateTime().addYears(-100).toString(
+        "yyyy-MM-ddTHH:mm:ss.zzz");
+}
+
+QString ProjectDto::getDefaultEndTime() const {
+    return QDateTime::currentDateTime().addYears(100).toString(
+        "yyyy-MM-ddTHH:mm:ss.zzz");
 }

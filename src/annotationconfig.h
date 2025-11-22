@@ -26,7 +26,7 @@ class AnnotationConfig : public QObject {
     Q_PROPERTY(LabelListModel *labelListModel READ labelListModel CONSTANT)
     Q_PROPERTY(FileListModel *fileListModel READ fileListModel CONSTANT)
     Q_PROPERTY(AnnotationModelBase *currentAnnotationModel READ
-                   currentAnnotationModel CONSTANT)
+                   currentAnnotationModel NOTIFY currentAnnotationModelChanged)
     Q_PROPERTY(int currentImageIndex READ currentImageIndex WRITE
                    setCurrentImageIndex NOTIFY currentImageIndexChanged FINAL)
     Q_PROPERTY(int currentLabelIndex READ currentLabelIndex NOTIFY
@@ -134,6 +134,7 @@ signals:
     void currentLabelIndexChanged();
     void currentLabelChanged();
     void currentLabelColorChanged();
+    void currentAnnotationModelChanged();
 
 private:
     QString imageDir_;
