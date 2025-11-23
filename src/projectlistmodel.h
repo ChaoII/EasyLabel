@@ -9,8 +9,6 @@ class ProjectListModel : public QAbstractListModel {
 
     Q_PROPERTY(int pageSize READ pageSize WRITE setPageSize NOTIFY pageSizeChanged)
     Q_PROPERTY(int currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
-    Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
-    Q_PROPERTY(int totalPages READ totalPages NOTIFY totalPagesChanged)
 
 public:
     struct ProjectItem {
@@ -28,7 +26,7 @@ public:
     };
 
     enum ItemRoles {
-        IDROle = Qt::UserRole + 1,
+        IDRole = Qt::UserRole + 1,
         ProjectNameRole,
         ImageFolderRole,
         ResultFolderRole,
@@ -59,19 +57,12 @@ public:
     void setCurrentPage(int currentPage);
 
 public slots:
-    // 分页查询
-    Q_INVOKABLE void refresh();
-    Q_INVOKABLE void loadPage(int page);
-    Q_INVOKABLE void nextPage();
-    Q_INVOKABLE void prevPage();
-    Q_INVOKABLE void firstPage();
-    Q_INVOKABLE void lastPage();
 
     Q_INVOKABLE void filterProjectListModel(const QString &projectName = "",
                                             const QString &startTime = "",
                                             const QString &endTime = "",
                                             const QString &orderField = "id",
-                                            bool descending = false);
+                                            bool descending = true);
 
     Q_INVOKABLE int getProjectCount(const QString &projectName = "",
                                     const QString &startTime = "",
@@ -80,12 +71,13 @@ public slots:
     Q_INVOKABLE bool addItem(const QString &projectName,
                              const QString &imageFolder = "",
                              const QString &resultFolder = "",
-                             int annotationType = 0);
+                             int annotationType = 0,bool outOfTarget=false,bool showOrder=false);
 
     Q_INVOKABLE bool removeItem(int projectID);
     Q_INVOKABLE bool updateItem(int projectId, const QVariantMap &updates);
 
     // 属性设置辅助方法
+    Q_INVOKABLE QVariant getProperty(int index, const QString &property);
     Q_INVOKABLE bool setProperty(int index, const QString &property, const QVariant &value);
     Q_INVOKABLE bool setPropertyById(int projectId, const QString &property, const QVariant &value);
     Q_INVOKABLE int findIndexById(int projectId);
@@ -93,8 +85,6 @@ public slots:
 signals:
     void pageSizeChanged();
     void currentPageChanged();
-    void totalCountChanged();
-    void totalPagesChanged();
     void loadFinished(bool success, const QString &errorMessage = "");
 
 private:
@@ -106,13 +96,6 @@ private:
     int totalCount_ = 0;
     int totalPages_ = 1;
 
-    // 当前过滤条件
-    QString currentProjectName_;
-    QString currentStartTime_;
-    QString currentEndTime_;
-    QString currentOrderField_ = "id";
     bool currentDescending_ = false;
 
-    void updatePaginationInfo();
-    bool isValidPage(int page) const;
 };

@@ -1,5 +1,7 @@
 #include "projectlistmodel.h"
 
+#include <QTimer>
+
 ProjectListModel::ProjectListModel(QObject *parent)
     : QAbstractListModel{parent}, projectDto_(new ProjectDto()) {}
 
@@ -15,7 +17,7 @@ QVariant ProjectListModel::data(const QModelIndex &index, int role) const {
 
     const ProjectItem &projectItem = items_.at(index.row());
     switch (role) {
-    case IDROle:
+    case IDRole:
         return projectItem.id;
     case ProjectNameRole:
         return projectItem.projectName;
@@ -126,7 +128,7 @@ bool ProjectListModel::setData(const QModelIndex &index, const QVariant &value,
 }
 
 QHash<int, QByteArray> ProjectListModel::roleNames() const {
-    return {{IDROle, "id"},
+    return {{IDRole, "id"},
             {ProjectNameRole, "projectName"},
             {ImageFolderRole, "imageFolder"},
             {ResultFolderRole, "resultFolder"},
@@ -142,17 +144,14 @@ QHash<int, QByteArray> ProjectListModel::roleNames() const {
 void ProjectListModel::setPageSize(int pageSize) {
     if (pageSize_ != pageSize && pageSize > 0) {
         pageSize_ = pageSize;
-        updatePaginationInfo();
         emit pageSizeChanged();
-        refresh(); // 页面大小改变时重新加载
     }
 }
 
 void ProjectListModel::setCurrentPage(int currentPage) {
-    if (currentPage_ != currentPage && isValidPage(currentPage)) {
+    if (currentPage_ != currentPage) {
         currentPage_ = currentPage;
         emit currentPageChanged();
-        refresh(); // 页码改变时重新加载
     }
 }
 
@@ -162,33 +161,15 @@ void ProjectListModel::filterProjectListModel(const QString &projectName,
                                               const QString &endTime,
                                               const QString &orderField,
                                               bool descending) {
-    // 保存过滤条件
-    currentProjectName_ = projectName;
-    currentStartTime_ = startTime;
-    currentEndTime_ = endTime;
-    currentOrderField_ = orderField.isEmpty() ? "id" : orderField;
-    currentDescending_ = descending;
 
-    // 重新计算分页信息
     totalCount_ = projectDto_->getProjectCount(projectName, startTime, endTime);
-    updatePaginationInfo();
-
     // 加载当前页数据
     const int limit = pageSize_;
-    const int offset = pageSize_ * (currentPage_ - 1);
-    qDebug() << "projectName: " << projectName;
-    qDebug() << "startTime: " << startTime;
-    qDebug() << "endTime: " << endTime;
-    qDebug() << "limit: " << limit;
-    qDebug() << "offset: " << offset;
-
+    const int offset = pageSize_ * currentPage_;
     auto projects = projectDto_->getProjectList(
         projectName, startTime, endTime, limit, offset, orderField, descending);
-    qDebug() << "projects.size(): " << projects.size();
-
     beginResetModel();
     items_.clear();
-
     for (const Project &project : projects) {
         ProjectItem item;
         item.id = project.id;
@@ -200,69 +181,37 @@ void ProjectListModel::filterProjectListModel(const QString &projectName,
         item.showOrder = project.showOrder;
         item.current = project.current;
         item.total = project.total;
-        item.createTime = QString::fromStdString(
-            project.createTime); // 修复：这里应该是createTime
-        item.updateTime = QString::fromStdString(
-            project.updateTime); // 修复：这里应该是updateTime
+        item.createTime = QString::fromStdString(project.createTime);
+        item.updateTime = QString::fromStdString(project.updateTime);
         items_.append(item);
     }
     endResetModel();
-
     emit loadFinished(true);
 }
-
-// 分页导航函数
-void ProjectListModel::refresh() {
-    filterProjectListModel(currentProjectName_, currentStartTime_,
-                           currentEndTime_, currentOrderField_,
-                           currentDescending_);
-}
-
-void ProjectListModel::loadPage(int page) {
-    if (isValidPage(page)) {
-        setCurrentPage(page);
-    }
-}
-
-void ProjectListModel::nextPage() {
-    if (currentPage_ < totalPages_) {
-        setCurrentPage(currentPage_ + 1);
-    }
-}
-
-void ProjectListModel::prevPage() {
-    if (currentPage_ > 1) {
-        setCurrentPage(currentPage_ - 1);
-    }
-}
-
-void ProjectListModel::firstPage() { setCurrentPage(1); }
-
-void ProjectListModel::lastPage() { setCurrentPage(totalPages_); }
 
 int ProjectListModel::getProjectCount(const QString &projectName,
                                       const QString &startTime,
                                       const QString &endTime) {
     totalCount_ = projectDto_->getProjectCount(projectName, startTime, endTime);
-    updatePaginationInfo();
     return totalCount_;
 }
 
 bool ProjectListModel::addItem(const QString &projectName,
                                const QString &imageFolder,
-                               const QString &resultFolder,
-                               int annotationType) {
+                               const QString &resultFolder, int annotationType,
+                               bool outOfTarget, bool showOrder) {
     // 创建新项目
     Project newProject;
     newProject.projectName = projectName.toStdString();
     newProject.imageFolder = imageFolder.toStdString();
     newProject.resultFolder = resultFolder.toStdString();
     newProject.annotationType = annotationType;
-
+    newProject.outOfTarget = outOfTarget;
+    newProject.showOrder = showOrder;
+    newProject.current = 0;
+    newProject.total = 0;
     int newId = projectDto_->addProject(newProject);
     if (newId > 0) {
-        // 重新加载数据（可以优化为只插入单条数据）
-        refresh();
         return true;
     }
     return false;
@@ -277,19 +226,6 @@ bool ProjectListModel::removeItem(int projectId) {
         beginRemoveRows(QModelIndex(), index, index);
         items_.removeAt(index);
         endRemoveRows();
-
-        // 更新总数
-        totalCount_ = projectDto_->getProjectCount(
-            currentProjectName_, currentStartTime_, currentEndTime_);
-        updatePaginationInfo();
-
-        // 如果当前页没有数据了，且不是第一页，则跳转到上一页
-        if (items_.isEmpty() && currentPage_ > 1) {
-            setCurrentPage(currentPage_ - 1);
-        } else {
-            emit totalCountChanged();
-        }
-        return true;
     }
     return false;
 }
@@ -311,6 +247,32 @@ bool ProjectListModel::updateItem(int projectId, const QVariantMap &updates) {
 }
 
 // 辅助函数实现
+
+QVariant ProjectListModel::getProperty(int index, const QString &property) {
+    if (index < 0 || index >= items_.size())
+        return "";
+    QModelIndex modelIndex = createIndex(index, 0);
+    if (property == "id")
+        return data(modelIndex, IDRole);
+    if (property == "projectName")
+        return data(modelIndex, ProjectNameRole);
+    if (property == "imageFolder")
+        return data(modelIndex, ImageFolderRole);
+    if (property == "resultFolder")
+        return data(modelIndex, ResultFolderRole);
+    if (property == "annotationType")
+        return data(modelIndex, AnnotationTypeRole);
+    if (property == "outOfTarget")
+        return data(modelIndex, OutOfTargetRole);
+    if (property == "showOrder")
+        return data(modelIndex, ShowOrderRole);
+    if (property == "current")
+        return data(modelIndex, CurrentRole);
+    if (property == "total")
+        return data(modelIndex, TotalRole);
+    return "";
+}
+
 bool ProjectListModel::setProperty(int index, const QString &property,
                                    const QVariant &value) {
     if (index < 0 || index >= items_.size())
@@ -350,23 +312,4 @@ int ProjectListModel::findIndexById(int projectId) {
         }
     }
     return -1;
-}
-
-// 私有辅助函数
-void ProjectListModel::updatePaginationInfo() {
-    totalPages_ = (totalCount_ + pageSize_ - 1) / pageSize_; // 向上取整
-    if (totalPages_ < 1)
-        totalPages_ = 1;
-
-    // 确保当前页在有效范围内
-    if (currentPage_ > totalPages_) {
-        currentPage_ = totalPages_;
-        emit currentPageChanged();
-    }
-    emit totalCountChanged();
-    emit totalPagesChanged();
-}
-
-bool ProjectListModel::isValidPage(int page) const {
-    return page >= 1 && page <= totalPages_;
 }

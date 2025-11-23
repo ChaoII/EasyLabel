@@ -18,7 +18,7 @@ public:
     std::vector<Project>
     getProjectList(const QString &projectName = "", const QString &startTime = "",
                    const QString &endTime = "", int limit = -1, int offset = 0,
-                   const QString &orderField = "id", bool descending = false);
+                   const QString &orderField = "id", bool descending = true);
 
     Project getProjectById(int projectId);
     bool existsProjectByName(const QString &projectName);

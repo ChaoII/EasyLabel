@@ -12,7 +12,7 @@ Item {
     property string searchEndTime:""
     property var listModel: ProjectListModel{ }
     Component.onCompleted: {
-        searchProject()
+        // searchProject()
     }
     Item{
         id: header
@@ -125,9 +125,9 @@ Item {
 
     function removeProject(index){
         let success = false
-        if(index >= 0 && index < listModel.length){
-            let formData = listModel[index]
-            let removed = projectDto.removeProject(formData.id)
+        if(index >= 0 && index < listModel.rowCount()){
+            let projeID = listModel.getProperty(index, "id")
+            let removed = listModel.removeItem(projeID)
             searchProject()
             success = true
         }
@@ -150,7 +150,6 @@ Item {
             height: 200
             titleDelegate: null
             Component.onCompleted: {
-                console.log("++++",index)
                 annotationTypeBaseColor = annotationConfig.getAnnotationTypeColor()
                 annotationTypeName = annotationConfig.getAnnotationTypeName()
             }
@@ -178,6 +177,8 @@ Item {
                 Connections{
                     target: annotationConfig
                     function onAnnotatedImageNumChanged(){
+                        listModel.setProperty(index, "current", annotationConfig.annotatedImageNum)
+                        listModel.setProperty(index, "total", annotationConfig.totalImageNum)
                         progressBar.percent = annotationConfig.annotatedImageNum/annotationConfig.totalImageNum *100
                     }
                 }
@@ -374,23 +375,37 @@ Item {
         }
         onFormDataEditFinished: function(index, formData){
             if(popup.mode === GlobalEnum.Create){
-                if(projectDto.insertProject(formData)){
+
+                let projectName = formData.projectName
+                let imageFolder =formData.imageFolder
+                let resultFolder = formData.resultFolder
+                let annotationType = formData.annotationType
+                let outOfTarget = formData.outOfTarget
+                let showOrder = formData.showOrder
+                if(listModel.addItem(projectName, imageFolder, resultFolder, annotationType, outOfTarget, showOrder)){
                     QmlGlobalHelper.message.success("创建项目成功！")
                 }else{
                     QmlGlobalHelper.message.error("创建项目失败！")
                 }
                 Qt.callLater(searchProject);
             }if(popup.mode === GlobalEnum.Edit){
-                if (index >= 0 && index < listModel.length) {
-                    var currentListItem = listModel[index]
-                    currentListItem["projectName"] = formData.projectName || currentListItem.projectName
-                    currentListItem["imageFolder"] = formData.imageFolder || currentListItem.imageFolder
-                    currentListItem["resultFolder"] = formData.resultFolder || currentListItem.resultFolder
-                    currentListItem["annotationType"] = formData.annotationType !== undefined ? formData.annotationType: currentListItem.annotationType
-                    currentListItem["outOfTarget"] = formData.outOfTarget !== undefined ? formData.outOfTarget: currentListItem.outOfTarget
-                    currentListItem["showOrder"] = formData.showOrder !== undefined ? formData.showOrder: currentListItem.showOrder
-                    currentListItem["updateTime"] = formData.showOrder !== undefined ? formData.updateTime: currentListItem.showOrder
-                    if(projectDto.updateProject(currentListItem)){
+                if (index >= 0 && index < listModel.rowCount()) {
+                    let success = false
+                    let currentprojectName = listModel.getProperty(index, "projectName")
+                    let currentimageFolder = listModel.getProperty(index, "imageFolder")
+                    let currentresultFolder = listModel.getProperty(index, "resultFolder")
+                    let currentannotationType = listModel.getProperty(index, "annotationType")
+                    let currentoutOfTarget =  listModel.getProperty(index, "outOfTarget")
+                    let currentshowOrder =  listModel.getProperty(index, "showOrder")
+
+                    success = listModel.setProperty(index, "projectName", formData.projectName)
+                    success = listModel.setProperty(index, "imageFolder", formData.imageFolder)
+                    success = listModel.setProperty(index, "resultFolder", formData.resultFolder)
+                    success = listModel.setProperty(index, "annotationType", formData.annotationType)
+                    success = listModel.setProperty(index, "outOfTarget", formData.outOfTarget)
+                    success = listModel.setProperty(index, "showOrder", formData.showOrder)
+                    success = listModel.setProperty(index, "updateTime", formData.updateTime)
+                    if(success){
                         QmlGlobalHelper.message.success("修改项目成功！")
                     }else{
                         QmlGlobalHelper.message.error("修改项目失败！")
