@@ -2,47 +2,37 @@
 #include "detectionAnnotationmodel.h"
 #include <QDir>
 #include <QFile>
-#include <QSaveFile>
+#include <QImage>
 #include <QModelIndex>
+#include <QSaveFile>
 
-
-AnnotationConfig::AnnotationConfig(QObject* parent): QObject(parent),
-    labelListModel_(new LabelListModel(this)),
+AnnotationConfig::AnnotationConfig(QObject* parent)
+    : QObject(parent), labelListModel_(new LabelListModel(this)),
     fileListModel_(new FileListModel(this)) {
-    connect(labelListModel_, &LabelListModel::listModelDataChanged, this, [this]() {
-        if (!saveLabelFile()) {
-            qDebug() << "Failed to save label file.";
-        }
-        emit currentLabelIndexChanged();
-        emit currentLabelChanged();
-        emit currentLabelColorChanged();
-    });
+    connect(labelListModel_, &LabelListModel::listModelDataChanged, this,
+            [this]() {
+                if (!saveLabelFile()) {
+                    qDebug() << "Failed to save label file.";
+                }
+                emit currentLabelIndexChanged();
+                emit currentLabelChanged();
+                emit currentLabelColorChanged();
+            });
 }
 
-QString AnnotationConfig::imageDir() const {
-    return imageDir_;
-}
+QString AnnotationConfig::imageDir() const { return imageDir_; }
 
-QString AnnotationConfig::resultDir() const {
-    return resultDir_;
-}
+QString AnnotationConfig::resultDir() const { return resultDir_; }
 
-QString AnnotationConfig::projectName() const {
-    return projectName_;
-}
+QString AnnotationConfig::projectName() const { return projectName_; }
 
 AnnotationConfig::AnnotationType AnnotationConfig::annotationType() const {
     return annotationType_;
 }
 
-int AnnotationConfig::totalImageNum() const {
-    return totalImageNum_;
-}
+int AnnotationConfig::totalImageNum() const { return totalImageNum_; }
 
-int AnnotationConfig::annotatedImageNum() const {
-    return annotatedImageNum_;
-}
-
+int AnnotationConfig::annotatedImageNum() const { return annotatedImageNum_; }
 
 LabelListModel* AnnotationConfig::labelListModel() const {
     return labelListModel_;
@@ -53,14 +43,13 @@ FileListModel* AnnotationConfig::fileListModel() const {
 }
 
 AnnotationModelBase* AnnotationConfig::currentAnnotationModel() {
-    if (currentImageIndex_ < 0 || currentImageIndex_ >= annotationModelList_.size())
+    if (currentImageIndex_ < 0 ||
+        currentImageIndex_ >= annotationModelList_.size())
         return new DetectionAnnotationModel();
     return annotationModelList_[currentImageIndex_];
 }
 
-int AnnotationConfig::currentLineWidth() const {
-    return currentLineWidth_;
-}
+int AnnotationConfig::currentLineWidth() const { return currentLineWidth_; }
 
 double AnnotationConfig::currentFillOpacity() const {
     return currentFillOpacity_;
@@ -70,17 +59,11 @@ int AnnotationConfig::currentCornerRadius() const {
     return currentCornerRadius_;
 }
 
-int AnnotationConfig::currentEdgeWidth() const {
-    return currentEdgeWidth_;
-}
+int AnnotationConfig::currentEdgeWidth() const { return currentEdgeWidth_; }
 
-int AnnotationConfig::currentEdgeHeight() const {
-    return currentEdgeHeight_;
-}
+int AnnotationConfig::currentEdgeHeight() const { return currentEdgeHeight_; }
 
-int AnnotationConfig::currentImageIndex() const {
-    return currentImageIndex_;
-}
+int AnnotationConfig::currentImageIndex() const { return currentImageIndex_; }
 
 int AnnotationConfig::currentLabelIndex() {
     currentLabelIndex_ = labelListModel_->getFirstSelected();
@@ -95,17 +78,11 @@ QString AnnotationConfig::currentLabel() const {
     return labelListModel_->getLabel(currentLabelIndex_);
 }
 
-bool AnnotationConfig::showLabel() const {
-    return showLabel_;
-}
+bool AnnotationConfig::showLabel() const { return showLabel_; }
 
-int AnnotationConfig::fontPointSize() const {
-    return fontPointSize_;
-}
+int AnnotationConfig::fontPointSize() const { return fontPointSize_; }
 
-int AnnotationConfig::centerPointerSize() const {
-    return centerPointerSize_;
-}
+int AnnotationConfig::centerPointerSize() const { return centerPointerSize_; }
 
 void AnnotationConfig::setCurrentLineWidth(int lineWidth) {
     if (currentLineWidth_ != lineWidth) {
@@ -120,7 +97,6 @@ void AnnotationConfig::setCurrentFillOpacity(double fillOpacity) {
         emit currentFillOpacityChanged();
     }
 }
-
 
 void AnnotationConfig::setCurrentCornerRadius(int radius) {
     if (currentCornerRadius_ != radius) {
@@ -143,12 +119,11 @@ void AnnotationConfig::setCurrentEdgeHeight(int height) {
     }
 }
 
-
 void AnnotationConfig::setCurrentImageIndex(int index) {
     if (currentImageIndex_ != index) {
         int prewIndex = currentImageIndex_;
         currentImageIndex_ = index;
-        qDebug() << "index:"<<index;
+        qDebug() << "index:" << index;
         emit currentAnnotationModelChanged();
         emit currentImageIndexChanged(prewIndex, index);
     }
@@ -175,16 +150,9 @@ void AnnotationConfig::setCenterPointerSize(int pointerSize) {
     }
 }
 
-
 void AnnotationConfig::setImageDir(const QString& imageDir) {
     if (imageDir != imageDir_) {
-        setCurrentImageIndex(-1);
         imageDir_ = imageDir;
-        fileListModel_->setFolderPath(imageDir_);
-        setTotalImageNum(fileListModel_->rowCount());
-        if (fileListModel_->rowCount() > 0) {
-            setCurrentImageIndex(0);
-        }
         emit imageDirChanged();
     }
 }
@@ -192,10 +160,6 @@ void AnnotationConfig::setImageDir(const QString& imageDir) {
 void AnnotationConfig::setResultDir(const QString& resultDir) {
     if (resultDir != resultDir_) {
         resultDir_ = resultDir;
-        if (!loadLabelFile()) {
-            qDebug() << "Failed to load label file.";
-        }
-        loadAnnotationFiles();
         emit resultDirChanged();
     }
 }
@@ -228,22 +192,21 @@ void AnnotationConfig::setAnnotatedImageNum(int annotatedNum) {
     }
 }
 
-
 QString AnnotationConfig::getAnnotationTypeColor() const {
     static QVector<QString> palettes = {
-        "#F5222D", //red
-        "#FA541C", //volcano
-        "#FA8C16", //orange
-        "#FAAD14", //gold
-        "#FADB14", //yellow
-        "#A0D911", //lime
-        "#52C41A", //green
-        "#13C2C2", //cyan
-        "#1677FF", //blue
-        "#2F54EB", //geekblue
-        "#722ED1", //purple
-        "#EB2F96", //magenta
-        "#666666", //Grey
+        "#F5222D", // red
+        "#FA541C", // volcano
+        "#FA8C16", // orange
+        "#FAAD14", // gold
+        "#FADB14", // yellow
+        "#A0D911", // lime
+        "#52C41A", // green
+        "#13C2C2", // cyan
+        "#1677FF", // blue
+        "#2F54EB", // geekblue
+        "#722ED1", // purple
+        "#EB2F96", // magenta
+        "#666666", // Grey
     };
     const int index = annotationType_;
     if (index < 0) {
@@ -252,12 +215,23 @@ QString AnnotationConfig::getAnnotationTypeColor() const {
     return palettes[index % palettes.size()];
 }
 
-
 QString AnnotationConfig::getAnnotationTypeName() const {
     const QMetaObject* metaObject = &AnnotationConfig::staticMetaObject;
     const int enumIndex = metaObject->indexOfEnumerator("AnnotationType");
     const QMetaEnum metaEnum = metaObject->enumerator(enumIndex);
     return {metaEnum.valueToKey(annotationType_)};
+}
+
+QVariantList AnnotationConfig::getExportAnnotationTypes() const {
+    QVariantList list;
+    QMetaEnum metaEnum = QMetaEnum::fromType<ExportAnnotationType>();
+    for (int i = 0; i < metaEnum.keyCount(); ++i) {
+        list.append(QVariantMap{
+            {"label", QString(metaEnum.key(i))},
+            {"value", metaEnum.value(i)}
+        });
+    }
+    return list;
 }
 
 
@@ -270,12 +244,14 @@ void AnnotationConfig::loadAnnotationFiles() {
     annotationModelList_.clear();
     for (int i = 0; i < fileListModel_->rowCount(); i++) {
         QString annotationBaseFileName = fileListModel_->getResultFilePath(i);
-        QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
+        QString annotationFilePath =
+            QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
         // 不存在就创建
-        if (!QFile::exists(AnnotationFilePath)) {
-            QFile file(AnnotationFilePath);
+        if (!QFile::exists(annotationFilePath)) {
+            QFile file(annotationFilePath);
             if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                qWarning() << "无法打开文件:" << AnnotationFilePath << file.errorString();
+                qWarning() << "无法打开文件:" << annotationFilePath
+                           << file.errorString();
                 continue;
             }
             file.close();
@@ -283,12 +259,25 @@ void AnnotationConfig::loadAnnotationFiles() {
         }
         // 如果存在那么加载annotation
         AnnotationModelBase* annotation = new DetectionAnnotationModel();
-        if (annotation->loadFromFile(AnnotationFilePath)) {
+        if (annotation->loadFromFile(annotationFilePath)) {
             fileListModel_->setAnnotated(i, true);
         }
         annotationModelList_.append(annotation);
     }
     setAnnotatedImageNum(fileListModel_->getAnnotatedNum());
+}
+
+void AnnotationConfig::loadAnnotationConfig() {
+    setCurrentImageIndex(-1);
+    fileListModel_->setFolderPath(imageDir_);
+    setTotalImageNum(fileListModel_->rowCount());
+    if (fileListModel_->rowCount() > 0) {
+        setCurrentImageIndex(0);
+    }
+    if (!loadLabelFile()) {
+        qDebug() << "Failed to load label file.";
+    }
+    loadAnnotationFiles();
 }
 
 
@@ -303,11 +292,11 @@ bool AnnotationConfig::loadLabelFile() const {
         qDebug() << "文件不存在：" << labelFilePath;
         return false;
     }
-    if(! labelListModel_->loadFromFile(labelFilePath)){
-
+    if (!labelListModel_->loadFromFile(labelFilePath)) {
+        return false;
     }
+    return true;
 }
-
 
 bool AnnotationConfig::saveLabelFile() const {
     if (resultDir_.isEmpty()) {
@@ -332,21 +321,52 @@ bool AnnotationConfig::saveLabelFile() const {
 }
 
 bool AnnotationConfig::saveAnnotationFile(const int imageIndex) {
-    if (imageIndex < 0 || imageIndex >= annotationModelList_.size()) return false;
-    const QString annotationBaseFileName = fileListModel_->getResultFilePath(imageIndex);
-    const QString AnnotationFilePath = QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
-    if (!annotationModelList_[imageIndex]->saveToFile(AnnotationFilePath)) return false;
+    if (imageIndex < 0 || imageIndex >= annotationModelList_.size())
+        return false;
+    const QString annotationBaseFileName =
+        fileListModel_->getResultFilePath(imageIndex);
+    const QString aAnnotationFilePath =
+        QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
+    QImage image(fileListModel_->getFullPath(imageIndex));
+    if (!annotationModelList_[imageIndex]->saveToFile(aAnnotationFilePath, annotationType_,
+                                                      image.size()))
+        return false;
     fileListModel_->setAnnotated(imageIndex, true);
     setAnnotatedImageNum(fileListModel_->getAnnotatedNum());
     return true;
 }
 
 AnnotationModelBase* AnnotationConfig::getAnnotationModel(const int index) {
-    if (index < 0 || index >= annotationModelList_.size()) return nullptr;
+    if (index < 0 || index >= annotationModelList_.size())
+        return nullptr;
     return annotationModelList_[index];
 }
 
-void AnnotationConfig::setAnnotationModel(int index, AnnotationModelBase* annotationModel) {
-    if (index < 0 || index > annotationModelList_.size()) return;
+void AnnotationConfig::setAnnotationModel(
+    int index, AnnotationModelBase* annotationModel) {
+    if (index < 0 || index > annotationModelList_.size())
+        return;
     annotationModelList_[index] = annotationModel;
+}
+
+bool AnnotationConfig::exportAnnotation(const QString& exportDir, bool exportImage,
+                                        ExportAnnotationType exportType, double trainSpliteRate) {
+    auto fileListModel = new FileListModel(this);
+    DetectionAnnotationModel* annotationModel = new DetectionAnnotationModel(this);
+    fileListModel->setFolderPath(imageDir_);
+    for (int index = 0; index < fileListModel_->rowCount(); index++) {
+        const QString annotationBaseFileName =
+            fileListModel_->getResultFilePath(index);
+        const QString annotationFilePath =
+            QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
+        annotationModel->loadFromFile(annotationFilePath);
+        annotationModel->exportYolo(annotationFilePath);
+    }
+
+    return true;
+
+    // if (annotationType_ == Detection) {
+    //     if (exportType == ExportAnnotationType::YOLO) {
+    //     }
+    // }
 }

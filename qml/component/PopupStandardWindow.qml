@@ -10,13 +10,11 @@ HusPopup {
     id: popup
     property alias title: txtTitle.text
     property Component contentDelegate: null
-    property Item loaderItem: contentLoader.item
+    property QtObject loaderItem: contentLoader.item
     signal accepted()
     signal rejected()
     x: (parent.width - width) * 0.5
     y: (parent.height - height) * 0.5
-    implicitWidth: 800
-    implicitHeight: 600
     parent: Overlay.overlay
     closePolicy: HusPopup.NoAutoClose
     movable: true
@@ -63,7 +61,6 @@ HusPopup {
             }
             sourceComponent: popup.contentDelegate
         }
-
         HusDivider {
             id: dividerBottom
             anchors.bottom:btnLayout.top

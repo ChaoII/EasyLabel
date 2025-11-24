@@ -53,8 +53,10 @@ class AnnotationConfig : public QObject {
 
 public:
     enum AnnotationType { Detection = 0, RotatedBox = 1, Other = 2 };
+    enum ExportAnnotationType { YOLO = 0, COCO, VOC };
 
     Q_ENUM(AnnotationType)
+    Q_ENUM(ExportAnnotationType)
     explicit AnnotationConfig(QObject *parent = nullptr);
     [[nodiscard]] QString imageDir() const;
     [[nodiscard]] QString resultDir() const;
@@ -102,18 +104,21 @@ public:
 
     Q_INVOKABLE QString getAnnotationTypeColor() const;
     Q_INVOKABLE QString getAnnotationTypeName() const;
+    Q_INVOKABLE QVariantList getExportAnnotationTypes() const;
 
+    Q_INVOKABLE void loadAnnotationConfig();
     Q_INVOKABLE bool loadLabelFile() const;
     Q_INVOKABLE bool saveLabelFile() const;
     Q_INVOKABLE void loadAnnotationFiles();
     Q_INVOKABLE bool saveAnnotationFile(int imageIndex);
     Q_INVOKABLE AnnotationModelBase *getAnnotationModel(int index);
-    Q_INVOKABLE void setAnnotationModel(int index,
-                                        AnnotationModelBase *annotationModel);
+    Q_INVOKABLE void setAnnotationModel(int index, AnnotationModelBase *annotationModel);
+    Q_INVOKABLE bool exportAnnotation(const QString& exportDir, bool exportImage,
+                                      ExportAnnotationType exportType, double trainSpliteRate);
 
 signals:
     void imageDirChanged();
-    void resultDirChanged();
+        void resultDirChanged();
     void projectNameChanged();
     void annotationTypeChanged();
     void totalImageNumChanged();

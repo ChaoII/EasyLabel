@@ -26,7 +26,7 @@ Item {
             type: HusButton.Type_Primary
             text: "创建项目"
             onClicked: {
-                popup.openProjectInfo()
+                projectPopup.openProjectInfo()
             }
         }
         RowLayout{
@@ -143,6 +143,9 @@ Item {
             property int fontSize: 12
             property AnnotationConfig annotationConfig: AnnotationConfig{
                 annotationType: modelData.annotationType
+                imageDir: modelData.imageFolder
+                resultDir: modelData.resultFolder
+                projectName: modelData.projectName
             }
             property color annotationTypeBaseColor
             property string annotationTypeName
@@ -156,16 +159,12 @@ Item {
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
-                    annotationConfig.imageDir = modelData.imageFolder
-                    annotationConfig.resultDir = modelData.resultFolder
-                    annotationConfig.projectName = modelData.projectName
+                    annotationConfig.loadAnnotationConfig()
                     QmlGlobalHelper.mainStackView.push("../canvas/MainCanvas.qml",{
                                                            annotationConfig:annotationConfig
                                                        })
                 }
             }
-
-
             Item{
                 id:itemTitle
                 anchors.left: parent.left
@@ -314,7 +313,7 @@ Item {
                     iconSource: HusIcon.EditOutlined
                     iconSize: 16
                     onClicked: {
-                        popup.openProjectInfo(index, modelData)
+                        projectPopup.openProjectInfo(index, modelData)
                     }
                 }
                 Item {
@@ -331,8 +330,23 @@ Item {
                         type: HusButton.Type_Link
                         iconSource: HusIcon.ExportOutlined
                         iconSize: 16
+
                         onClicked:{
-                            QmlGlobalHelper.message.info("message")
+                            // annotationConfig.exportAnnotation(AnnotationConfig.Yolo)
+                            exportDatasetPopup.exportTypeList = annotationConfig.getExportAnnotationTypes()
+                            exportDatasetPopup.open()
+                        }
+                    }
+                    ExportDatasetPopup{
+                        id: exportDatasetPopup
+                        width: 480
+                        height: 320
+                        Overlay.modal: Rectangle {
+                            color: "#90000000"
+                        }
+                        onExportDataReady: function(exportDir, exportImage, currentExportType, tarinRate){
+                            console.log(exportDir, exportImage, currentExportType, tarinRate)
+                            exportDatasetPopup.close()
                         }
                     }
                 }
@@ -365,7 +379,8 @@ Item {
     }
 
     ProjectPopup{
-        id: popup
+
+        id: projectPopup
         x: (parent.width - width) * 0.5
         y: (parent.height - height) * 0.5
         width: 800
@@ -374,8 +389,7 @@ Item {
             color: "#90000000"  // 半透明黑色
         }
         onFormDataEditFinished: function(index, formData){
-            if(popup.mode === GlobalEnum.Create){
-
+            if(projectPopup.mode === GlobalEnum.Create){
                 let projectName = formData.projectName
                 let imageFolder =formData.imageFolder
                 let resultFolder = formData.resultFolder
@@ -388,16 +402,9 @@ Item {
                     QmlGlobalHelper.message.error("创建项目失败！")
                 }
                 Qt.callLater(searchProject);
-            }if(popup.mode === GlobalEnum.Edit){
+            }if(projectPopup.mode === GlobalEnum.Edit){
                 if (index >= 0 && index < listModel.rowCount()) {
                     let success = false
-                    let currentprojectName = listModel.getProperty(index, "projectName")
-                    let currentimageFolder = listModel.getProperty(index, "imageFolder")
-                    let currentresultFolder = listModel.getProperty(index, "resultFolder")
-                    let currentannotationType = listModel.getProperty(index, "annotationType")
-                    let currentoutOfTarget =  listModel.getProperty(index, "outOfTarget")
-                    let currentshowOrder =  listModel.getProperty(index, "showOrder")
-
                     success = listModel.setProperty(index, "projectName", formData.projectName)
                     success = listModel.setProperty(index, "imageFolder", formData.imageFolder)
                     success = listModel.setProperty(index, "resultFolder", formData.resultFolder)

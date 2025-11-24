@@ -9,7 +9,6 @@ Item {
     property alias placeholderText: textInput.placeholderText
     property string dialogTitle: "选择文件夹"
     property bool shouldBind: true
-
     height: 30
     width: 320
     HusInput {
@@ -19,7 +18,7 @@ Item {
         radiusBg.topRight: 0
         radiusBg.bottomRight: 0
         placeholderText: "请选择文件夹"
-        text:dirSelect.text
+        text: dirSelect.text
     }
 
     HusIconButton {

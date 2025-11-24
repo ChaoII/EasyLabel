@@ -52,6 +52,6 @@ signals:
     void folderPathChanged();
 
 private:
-    QString folderPath_;
+    QString folderPath_ ;
     QVector<FileInfoItem> items_;
 };

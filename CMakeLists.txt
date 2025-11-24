@@ -10,7 +10,6 @@ set(HuskarUI_DIR "D:/HuskarUI")
 set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(SqliteOrm CONFIG REQUIRED)
 find_package(HuskarUI REQUIRED)
 
@@ -74,6 +73,8 @@ qt_add_qml_module(appEasyLabel
      SOURCES src/detectionAnnotationmodel.h src/detectionAnnotationmodel.cpp
      SOURCES src/annotationmodelbase.h src/annotationmodelbase.cpp
      SOURCES src/projectlistmodel.h src/projectlistmodel.cpp
+     QML_FILES qml/project/ExportDatasetPopup.qml
+     SOURCES
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -90,7 +91,6 @@ set_target_properties(appEasyLabel PROPERTIES
 target_link_libraries(appEasyLabel
     PRIVATE Qt6::Quick HuskarUI::Basic Qt6::Core sqlite_orm::sqlite_orm
 )
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 install(TARGETS appEasyLabel
