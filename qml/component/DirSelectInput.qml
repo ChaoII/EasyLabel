@@ -32,6 +32,7 @@ Item {
         radiusBg.bottomLeft: 0
         iconSource: HusIcon.FolderOpenOutlined
         onClicked: {
+            folderDialog.currentFolder = textInput.text.startsWith("file:///") ? textInput.text : "file:///"+textInput.text
             folderDialog.open()
         }
     }

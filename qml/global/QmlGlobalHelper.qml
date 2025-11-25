@@ -34,8 +34,17 @@ QtObject {
         }
     }
 
+    property var fileDialog: FileDialog {
+        id: internalFileDialog
+        nameFilters: ["所有文件(*.*)" , "图像文件(*.jpg *.png *.bmp *.jpeg)", "文本文件(*.txt)","json文件(*.json)"]
+        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+        onAccepted: {
+
+        }
+    }
+
     property var folderDialog: FolderDialog {
-        id: internalDialog
+        id: internalFolderDialog
         currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         onAccepted: {
             var folderPath = currentFolder.toString().replace("file:///", "")
@@ -69,13 +78,13 @@ QtObject {
     // 公开的打开方法
     function openFolderDialog(title, defaultFolder) {
         if (title) {
-            internalDialog.title = title
+            internalFolderDialog.title = title
         }
         if (defaultFolder) {
             var correctP = correctPath(defaultFolder)
-            internalDialog.currentFolder = correctP
+            internalFolderDialog.currentFolder = correctP
         }
-        internalDialog.open()
+        internalFolderDialog.open()
     }
 
     function correctPath(path) {
