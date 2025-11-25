@@ -1,6 +1,7 @@
 #pragma once
 
 #include "annotationmodelbase.h"
+#include "exportworker.h"
 #include "filelistmodel.h"
 #include "labellistmodel.h"
 #include <QObject>
@@ -58,6 +59,8 @@ public:
     Q_ENUM(AnnotationType)
     Q_ENUM(ExportAnnotationType)
     explicit AnnotationConfig(QObject *parent = nullptr);
+    ~AnnotationConfig();
+
     [[nodiscard]] QString imageDir() const;
     [[nodiscard]] QString resultDir() const;
     [[nodiscard]] QString projectName() const;
@@ -105,6 +108,8 @@ public:
     Q_INVOKABLE QString getAnnotationTypeColor() const;
     Q_INVOKABLE QString getAnnotationTypeName() const;
     Q_INVOKABLE QVariantList getExportAnnotationTypes() const;
+    Q_INVOKABLE QString
+    getExportAnnotationTypeName(ExportAnnotationType type) const;
 
     Q_INVOKABLE void loadAnnotationConfig();
     Q_INVOKABLE bool loadLabelFile() const;
@@ -112,13 +117,18 @@ public:
     Q_INVOKABLE void loadAnnotationFiles();
     Q_INVOKABLE bool saveAnnotationFile(int imageIndex);
     Q_INVOKABLE AnnotationModelBase *getAnnotationModel(int index);
-    Q_INVOKABLE void setAnnotationModel(int index, AnnotationModelBase *annotationModel);
-    Q_INVOKABLE bool exportAnnotation(const QString& exportDir, bool exportImage,
-                                      ExportAnnotationType exportType, double trainSpliteRate);
+    Q_INVOKABLE void setAnnotationModel(int index,
+                                        AnnotationModelBase *annotationModel);
+    Q_INVOKABLE void exportAnnotation(const QString &exportDir, bool exportImage,
+                                      ExportAnnotationType exportType,
+                                      double trainSplitRate);
+
+    void stopExportThread();
+
 
 signals:
     void imageDirChanged();
-        void resultDirChanged();
+    void resultDirChanged();
     void projectNameChanged();
     void annotationTypeChanged();
     void totalImageNumChanged();
@@ -140,6 +150,11 @@ signals:
     void currentLabelChanged();
     void currentLabelColorChanged();
     void currentAnnotationModelChanged();
+
+    // exportThread
+    void exportProgress(double progress);
+    void exportFinished();
+    void exportError(const QString &error);
 
 private:
     QString imageDir_;
@@ -167,4 +182,9 @@ private:
     LabelListModel *labelListModel_;
     FileListModel *fileListModel_;
     QVector<AnnotationModelBase *> annotationModelList_;
+
+    //
+
+    ExportWorker *exportWorker_ = nullptr;
+    QThread *exportThread_ = nullptr;
 };

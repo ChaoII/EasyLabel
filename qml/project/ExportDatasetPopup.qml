@@ -3,47 +3,75 @@ import QtQuick
 import HuskarUI.Basic
 import QtQuick.Layouts
 import EasyLabel
+import QtQuick.Controls
 
-PopupStandardWindow{
-    id: popup
-    property string exportDir: loaderItem.internalExportDir
-    property bool exportImage: loaderItem.internalExportImage
-    property var exportTypeList: loaderItem.internalExportTypeModel
-    readonly property var currentExportType: loaderItem.internalExportType
-    property real tarinRate: loaderItem.internaltarinRate
-    property bool isInitialed: false
-    signal exportDataReady(string exportDir, bool exportImage, int currentExportType, real tarinRate)
-    onAccepted: {
-        popup.exportDataReady( popup.exportDir, popup.exportImage,
-                              popup.currentExportType, popup.tarinRate/100)
+
+
+HusPopup {
+    id: exportDatasetPopup
+    property alias title: txtTitle.text
+    property alias exportDir: dirSelectExport.text
+    property alias trainSplitRate: trainNum.value
+    property alias exportImage: switchExportImage.checked
+    property alias exportTypeModel: selectExportType.model
+    property alias exportType: selectExportType.currentValue
+
+    signal accepted()
+    signal rejected()
+
+    x: (parent.width - width) * 0.5
+    y: (parent.height - height) * 0.5
+    parent: Overlay.overlay
+    closePolicy: HusPopup.NoAutoClose
+    movable: true
+    modal: true
+    resizable: false
+    minimumX: 0
+    minimumY: 0
+    maximumX: parent.width - width
+    maximumY: parent.height - height
+    Overlay.modal: Rectangle {
+        color: "#90000000"
     }
-    Component.onCompleted: {
-        isInitialed = true
-    }
-    onRejected:{
-        popup.close()
-    }
-    onExportTypeListChanged:{
-        if(isInitialed){
-            loaderItem.internalExportTypeModel = popup.exportTypeList
+    contentItem: Item {
+        HusCaptionButton {
+            id: btnClose
+            anchors.right: parent.right
+            radiusBg.all: exportDatasetPopup.radiusBg.all * 0.5
+            colorText: colorIcon
+            iconSource: HusIcon.CloseOutlined
+            onClicked: exportDatasetPopup.close();
         }
-    }
-    title: "数据导出"
-    contentDelegate: _contentComponent
-    Component{
-        id: _contentComponent
+
+        HusText{
+            id: txtTitle
+            anchors.left: parent.left
+            anchors.verticalCenter: btnClose.verticalCenter
+            anchors.leftMargin: 10
+            text:"新建项目"
+        }
+
+        HusDivider {
+            id: dividerTop
+            anchors.top:btnClose.bottom
+            width: parent.width
+            height: 1
+        }
+
         Item{
             id: content
+            anchors.top: dividerTop.bottom
+            anchors.bottom: dividerBottom.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 40
+            anchors.rightMargin: 40
+            anchors.topMargin: 10
+            anchors.bottomMargin: 10
+
             property int labelWidth: 100
-            property alias internalExportDir: dirSelectExport.text
-            property alias internaltarinRate: trainNum.value
-            property alias internalExportImage: switchExportImage.checked
-            property var internalExportTypeModel: []
-            property alias internalExportType: selectExportType.currentValue
             ColumnLayout{
                 anchors.fill: parent
-                anchors.leftMargin: 40
-                anchors.rightMargin: 40
                 spacing: 20
                 RowLayout{
                     HusText{
@@ -53,7 +81,7 @@ PopupStandardWindow{
                     DirSelectInput{
                         id: dirSelectExport
                         Layout.fillWidth:true
-                        text: content.internalExportDir
+                        text: popup.exportDir
                     }
                 }
                 RowLayout{
@@ -65,7 +93,11 @@ PopupStandardWindow{
                         id: selectExportType
                         Layout.fillWidth: true
                         Layout.preferredHeight: 30
-                        model: content.internalExportTypeModel
+                        model: popup.exportTypeList
+                        onCurrentValueChanged: {
+                            let newPath = changeExportPath(dirSelectExport.text, currentText)
+                            dirSelectExport.text = newPath
+                        }
                     }
                 }
 
@@ -106,6 +138,7 @@ PopupStandardWindow{
                         id: switchDatasetSplit
                         radiusBg.all: 2
                         animationEnabled: false
+                        checked: true
                         handleDelegate: HusRectangle {
                             radius: 2
                             color: switchDatasetSplit.colorHandle
@@ -152,7 +185,80 @@ PopupStandardWindow{
                 Item{
                     Layout.fillHeight: true
                 }
+            }}
+        HusDivider {
+            id: dividerBottom
+            anchors.bottom:btnLayout.top
+            anchors.margins: 10
+            width: parent.width
+            height: 1
+        }
+
+        RowLayout{
+            id: btnLayout
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 10
+            Item{
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                HusText{
+                    id:textQuto
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    visible: exportProgress.percent > 0
+                    text:"正在导出，请稍后..."
+                }
+                HusProgress{
+                    id: exportProgress
+                    status: HusProgress.Status_Active
+                    animationEnabled: false
+                    visible: percent > 0
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: textQuto.bottom
+                    percent: 0
+                }
+            }
+            HusButton {
+                id: btnCancel
+                text: "取消"
+                type: HusButton.Type_Outlined
+                onClicked:{
+                    exportDatasetPopup.rejected()
+                    close()
+                }
+            }
+            HusButton {
+                id: btnEnsure
+                text: "确认"
+                type: HusButton.Type_Primary
+                focus: true
+                onClicked:{
+                    exportDatasetPopup.accepted()
+                }
             }
         }
     }
+
+    function updateExportProgress(progress){
+        exportProgress.percent = progress
+    }
+
+    function changeExportPath(sourceDir, newDirName) {
+        let newDir = ""
+        var lastSlash = sourceDir.lastIndexOf("/")
+        if (lastSlash !== -1) {
+            newDir = sourceDir.substring(0, lastSlash) + "/" + newDirName
+        } else {
+            newDir = sourceDir + "/" + newDirName
+        }
+        return newDir
+    }
 }
+
+
+
+
+

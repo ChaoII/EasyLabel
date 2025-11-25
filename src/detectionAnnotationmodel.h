@@ -1,10 +1,10 @@
 #pragma once
 
+#include "annotationenums.h"
 #include "annotationmodelbase.h"
 #include <QColor>
 #include <QQmlEngine>
 #include <QRect>
-#include "annotationenums.h"
 
 class DetectionAnnotationModel : public AnnotationModelBase {
     Q_OBJECT
@@ -73,13 +73,23 @@ public:
 
     Q_INVOKABLE void setLabelID(int index, int labelID) override;
 
-    Q_INVOKABLE void exportYolo(const QString &AnnotationFilePath) const;
+    Q_INVOKABLE bool
+    exportAnotation(const QString &exportDir,
+                    const QVector<QPair<QString, QString>> &dataSet,
+                    int exportType, double trainSplitRate);
 
+    Q_INVOKABLE bool
+    exportYoloAnnotation(const QString &exportDir,
+                         const QVector<QPair<QString, QString>> &dataSet,
+                         double trainSplitRate);
+
+signals:
+    void exportProgress(double progress);
 
 private:
     QString exportDir_;
     bool exportImage_ = false;
     int exportType_ = 0;
-    double trainSplitRate_=0.8;
+    double trainSplitRate_ = 0.8;
     QVector<DetectionAnnotationItem> items_;
 };

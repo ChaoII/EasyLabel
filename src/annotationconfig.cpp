@@ -1,12 +1,14 @@
 #include "annotationconfig.h"
 #include "detectionAnnotationmodel.h"
+#include "exportworker.h"
 #include <QDir>
 #include <QFile>
 #include <QImage>
 #include <QModelIndex>
 #include <QSaveFile>
+#include <QtAlgorithms>
 
-AnnotationConfig::AnnotationConfig(QObject* parent)
+AnnotationConfig::AnnotationConfig(QObject *parent)
     : QObject(parent), labelListModel_(new LabelListModel(this)),
     fileListModel_(new FileListModel(this)) {
     connect(labelListModel_, &LabelListModel::listModelDataChanged, this,
@@ -17,8 +19,10 @@ AnnotationConfig::AnnotationConfig(QObject* parent)
                 emit currentLabelIndexChanged();
                 emit currentLabelChanged();
                 emit currentLabelColorChanged();
-            });
+    });
 }
+
+AnnotationConfig::~AnnotationConfig() { stopExportThread(); }
 
 QString AnnotationConfig::imageDir() const { return imageDir_; }
 
@@ -34,15 +38,15 @@ int AnnotationConfig::totalImageNum() const { return totalImageNum_; }
 
 int AnnotationConfig::annotatedImageNum() const { return annotatedImageNum_; }
 
-LabelListModel* AnnotationConfig::labelListModel() const {
+LabelListModel *AnnotationConfig::labelListModel() const {
     return labelListModel_;
 }
 
-FileListModel* AnnotationConfig::fileListModel() const {
+FileListModel *AnnotationConfig::fileListModel() const {
     return fileListModel_;
 }
 
-AnnotationModelBase* AnnotationConfig::currentAnnotationModel() {
+AnnotationModelBase *AnnotationConfig::currentAnnotationModel() {
     if (currentImageIndex_ < 0 ||
         currentImageIndex_ >= annotationModelList_.size())
         return new DetectionAnnotationModel();
@@ -150,28 +154,28 @@ void AnnotationConfig::setCenterPointerSize(int pointerSize) {
     }
 }
 
-void AnnotationConfig::setImageDir(const QString& imageDir) {
+void AnnotationConfig::setImageDir(const QString &imageDir) {
     if (imageDir != imageDir_) {
         imageDir_ = imageDir;
         emit imageDirChanged();
     }
 }
 
-void AnnotationConfig::setResultDir(const QString& resultDir) {
+void AnnotationConfig::setResultDir(const QString &resultDir) {
     if (resultDir != resultDir_) {
         resultDir_ = resultDir;
         emit resultDirChanged();
     }
 }
 
-void AnnotationConfig::setProjectName(const QString& projectName) {
+void AnnotationConfig::setProjectName(const QString &projectName) {
     if (projectName_ != projectName) {
         projectName_ = projectName;
         emit projectNameChanged();
     }
 }
 
-void AnnotationConfig::setAnnotationType(const AnnotationType& annotationType) {
+void AnnotationConfig::setAnnotationType(const AnnotationType &annotationType) {
     if (annotationType_ != annotationType) {
         annotationType_ = annotationType;
         emit annotationTypeChanged();
@@ -216,7 +220,7 @@ QString AnnotationConfig::getAnnotationTypeColor() const {
 }
 
 QString AnnotationConfig::getAnnotationTypeName() const {
-    const QMetaObject* metaObject = &AnnotationConfig::staticMetaObject;
+    const QMetaObject *metaObject = &AnnotationConfig::staticMetaObject;
     const int enumIndex = metaObject->indexOfEnumerator("AnnotationType");
     const QMetaEnum metaEnum = metaObject->enumerator(enumIndex);
     return {metaEnum.valueToKey(annotationType_)};
@@ -226,14 +230,17 @@ QVariantList AnnotationConfig::getExportAnnotationTypes() const {
     QVariantList list;
     QMetaEnum metaEnum = QMetaEnum::fromType<ExportAnnotationType>();
     for (int i = 0; i < metaEnum.keyCount(); ++i) {
-        list.append(QVariantMap{
-            {"label", QString(metaEnum.key(i))},
-            {"value", metaEnum.value(i)}
-        });
+        list.append(QVariantMap{{"label", QString(metaEnum.key(i))},
+                                {"value", metaEnum.value(i)}});
     }
     return list;
 }
 
+QString AnnotationConfig::getExportAnnotationTypeName(
+    AnnotationConfig::ExportAnnotationType type) const {
+    QMetaEnum metaEnum = QMetaEnum::fromType<ExportAnnotationType>();
+    return {metaEnum.valueToKey(type)};
+}
 
 void AnnotationConfig::loadAnnotationFiles() {
     const QDir dir(resultDir_);
@@ -258,7 +265,7 @@ void AnnotationConfig::loadAnnotationFiles() {
             continue;
         }
         // 如果存在那么加载annotation
-        AnnotationModelBase* annotation = new DetectionAnnotationModel();
+        AnnotationModelBase *annotation = new DetectionAnnotationModel();
         if (annotation->loadFromFile(annotationFilePath)) {
             fileListModel_->setAnnotated(i, true);
         }
@@ -279,7 +286,6 @@ void AnnotationConfig::loadAnnotationConfig() {
     }
     loadAnnotationFiles();
 }
-
 
 bool AnnotationConfig::loadLabelFile() const {
     const QDir dir(resultDir_);
@@ -328,45 +334,63 @@ bool AnnotationConfig::saveAnnotationFile(const int imageIndex) {
     const QString aAnnotationFilePath =
         QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
     QImage image(fileListModel_->getFullPath(imageIndex));
-    if (!annotationModelList_[imageIndex]->saveToFile(aAnnotationFilePath, annotationType_,
-                                                      image.size()))
+    if (!annotationModelList_[imageIndex]->saveToFile(
+            aAnnotationFilePath, annotationType_, image.size()))
         return false;
     fileListModel_->setAnnotated(imageIndex, true);
     setAnnotatedImageNum(fileListModel_->getAnnotatedNum());
     return true;
 }
 
-AnnotationModelBase* AnnotationConfig::getAnnotationModel(const int index) {
+AnnotationModelBase *AnnotationConfig::getAnnotationModel(const int index) {
     if (index < 0 || index >= annotationModelList_.size())
         return nullptr;
     return annotationModelList_[index];
 }
 
 void AnnotationConfig::setAnnotationModel(
-    int index, AnnotationModelBase* annotationModel) {
+    int index, AnnotationModelBase *annotationModel) {
     if (index < 0 || index > annotationModelList_.size())
         return;
     annotationModelList_[index] = annotationModel;
 }
 
-bool AnnotationConfig::exportAnnotation(const QString& exportDir, bool exportImage,
-                                        ExportAnnotationType exportType, double trainSpliteRate) {
-    auto fileListModel = new FileListModel(this);
-    DetectionAnnotationModel* annotationModel = new DetectionAnnotationModel(this);
-    fileListModel->setFolderPath(imageDir_);
-    for (int index = 0; index < fileListModel_->rowCount(); index++) {
-        const QString annotationBaseFileName =
-            fileListModel_->getResultFilePath(index);
-        const QString annotationFilePath =
-            QDir(resultDir_).absoluteFilePath(annotationBaseFileName);
-        annotationModel->loadFromFile(annotationFilePath);
-        annotationModel->exportYolo(annotationFilePath);
+void AnnotationConfig::exportAnnotation(const QString &exportDir,
+                                        bool exportImage,
+                                        ExportAnnotationType exportType,
+                                        double trainSplitRate) {
+
+    stopExportThread();
+    exportWorker_ = new ExportWorker();
+    exportThread_ = new QThread();
+    exportWorker_->moveToThread(exportThread_);
+
+    // 连接信号槽
+    connect(exportThread_, &QThread::finished, exportWorker_,
+            &QObject::deleteLater);
+    connect(exportThread_, &QThread::started, exportWorker_, [=]() {
+        exportWorker_->startExport(exportDir, imageDir_, resultDir_,
+                                   static_cast<int>(annotationType_),
+                                   static_cast<int>(exportType), trainSplitRate);
+    });
+
+    connect(exportWorker_, &ExportWorker::exportProgress, this,
+            &AnnotationConfig::exportProgress);
+    connect(exportWorker_, &ExportWorker::exportFinished, this,
+            &AnnotationConfig::exportFinished);
+    connect(exportWorker_, &ExportWorker::exportError, this,
+            &AnnotationConfig::exportError);
+
+    // 启动线程
+    exportThread_->start();
+}
+
+void AnnotationConfig::stopExportThread() {
+    if (exportThread_) {
+        exportThread_->requestInterruption();
+        exportThread_->quit();
+        exportThread_->wait(500); // 等待500ms线程结束
+        exportWorker_ = nullptr;  // worker会被自动删除
+        exportThread_ = nullptr;  // thread会被自动删除
     }
-
-    return true;
-
-    // if (annotationType_ == Detection) {
-    //     if (exportType == ExportAnnotationType::YOLO) {
-    //     }
-    // }
 }

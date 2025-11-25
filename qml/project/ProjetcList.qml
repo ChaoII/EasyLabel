@@ -202,7 +202,7 @@ Item {
                         return modelData.current / modelData.total * 100
                     }
                     status: {
-                        if(modelData.total>0 && modelData.current === modelData.total){
+                        if(modelData.total > 0 && modelData.current === modelData.total){
                             return HusProgress.Status_Success
                         }
                         return HusProgress.Status_Active
@@ -330,23 +330,64 @@ Item {
                         type: HusButton.Type_Link
                         iconSource: HusIcon.ExportOutlined
                         iconSize: 16
-
                         onClicked:{
-                            // annotationConfig.exportAnnotation(AnnotationConfig.Yolo)
-                            exportDatasetPopup.exportTypeList = annotationConfig.getExportAnnotationTypes()
-                            exportDatasetPopup.open()
+                            if(modelData.total <=0 || modelData.current !== modelData.total){
+                                popconfirm.open()
+                            }else{
+                                let annotationType = annotationConfig.getExportAnnotationTypeName(0)
+                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ annotationType
+                                exportDatasetPopup.updateExportProgress(0)
+                                exportDatasetPopup.open()
+                            }
                         }
+                        HusPopconfirm {
+                            id: popconfirm
+                            x: (parent.width - width) * 0.5
+                            y: parent.height + 6
+                            width: 300
+                            title: '警告'
+                            description: "标注未完成，导出的数据集可能无法用于训练，当前标注进度: ["+ (modelData.current / modelData.total * 100).toFixed(1) + "%]，确认导出?"
+                            confirmText: '是'
+                            cancelText: '否'
+                            onConfirm: {
+                                let annotationType = annotationConfig.getExportAnnotationTypeName(0)
+                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ annotationType
+                                exportDatasetPopup.updateExportProgress(0)
+                                exportDatasetPopup.open()
+                                close();
+                            }
+                            onCancel: {
+                                close();
+                            }
+                        }
+
                     }
                     ExportDatasetPopup{
                         id: exportDatasetPopup
                         width: 480
                         height: 320
-                        Overlay.modal: Rectangle {
-                            color: "#90000000"
+                        title: "导出标签"
+                        exportTypeModel:annotationConfig.getExportAnnotationTypes()
+                        Connections{
+                            target: annotationConfig
+                            function onExportProgress(porgress){
+                                exportDatasetPopup.updateExportProgress(porgress)
+                            }
+                            function onExportFinished(){
+                                QmlGlobalHelper.message.success("导出成功！"+ exportDatasetPopup.exportDir)
+                                exportDatasetPopup.close()
+                                exportDatasetPopup.enabled = true;
+                            }
+                            function onExportError(errorMsg){
+                                QmlGlobalHelper.message.success("导出失败:" + errorMsg)
+                                exportDatasetPopup.close()
+                                exportDatasetPopup.enabled = true;
+                            }
                         }
-                        onExportDataReady: function(exportDir, exportImage, currentExportType, tarinRate){
-                            console.log(exportDir, exportImage, currentExportType, tarinRate)
-                            exportDatasetPopup.close()
+                        onAccepted: {
+                            // trainSplitRate 是一个整数（1-100之间）
+                            annotationConfig.exportAnnotation(exportDir, exportImage, exportType, trainSplitRate/100);
+                            exportDatasetPopup.enabled = false;
                         }
                     }
                 }
@@ -379,7 +420,6 @@ Item {
     }
 
     ProjectPopup{
-
         id: projectPopup
         x: (parent.width - width) * 0.5
         y: (parent.height - height) * 0.5

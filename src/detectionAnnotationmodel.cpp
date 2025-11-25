@@ -1,5 +1,6 @@
 #include "detectionAnnotationmodel.h"
 
+#include <QThread>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -228,7 +229,8 @@ bool DetectionAnnotationModel::loadFromFile(const QString &annotationFilePath) {
         return false;
     }
     QJsonObject obj = doc.object();
-    AnnotationModelBase::annotationType_ = static_cast<AnnotationEnums::AnnotationType>(obj["type"].toInt());
+    AnnotationModelBase::annotationType_ =
+        static_cast<AnnotationEnums::AnnotationType>(obj["type"].toInt());
     AnnotationModelBase::imageWidth_ = obj["width"].toInt();
     AnnotationModelBase::imageHeight_ = obj["height"].toInt();
     QJsonArray jsonArray = doc["boxes"].toArray();
@@ -261,31 +263,107 @@ void DetectionAnnotationModel::setLabelID(int index, int labelID) {
     emit dataChanged(modelIndex, modelIndex, {LabelIDRole});
 };
 
-void DetectionAnnotationModel::exportYolo(
-    const QString &AnnotationFilePath) const {
-    for (auto &item : items_) {
-        double centerX = (item.x + item.width / 2.0) / imageWidth_;
-        double centerY = (item.y + item.height / 2.0) / imageHeight_;
-        double normWidth = static_cast<double>(item.width) / imageWidth_;
-        double normHeight = static_cast<double>(item.height) / imageHeight_;
-        // YOLO格式：<class_id> <center_x> <center_y> <width> <height>
-        QString yoloAnnotationContent = QString("%1 %2 %3 %4 %5")
-                                            .arg(item.labelID) // 使用原始labelID
-                                            .arg(centerX, 0, 'f', 6)
-                                            .arg(centerY, 0, 'f', 6)
-                                            .arg(normWidth, 0, 'f', 6)
-                                            .arg(normHeight, 0, 'f', 6);
-        QString yoloAnnotationFilePath =QFileInfo(AnnotationFilePath)
-                                             .absoluteDir()
-                                             .filePath(QFileInfo(AnnotationFilePath).completeBaseName() +".txt");
+bool DetectionAnnotationModel::exportAnotation(
+    const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
+    int exportType, double trainSplitRate) {
+
+    // 验证参数
+    if (exportDir.isEmpty()) {
+        qWarning() << "导出目录为空";
+        return false;
+    }
+
+    // 创建导出目录
+    QDir dir(exportDir);
+    if (dir.exists()) {
+        qWarning() << "目录已存在,即将删除：" << exportDir;
+        if (!dir.removeRecursively()) {
+            qWarning() << "无法删除目录:" << exportDir;
+            return false;
+        }
+        qDebug() << "目录已删除:" << exportDir;
+    }
+
+    // 创建新目录
+    if (!dir.mkpath(".")) {
+        qWarning() << "无法创建目录:" << exportDir;
+        return false;
+    }
+    qDebug() << "目录创建成功:" << exportDir;
+    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate);
+}
+
+bool DetectionAnnotationModel::exportYoloAnnotation(
+    const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
+    double trainSplitRate) {
+    QDir dir(exportDir);
+    QString trainImageDir = dir.filePath("images/train");
+    QString valImageDir = dir.filePath("images/val");
+    QString trainLabelDir = dir.filePath("labels/train");
+    QString valLabelDir = dir.filePath("labels/val");
+    // 创建新目录
+    if (!QDir(trainImageDir).mkpath(".")) {
+        qWarning() << "无法创建目录:" << trainImageDir;
+        return false;
+    }
+    if (!QDir(valImageDir).mkpath(".")) {
+        qWarning() << "无法创建目录:" << valImageDir;
+        return false;
+    }
+    if (!QDir(trainLabelDir).mkpath(".")) {
+        qWarning() << "无法创建目录:" << trainLabelDir;
+        return false;
+    }
+    if (!QDir(valLabelDir).mkpath(".")) {
+        qWarning() << "无法创建目录:" << valLabelDir;
+        return false;
+    }
+
+    const int dataSetCount = dataSet.size();
+    const int trainCount = dataSetCount * trainSplitRate;
+
+    for (int i = 0; i < dataSetCount; i++) {
+        auto [imagePath, annotationPath] = dataSet[i];
+        loadFromFile(annotationPath);
+        QString yoloAnnotationFileName =
+            QFileInfo(annotationPath).baseName() + ".txt";
+        QString imageFileName = QFileInfo(imagePath).fileName();
+        bool isTrainSet = i < trainCount;
+        QString labelDir = isTrainSet ? trainLabelDir : valLabelDir;
+        QString imageDir = isTrainSet ? trainImageDir : valImageDir;
+        QString yoloAnnotationFilePath = QDir(labelDir).filePath(yoloAnnotationFileName);
+        QString newImageFilePath = QDir(imageDir).filePath(imageFileName);
+
         QFile file(yoloAnnotationFilePath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qDebug() << "无法创建输出文件:" << yoloAnnotationFilePath;
+            qWarning() << "无法创建输出文件:" << yoloAnnotationFilePath;
             continue;
         }
         QTextStream out(&file);
-        out << yoloAnnotationContent;
+        for (auto &item : items_) {
+            double centerX = (item.x + item.width / 2.0) / imageWidth_;
+            double centerY = (item.y + item.height / 2.0) / imageHeight_;
+            double normWidth = static_cast<double>(item.width) / imageWidth_;
+            double normHeight = static_cast<double>(item.height) / imageHeight_;
+            // YOLO格式：<class_id> <center_x> <center_y> <width> <height>
+            QString yoloAnnotationContent = QString("%1 %2 %3 %4 %5")
+                                                .arg(item.labelID)
+                                                .arg(centerX, 0, 'f', 6)
+                                                .arg(centerY, 0, 'f', 6)
+                                                .arg(normWidth, 0, 'f', 6)
+                                                .arg(normHeight, 0, 'f', 6);
+            out << yoloAnnotationContent<<"\n";
+        }
         file.close();
         qDebug() << "YOLO格式文件已保存:" << yoloAnnotationFilePath;
+        // 复制图像文件
+        if (!QFile::copy(imagePath, newImageFilePath)) {
+            qWarning() << "复制图像文件失败:" << imagePath << "->" << newImageFilePath;
+        }
+        double progress = static_cast<double>(i + 1) / dataSetCount * 100.0;
+        emit exportProgress(progress);
+        QThread::msleep(1);
     }
+    qDebug() << "YOLO格式导出完成，总计处理" << dataSetCount << "个文件";
+    return true;
 }
