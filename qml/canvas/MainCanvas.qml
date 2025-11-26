@@ -18,6 +18,8 @@ Item {
             bodyDelegate: null
             titleDelegate: null
             border.color: "transparent"
+            Component.onCompleted: {
+            }
         }
 
         // 返回按钮
@@ -27,6 +29,9 @@ Item {
             type: HusButton.Type_Link
             iconSource: HusIcon.LeftOutlined
             onClicked: QmlGlobalHelper.mainStackView.pop()
+            Component.onCompleted: {
+            }
+
         }
         HusText{
             id:textProjectName
@@ -34,8 +39,11 @@ Item {
             anchors.leftMargin: 10
             anchors.verticalCenter: btnBack.verticalCenter
             text:root.annotationConfig.projectName
+            Component.onCompleted: {
+            }
         }
     }
+
 
     SplitView{
         id: splitView
@@ -53,6 +61,10 @@ Item {
             SplitView.fillWidth: true
             SplitView.fillHeight: true
             annotationConfig: root.annotationConfig
+
+            Component.onCompleted: {
+
+            }
         }
 
         AnnotationDetailPanel{
@@ -62,12 +74,8 @@ Item {
             SplitView.maximumWidth: 400
             annotationConfig: root.annotationConfig
             Component.onCompleted: {
-
             }
         }
     }
 
-    Component.onCompleted: {
-
-    }
 }

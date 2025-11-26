@@ -81,8 +81,8 @@ public:
     // label
     [[nodiscard]] int currentImageIndex() const;
     int currentLabelIndex();
-    [[nodiscard]] QString currentLabelColor() const;
-    [[nodiscard]] QString currentLabel() const;
+    [[nodiscard]] QString currentLabelColor();
+    [[nodiscard]] QString currentLabel();
     [[nodiscard]] LabelListModel *labelListModel() const;
     [[nodiscard]] FileListModel *fileListModel() const;
     AnnotationModelBase *currentAnnotationModel();
@@ -124,7 +124,6 @@ public:
                                       double trainSplitRate);
 
     void stopExportThread();
-
 
 signals:
     void imageDirChanged();

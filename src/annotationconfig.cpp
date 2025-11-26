@@ -1,6 +1,7 @@
 #include "annotationconfig.h"
 #include "detectionAnnotationmodel.h"
 #include "exportworker.h"
+#include "rotatedBoxAnnotationmodel.h"
 #include <QDir>
 #include <QFile>
 #include <QImage>
@@ -14,7 +15,7 @@ AnnotationConfig::AnnotationConfig(QObject *parent)
     connect(labelListModel_, &LabelListModel::listModelDataChanged, this,
             [this]() {
                 if (!saveLabelFile()) {
-                    qDebug() << "Failed to save label file.";
+            qDebug() << "Failed to save label file.";
                 }
                 emit currentLabelIndexChanged();
                 emit currentLabelChanged();
@@ -48,8 +49,15 @@ FileListModel *AnnotationConfig::fileListModel() const {
 
 AnnotationModelBase *AnnotationConfig::currentAnnotationModel() {
     if (currentImageIndex_ < 0 ||
-        currentImageIndex_ >= annotationModelList_.size())
-        return new DetectionAnnotationModel();
+        currentImageIndex_ >= annotationModelList_.size()) {
+        if (annotationType_ == AnnotationConfig::Detection) {
+            return new DetectionAnnotationModel();
+        }else if(annotationType_ == AnnotationConfig::RotatedBox){
+            return new RotatedBoxAnnotationModel();
+        }else{
+            return new DetectionAnnotationModel();
+        }
+    }
     return annotationModelList_[currentImageIndex_];
 }
 
@@ -74,12 +82,13 @@ int AnnotationConfig::currentLabelIndex() {
     return currentLabelIndex_;
 }
 
-QString AnnotationConfig::currentLabelColor() const {
-    return labelListModel_->getLabelColor(currentLabelIndex_);
+QString AnnotationConfig::currentLabelColor() {
+
+    return labelListModel_->getLabelColor(currentLabelIndex());
 }
 
-QString AnnotationConfig::currentLabel() const {
-    return labelListModel_->getLabel(currentLabelIndex_);
+QString AnnotationConfig::currentLabel() {
+    return labelListModel_->getLabel(currentLabelIndex());
 }
 
 bool AnnotationConfig::showLabel() const { return showLabel_; }
@@ -264,8 +273,13 @@ void AnnotationConfig::loadAnnotationFiles() {
             file.close();
             continue;
         }
+        AnnotationModelBase *annotation = nullptr;
+        if(annotationType_ == AnnotationConfig::Detection){
         // 如果存在那么加载annotation
-        AnnotationModelBase *annotation = new DetectionAnnotationModel();
+            annotation = new DetectionAnnotationModel();
+        }else{
+            annotation = new RotatedBoxAnnotationModel();
+        }
         if (annotation->loadFromFile(annotationFilePath)) {
             fileListModel_->setAnnotated(i, true);
         }

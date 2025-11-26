@@ -120,11 +120,9 @@ bool ProjectListModel::setData(const QModelIndex &index, const QVariant &value,
         item.updateTime =
             QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
         projectDto_->updateUpdateTime(item.id, item.updateTime);
-
         emit dataChanged(index, index, {role});
-        return true;
     }
-    return false;
+    return true;
 }
 
 QHash<int, QByteArray> ProjectListModel::roleNames() const {
@@ -202,6 +200,7 @@ bool ProjectListModel::addItem(const QString &projectName,
                                bool outOfTarget, bool showOrder) {
     // 创建新项目
     Project newProject;
+    QString currentTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
     newProject.projectName = projectName.toStdString();
     newProject.imageFolder = imageFolder.toStdString();
     newProject.resultFolder = resultFolder.toStdString();
@@ -210,6 +209,8 @@ bool ProjectListModel::addItem(const QString &projectName,
     newProject.showOrder = showOrder;
     newProject.current = 0;
     newProject.total = 0;
+    newProject.updateTime = currentTime.toStdString();
+    newProject.createTime = currentTime.toStdString();
     int newId = projectDto_->addProject(newProject);
     if (newId > 0) {
         return true;
@@ -270,6 +271,10 @@ QVariant ProjectListModel::getProperty(int index, const QString &property) {
         return data(modelIndex, CurrentRole);
     if (property == "total")
         return data(modelIndex, TotalRole);
+    if (property == "createTime")
+        return data(modelIndex, CreateTimeRole);
+    if (property == "updateTime")
+        return data(modelIndex, UpdateTimeRole);
     return "";
 }
 
@@ -277,7 +282,6 @@ bool ProjectListModel::setProperty(int index, const QString &property,
                                    const QVariant &value) {
     if (index < 0 || index >= items_.size())
         return false;
-
     QModelIndex modelIndex = createIndex(index, 0);
     if (property == "projectName")
         return setData(modelIndex, value, ProjectNameRole);
@@ -295,7 +299,6 @@ bool ProjectListModel::setProperty(int index, const QString &property,
         return setData(modelIndex, value, CurrentRole);
     if (property == "total")
         return setData(modelIndex, value, TotalRole);
-
     return false;
 }
 

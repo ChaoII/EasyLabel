@@ -16,7 +16,7 @@ PopupStandardWindow{
     title: mode === GlobalEnum.DialogMode.Edit ? qsTr("编辑项目") : qsTr("新建项目")
     contentDelegate: _contentComponent
     onAccepted: {
-        projectData = popup.getFormData()
+        projectData = popup.detailItem._getFormData()
         formDataEditFinished(popup.index, projectData)
         popup.close()
     }
@@ -113,16 +113,5 @@ PopupStandardWindow{
 
     function resetForm() {
         popup.detailItem._reset(data)
-    }
-
-    function getFormData() {
-        var fromData = popup.detailItem._getFormData()
-        if(mode===GlobalEnum.Create){
-            fromData["createTime"] = QmlUtilsCpp.now()
-            fromData["updateTime"] = QmlUtilsCpp.now()
-        }if(mode===GlobalEnum.Edit){
-            fromData["updateTime"] = QmlUtilsCpp.now()
-        }
-        return fromData
     }
 }

@@ -161,7 +161,7 @@ Item {
                 onClicked: {
                     annotationConfig.loadAnnotationConfig()
                     QmlGlobalHelper.mainStackView.push("../canvas/MainCanvas.qml",{
-                                                           annotationConfig:annotationConfig
+                                                           annotationConfig: annotationConfig
                                                        })
                 }
             }
@@ -346,7 +346,7 @@ Item {
                             y: parent.height + 6
                             width: 300
                             title: '警告'
-                            description: "标注未完成，导出的数据集可能无法用于训练，当前标注进度: ["+ (modelData.current / modelData.total * 100).toFixed(1) + "%]，确认导出?"
+                            description: "标注未完成，导出的数据集可能无法用于训练，当前标注进度: ["+ (modelData.current / (modelData.total + Number.MIN_VALUE) * 100).toFixed(1) + "%]，确认导出?"
                             confirmText: '是'
                             cancelText: '否'
                             onConfirm: {
@@ -451,7 +451,6 @@ Item {
                     success = listModel.setProperty(index, "annotationType", formData.annotationType)
                     success = listModel.setProperty(index, "outOfTarget", formData.outOfTarget)
                     success = listModel.setProperty(index, "showOrder", formData.showOrder)
-                    success = listModel.setProperty(index, "updateTime", formData.updateTime)
                     if(success){
                         QmlGlobalHelper.message.success("修改项目成功！")
                     }else{

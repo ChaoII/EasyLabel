@@ -4,7 +4,7 @@ import HuskarUI.Basic
 import EasyLabel
 Item {
     id: detectionLabelLayer
-    required property AnnotationConfig annotationConfig
+    property AnnotationConfig annotationConfig
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
@@ -23,15 +23,13 @@ Item {
         id: crosshair
         anchors.fill: parent
         visible: detectionLabelLayer.drawStatus === CanvasEnums.Drawing
-        color: detectionLabelLayer.currentLabelColor
-        centerPointerSize: detectionLabelLayer.annotationConfig.centerPointerSize/detectionLabelLayer.scaleFactor
-        lineWidth: detectionLabelLayer.annotationConfig.currentLineWidth/detectionLabelLayer.scaleFactor
+        crossColor: detectionLabelLayer.currentLabelColor
+        centerPointerSize: detectionLabelLayer.annotationConfig.centerPointerSize
+        lineWidth: detectionLabelLayer.annotationConfig.currentLineWidth
+        scaleFactor: detectionLabelLayer.scaleFactor
         showCoordinates: true
         showCenterPoint: true
     }
-
-
-
 
     onMousePositionChanged: {
         crosshair.mousePosition = mousePosition

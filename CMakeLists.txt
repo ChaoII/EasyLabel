@@ -72,11 +72,13 @@ qt_add_qml_module(appEasyLabel
      SOURCES src/labellistmodel.h src/labellistmodel.cpp
      SOURCES src/filelistmodel.h src/filelistmodel.cpp
      SOURCES src/detectionAnnotationmodel.h src/detectionAnnotationmodel.cpp
+     SOURCES src/rotatedBoxAnnotationmodel.h src/rotatedBoxAnnotationmodel.cpp
      SOURCES src/annotationmodelbase.h src/annotationmodelbase.cpp
      SOURCES src/projectlistmodel.h src/projectlistmodel.cpp
      QML_FILES qml/project/ExportDatasetPopup.qml
      SOURCES
      SOURCES src/exportworker.h src/exportworker.cpp
+     QML_FILES qml/canvas/RotatedBoxLabelLayer.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

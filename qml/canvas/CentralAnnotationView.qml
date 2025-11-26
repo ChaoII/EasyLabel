@@ -9,7 +9,8 @@ Item{
     required property AnnotationConfig annotationConfig
     property int drawStatus: CanvasEnums.OptionStatus.Select
     readonly property int currentImageIndex: annotationConfig.currentImageIndex
-    readonly property int labelNum: drawerLayer.listModel? drawerLayer.listModel.rowCount(): 0
+    property int labelNum: drawerLayer.item && drawerLayer.item.listModel ?
+                               drawerLayer.item.listModel.rowCount() : 0
 
     Flickable {
         id: flickable
@@ -60,18 +61,51 @@ Item{
                 anchors.fill: parent
             }
             Component.onCompleted: {
-                if(imageContainer.width<=0 ||imageContainer.height<=0 ){
+                if(imageContainer.width <= 0 ||imageContainer.height <= 0 ){
                     imageContainer.scale = 1.0
                 }
             }
-            DetectionLabelLayer{
+
+            Loader{
                 id: drawerLayer
-                annotationConfig: centralAnnotationView.annotationConfig
                 anchors.fill: parent
-                drawStatus: centralAnnotationView.drawStatus
-                scaleFactor: imageContainer.scale
+                sourceComponent: {
+                    switch (annotationConfig.annotationType){
+                    case  AnnotationConfig.Detection:
+                        return detectionLabelLayerComponent
+                    case AnnotationConfig.RotatedBox:
+                        return rotatedBoxLabelLayerComponent
+                    default:
+                        return detectionLabelLayerComponent
+                    }
+                }
+                onLoaded: {
+                    // 创建动态绑定
+                    item.annotationConfig = Qt.binding(
+                                ()=> {
+                                    return centralAnnotationView.annotationConfig
+                                })
+                    item.drawStatus = Qt.binding(
+                                () =>{
+                                    return centralAnnotationView.drawStatus
+                                })
+                    item.scaleFactor = Qt.binding(
+                                () =>{
+                                    return imageContainer.scale
+                                })
+                }
+                Connections{
+                    ignoreUnknownSignals: true
+                    enabled: drawerLayer.status === Loader.Ready
+                    target: drawerLayer.item.listModel
+                    function onDataChanged(){
+                        centralAnnotationView.labelNum = drawerLayer.item.listModel.rowCount()
+                    }
+                }
             }
         }
+
+
         // 放大
         function zoomIn(){
             zoom(flickable.zoomFactor)
@@ -109,6 +143,10 @@ Item{
 
         // 适合窗口大小的函数
         function fitToWindow() {
+            if(flickable.width<=0
+                    || flickable.height<=0
+                    || imageContainer.width<=0
+                    || imageContainer.height<=0 ) return
             imageContainer.scale = Math.min(flickable.width / imageContainer.width,
                                             flickable.height / imageContainer.height)
         }
@@ -121,11 +159,11 @@ Item{
     }
 
     Item{
-        id :footer
+        id: footer
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height:40
+        height: 40
         Connections{
             target: centralAnnotationView.annotationConfig
             function onCurrentImageIndexChanged(pre, next){
@@ -270,13 +308,20 @@ Item{
                     Layout.preferredHeight: 30
                     orientation: Qt.Vertical
                 }
+
+                ButtonGroup {
+                    id: radioGroup
+                    buttons:[btnSelect, btnDrawing]
+                }
+
                 HusIconButton{
-                    id:btnSelect
+                    id: btnSelect
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 16
                     iconSource: HusIcon.IcoMoonPointUp
                     radiusBg.all: 0
+                    checkable: true
                     onClicked: {
                         centralAnnotationView.drawStatus = CanvasEnums.Select
                         flickable.interactive = true
@@ -290,14 +335,14 @@ Item{
                     iconSize: 16
                     iconSource: HusIcon.IcoMoonPencil
                     radiusBg.all: 0
+                    checkable: true
                     onClicked: {
                         centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
                         flickable.interactive = false
                     }
                 }
-
                 HusIconButton{
-                    id: btnsave
+                    id: btnSave
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
@@ -307,7 +352,6 @@ Item{
                         centralAnnotationView.annotationConfig.saveAnnotationFile(centralAnnotationView.annotationConfig.currentImageIndex)
                     }
                 }
-
                 Item{
                     Layout.fillWidth: true
                 }
@@ -317,6 +361,20 @@ Item{
             }
         }
     }
+    Component{
+        id:detectionLabelLayerComponent
+        DetectionLabelLayer{
+        }
+    }
+
+    Component{
+        id:rotatedBoxLabelLayerComponent
+        RotatedBoxLabelLayer{
+        }
+    }
+
+
+
     onDrawStatusChanged: {
         if(drawStatus===CanvasEnums.OptionStatus.Drawing){
             flickable.interactive = false
