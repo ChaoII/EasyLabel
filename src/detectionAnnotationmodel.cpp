@@ -265,7 +265,7 @@ void DetectionAnnotationModel::setLabelID(int index, int labelID) {
 
 bool DetectionAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate) {
+    int exportType, double trainSplitRate, const QVector<QString>& labels) {
 
     // 验证参数
     if (exportDir.isEmpty()) {
@@ -290,12 +290,12 @@ bool DetectionAnnotationModel::exportAnotation(
         return false;
     }
     qDebug() << "目录创建成功:" << exportDir;
-    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate);
+    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate, labels);
 }
 
 bool DetectionAnnotationModel::exportYoloAnnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    double trainSplitRate) {
+    double trainSplitRate,const QVector<QString>& labels) {
     QDir dir(exportDir);
     QString trainImageDir = dir.filePath("images/train");
     QString valImageDir = dir.filePath("images/val");

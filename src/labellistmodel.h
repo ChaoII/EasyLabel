@@ -45,6 +45,8 @@ public:
     Q_INVOKABLE void setSingleSelected(int index);
     Q_INVOKABLE int getFirstSelected();
 
+    Q_INVOKABLE QVector<QString> toLabelList() const;
+
     Q_INVOKABLE [[nodiscard]] QJsonArray toJsonArray() const;
     Q_INVOKABLE [[nodiscard]] QString toJsonString(bool compact) const;
     Q_INVOKABLE [[nodiscard]] bool saveToFile(const QString& filePath) const;

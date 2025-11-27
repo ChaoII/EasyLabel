@@ -46,6 +46,9 @@ public:
     Q_INVOKABLE bool setProperty(int index, const QString &property,
                                  const QVariant &value);
 
+
+    Q_INVOKABLE QVariant getProperty(int index, const QString &property);
+
     Q_INVOKABLE void addItem(int lableID, int x, int y, int width, int height,
                              int zOrder, double rotation, bool selected);
 
@@ -59,7 +62,17 @@ public:
 
     Q_INVOKABLE void clear();
 
+    Q_INVOKABLE QRectF getBoundingBox(int index);
+
+    Q_INVOKABLE QRectF getBoundingBox(const QRectF& rect,double angle);
+
+    Q_INVOKABLE QVector<QPointF> rotatedRectCorners(int index);
+
+    bool pointInRotatedRectTopLeft(int index, const QPointF& point);
+
     Q_INVOKABLE QRect getRect(int index);
+
+    Q_INVOKABLE double getRotation(int index);
 
     Q_INVOKABLE int getLabelID(int index);
 
@@ -82,12 +95,12 @@ public:
     Q_INVOKABLE bool
     exportAnotation(const QString &exportDir,
                     const QVector<QPair<QString, QString>> &dataSet,
-                    int exportType, double trainSplitRate);
+                    int exportType, double trainSplitRate,const QVector<QString>& labels) override;
 
     Q_INVOKABLE bool
     exportYoloAnnotation(const QString &exportDir,
                          const QVector<QPair<QString, QString>> &dataSet,
-                         double trainSplitRate);
+                         double trainSplitRate, const QVector<QString>& labels);
 
 signals:
     void exportProgress(double progress);

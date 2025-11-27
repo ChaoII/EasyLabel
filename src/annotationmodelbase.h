@@ -3,6 +3,15 @@
 #include <QQmlEngine>
 #include <QAbstractListModel>
 
+struct DatasetConfig {
+    QString path;
+    QString trainPath;
+    QString valPath;
+    QString testPath;
+    QMap<int, QString> classes;
+};
+
+
 class AnnotationModelBase : public QAbstractListModel
 {
     Q_OBJECT
@@ -16,6 +25,10 @@ public:
 
     Q_INVOKABLE virtual void setLabelID(int index, int labelID) = 0;
 
+    Q_INVOKABLE virtual bool exportAnotation(const QString &exportDir,
+                                             const QVector<QPair<QString, QString>> &dataSet,
+                                             int exportType, double trainSplitRate,const QVector<QString>& labels)=0;
+
     Q_INVOKABLE virtual int getImageWidth(){
         return imageWidth_;
     }
@@ -24,8 +37,11 @@ public:
         return imageHeight_;
     }
 
+    bool generateYamlConfig(const QString& filename, const DatasetConfig& config);
+
 
 signals:
+    void exportProgress(int progress);
 
 protected:
     int annotationType_ = 0;

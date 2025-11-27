@@ -1,5 +1,6 @@
+#include "QmlUtilsCpp.h"
 #include "rotatedBoxAnnotationmodel.h"
-
+#include <QtGlobal>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -7,6 +8,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QThread>
+#include <QTransform>
+#include <QMarginsF>
 
 RotatedBoxAnnotationModel::RotatedBoxAnnotationModel(QObject *parent)
     : AnnotationModelBase{parent} {}
@@ -48,7 +51,7 @@ bool RotatedBoxAnnotationModel::setData(const QModelIndex &index,
                                         const QVariant &value, int role) {
     if (!index.isValid() || index.row() < 0 || index.row() >= items_.size())
         return false;
-    RotatedBoxAnnotationItem item = items_.at(index.row());
+    RotatedBoxAnnotationItem &item = items_[index.row()];
     bool changed = false;
     switch (role) {
     case LabelIDRole:
@@ -150,6 +153,29 @@ bool RotatedBoxAnnotationModel::setProperty(int index, const QString &property,
         return false;
 }
 
+QVariant RotatedBoxAnnotationModel::getProperty(int index, const QString &property) {
+    if (index < 0 || index >= items_.size())
+        return "";
+    QModelIndex modelIndex = createIndex(index, 0);
+    if (property == "labelID")
+        return data(modelIndex, LabelIDRole);
+    if (property == "boxX")
+        return data(modelIndex, XRole);
+    if (property == "boxY")
+        return data(modelIndex, YRole);
+    if (property == "boxWidth")
+        return data(modelIndex, WidthRole);
+    if (property == "boxHeight")
+        return data(modelIndex, HeightRole);
+    if (property == "zOrder")
+        return data(modelIndex, ZOrderRole);
+    if (property == "boxRotation")
+        return data(modelIndex, RotationRole);
+    if (property == "selected")
+        return data(modelIndex, SelectedRole);
+    return "";
+}
+
 void RotatedBoxAnnotationModel::addItem(int lableID, int x, int y, int width,
                                         int height, int zOrder, double rotation,
                                         bool selected) {
@@ -194,12 +220,94 @@ void RotatedBoxAnnotationModel::clear() {
     endRemoveRows();
 }
 
-QRect RotatedBoxAnnotationModel::getRect(int index) {
+
+QRectF RotatedBoxAnnotationModel::getBoundingBox(const QRectF& rect, double angle){
+    QPointF origin = rect.topLeft();
+
+    QTransform transform;
+    transform.translate(origin.x(), origin.y());
+    transform.rotate(angle);
+    transform.translate(-origin.x(), -origin.y());
+
+    // 矩形的四个角
+    QPointF p1 = transform.map(rect.topLeft());
+    QPointF p2 = transform.map(rect.topRight());
+    QPointF p3 = transform.map(rect.bottomLeft());
+    QPointF p4 = transform.map(rect.bottomRight());
+
+    qreal minX = std::min({p1.x(), p2.x(), p3.x(), p4.x()});
+    qreal minY = std::min({p1.y(), p2.y(), p3.y(), p4.y()});
+    qreal maxX = std::max({p1.x(), p2.x(), p3.x(), p4.x()});
+    qreal maxY = std::max({p1.y(), p2.y(), p3.y(), p4.y()});
+
+    return QRectF(QPointF(minX, minY), QPointF(maxX, maxY));
+}
+
+
+QRectF RotatedBoxAnnotationModel::getBoundingBox(int index) {
+    if (index < 0 || index >= items_.size())
+        return {};
+    auto item = items_[index];
+
+    QRectF rect(item.x, item.y, item.width, item.height);
+    double angle = item.rotation;
+    return getBoundingBox(rect,angle);
+}
+
+QVector<QPointF> RotatedBoxAnnotationModel::rotatedRectCorners(int index){
+    if (index < 0 || index >= items_.size())
+        return {};
+    auto item = items_[index];
+    QRectF rect(item.x, item.y, item.width, item.height);
+    double angle = item.rotation;
+    QPointF origin = rect.topLeft();
+
+    QTransform transform;
+    transform.translate(origin.x(), origin.y());
+    transform.rotate(angle);
+    transform.translate(-origin.x(), -origin.y());
+
+    return {
+        transform.map(rect.topLeft()),
+        transform.map(rect.topRight()),
+        transform.map(rect.bottomRight()),
+        transform.map(rect.bottomLeft())
+    };
+}
+
+bool RotatedBoxAnnotationModel::pointInRotatedRectTopLeft(int index, const QPointF& point)
+{
+    if (index < 0 || index >= items_.size())
+        return {};
+    auto item = items_[index];
+    QRectF rect(item.x, item.y, item.width, item.height);
+    double angle = item.rotation;
+    QPointF origin = rect.topLeft();   // 旋转中心改为左上角！
+    // 构造逆变换
+    QTransform t;
+    t.translate(origin.x(), origin.y());
+    t.rotate(-angle);                 // 逆旋转
+    t.translate(-origin.x(), -origin.y());
+    // 反变换点
+    QPointF local = t.map(point);
+    // 判断点是否在原矩形内
+    return rect.contains(local);
+}
+QRect RotatedBoxAnnotationModel::getRect(int index){
     if (index < 0 || index >= items_.size())
         return {};
     auto item = items_[index];
     return {item.x, item.y, item.width, item.height};
 }
+
+double RotatedBoxAnnotationModel::getRotation(int index){
+    if (index < 0 || index >= items_.size())
+        return 0.0;
+    auto item = items_[index];
+    return item.rotation;
+
+}
+
 
 int RotatedBoxAnnotationModel::getLabelID(int index) {
     if (index < 0 || index >= items_.size())
@@ -222,7 +330,10 @@ void RotatedBoxAnnotationModel::setSingleSelected(int index) {
 
 int RotatedBoxAnnotationModel::getSelectedIndex(int x, int y) {
     for (int i = 0; i < items_.size(); i++) {
-        if (getRect(i).contains(x, y))
+        auto & item = items_[i];
+        QRectF rect(item.x, item.y, item.width, item.height);
+        double rotation = item.rotation;
+        if (QmlUtilsCpp::pointInRotatedRect(QPointF(x,y), rect.marginsAdded(QMarginsF(10,10,100,10)), rotation))
             return i;
     }
     return -1;
@@ -316,14 +427,13 @@ void RotatedBoxAnnotationModel::setLabelID(int index, int labelID) {
 
 bool RotatedBoxAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate) {
+    int exportType, double trainSplitRate,const QVector<QString>& labels) {
 
     // 验证参数
     if (exportDir.isEmpty()) {
         qWarning() << "导出目录为空";
         return false;
     }
-
     // 创建导出目录
     QDir dir(exportDir);
     if (dir.exists()) {
@@ -341,12 +451,12 @@ bool RotatedBoxAnnotationModel::exportAnotation(
         return false;
     }
     qDebug() << "目录创建成功:" << exportDir;
-    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate);
+    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate,labels);
 }
 
 bool RotatedBoxAnnotationModel::exportYoloAnnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    double trainSplitRate) {
+    double trainSplitRate,const QVector<QString>& labels) {
     QDir dir(exportDir);
     QString trainImageDir = dir.filePath("images/train");
     QString valImageDir = dir.filePath("images/val");
@@ -393,17 +503,28 @@ bool RotatedBoxAnnotationModel::exportYoloAnnotation(
         }
         QTextStream out(&file);
         for (auto &item : items_) {
-            double centerX = (item.x + item.width / 2.0) / imageWidth_;
-            double centerY = (item.y + item.height / 2.0) / imageHeight_;
-            double normWidth = static_cast<double>(item.width) / imageWidth_;
-            double normHeight = static_cast<double>(item.height) / imageHeight_;
-            // YOLO格式：<class_id> <center_x> <center_y> <width> <height>
-            QString yoloAnnotationContent = QString("%1 %2 %3 %4 %5")
+            QRectF rect(item.x, item.y, item.width, item.height);
+            double rotation = item.rotation;
+            auto points = QmlUtilsCpp::rotatedRectCorners(rect, rotation);
+            double x1 = points[0].x() / imageWidth_;
+            double y1 = points[0].y() / imageHeight_;
+            double x2 = points[1].x() / imageWidth_;
+            double y2 = points[1].y() / imageHeight_;
+            double x3 = points[2].x() / imageWidth_;
+            double y3 = points[2].y() / imageHeight_;
+            double x4 = points[3].x() / imageWidth_;
+            double y4 = points[3].y() / imageHeight_;
+            // YOLO格式：<class_id> <x1> <y1> <x2> <y2> <x3> <y3> <x4> <y4>
+            QString yoloAnnotationContent = QString("%1 %2 %3 %4 %5 %6 %7 %8 %9")
                                                 .arg(item.labelID)
-                                                .arg(centerX, 0, 'f', 6)
-                                                .arg(centerY, 0, 'f', 6)
-                                                .arg(normWidth, 0, 'f', 6)
-                                                .arg(normHeight, 0, 'f', 6);
+                                                .arg(x1, 0, 'f', 6)
+                                                .arg(y1, 0, 'f', 6)
+                                                .arg(x2, 0, 'f', 6)
+                                                .arg(y2, 0, 'f', 6)
+                                                .arg(x3, 0, 'f', 6)
+                                                .arg(y3, 0, 'f', 6)
+                                                .arg(x4, 0, 'f', 6)
+                                                .arg(y4, 0, 'f', 6);
             out << yoloAnnotationContent << "\n";
         }
         file.close();
@@ -417,6 +538,23 @@ bool RotatedBoxAnnotationModel::exportYoloAnnotation(
         emit exportProgress(progress);
         QThread::msleep(1);
     }
+    QString yamlConfigFilePath = dir.absoluteFilePath("data.yaml");
+    DatasetConfig config;
+    config.path = dir.absolutePath();
+    config.testPath = "";
+    config.trainPath = "images/train";
+    config.valPath = "images/val";
+
+    for(int i=0;i<labels.size();i++){
+        config.classes.insert(i,labels[i]);
+    }
+
+    if(!generateYamlConfig(yamlConfigFilePath,config)){
+
+        qDebug() << "YOLO 配置文件导出失败"<<yamlConfigFilePath;
+
+    }
+
     qDebug() << "YOLO格式导出完成，总计处理" << dataSetCount << "个文件";
     return true;
 }

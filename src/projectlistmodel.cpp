@@ -200,7 +200,8 @@ bool ProjectListModel::addItem(const QString &projectName,
                                bool outOfTarget, bool showOrder) {
     // 创建新项目
     Project newProject;
-    QString currentTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
+    QString currentTime =
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
     newProject.projectName = projectName.toStdString();
     newProject.imageFolder = imageFolder.toStdString();
     newProject.resultFolder = resultFolder.toStdString();

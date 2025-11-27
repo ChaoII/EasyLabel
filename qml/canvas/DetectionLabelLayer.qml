@@ -278,13 +278,9 @@ Item {
             Repeater {
                 property int handlerWidth: detectionLabelLayer.annotationConfig.currentCornerRadius/detectionLabelLayer.scaleFactor
                 property int handlerHeight: detectionLabelLayer.annotationConfig.currentCornerRadius/detectionLabelLayer.scaleFactor
-
-
-
                 model: obj.showHandlers ? detectionLabelLayer.getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: cornerHandler
-
 
                     required property int index
                     required property int cornerHandlerX

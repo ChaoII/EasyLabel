@@ -146,11 +146,21 @@ int LabelListModel::getFirstSelected(){
     return -1;
 }
 
+QVector<QString> LabelListModel::toLabelList() const
+{
+    QVector<QString> labels;
+    for (const LabelItem& item: items_) {
+        QJsonObject jsonObj;
+        labels.append(item.label);
+    }
+    return labels;
+}
+
 
 QJsonArray LabelListModel::toJsonArray() const
 {
     QJsonArray jsonArray;
-    for (const LabelItem& item : items_) {
+    for (const LabelItem& item: items_) {
         QJsonObject jsonObj;
         jsonObj["label"] = item.label;
         jsonObj["labelColor"] = item.labelColor;

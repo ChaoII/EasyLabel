@@ -76,12 +76,12 @@ public:
     Q_INVOKABLE bool
     exportAnotation(const QString &exportDir,
                     const QVector<QPair<QString, QString>> &dataSet,
-                    int exportType, double trainSplitRate);
+                    int exportType, double trainSplitRate,const QVector<QString>& labels) override;
 
     Q_INVOKABLE bool
     exportYoloAnnotation(const QString &exportDir,
                          const QVector<QPair<QString, QString>> &dataSet,
-                         double trainSplitRate);
+                         double trainSplitRate,const QVector<QString>& labels);
 
 signals:
     void exportProgress(double progress);
