@@ -75,6 +75,8 @@ Item{
                         return detectionLabelLayerComponent
                     case AnnotationConfig.RotatedBox:
                         return rotatedBoxLabelLayerComponent
+                    case AnnotationConfig.Segmentation:
+                        return segmentationLabelLayerComponent
                     default:
                         return detectionLabelLayerComponent
                     }
@@ -370,6 +372,12 @@ Item{
     Component{
         id:rotatedBoxLabelLayerComponent
         RotatedBoxLabelLayer{
+        }
+    }
+
+    Component{
+        id:segmentationLabelLayerComponent
+        SegmentationLabelLayer{
         }
     }
 

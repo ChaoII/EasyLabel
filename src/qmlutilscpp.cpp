@@ -14,12 +14,12 @@ QString QmlUtilsCpp::now() const{
     return  QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz");
 }
 
-double QmlUtilsCpp::calcateAngleToRotation(const QPointF& p0, const QPointF& p1){
+double QmlUtilsCpp::calculateAngleToRotation(const QPointF& p0, const QPointF& p1){
     QLineF line(p0,p1);
     return 360 - line.angle();
 }
 
-double QmlUtilsCpp::calcateLength(const QPointF& p0, const QPointF& p1){
+double QmlUtilsCpp::calculateLength(const QPointF& p0, const QPointF& p1){
     QLineF line(p0, p1);
     return line.length();
 }
@@ -45,6 +45,13 @@ QVector<QPointF> QmlUtilsCpp::rotatedRectCorners(const QRectF &rect, double rota
     };
 }
 
+QRectF QmlUtilsCpp::getBoundingRect(const QVector<QPointF>& polygon){
+    if (polygon.size() < 3) return {}; // 至少需要3个点构成多边形
+    QPolygonF qPolygon = QPolygonF(polygon);
+    return qPolygon.boundingRect();
+}
+
+
 bool QmlUtilsCpp::pointInRotatedRect(const QPointF& point, const QRectF& rect, double rotation) {
     // 将点转换到矩形局部坐标系
     QTransform transform;
@@ -63,6 +70,15 @@ bool QmlUtilsCpp::isPointInRect(const QRectF& rect, const QPointF &point){
     return rect.contains(point);
 }
 
+bool QmlUtilsCpp::isPointInPolygon(const QPointF& point, const QVector<QPointF>& polygon) {
+    if (polygon.size() < 3) return false; // 至少需要3个点构成多边形
+
+    QPolygonF qPolygon = QPolygonF(polygon);
+    // Qt::FillRule fillRule = Qt::OddEvenFill; // 或 Qt::WindingFill
+    // return qPolygon.containsPoint(point, fillRule);
+    QRectF rect = qPolygon.boundingRect().marginsAdded({10, 10, 10, 10});
+    return rect.contains(point);
+}
 
 bool QmlUtilsCpp::isPointLeftOfLine(const QVector<QPointF>& points){
     Q_ASSERT(points.size() >= 3);

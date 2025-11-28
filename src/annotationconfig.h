@@ -53,7 +53,7 @@ class AnnotationConfig : public QObject {
                    setCenterPointerSize NOTIFY centerPointerSizeChanged FINAL)
 
 public:
-    enum AnnotationType { Detection = 0, RotatedBox = 1, Other = 2 };
+    enum AnnotationType { Detection = 0, RotatedBox = 1, Segmentation = 2, Other = 3};
     enum ExportAnnotationType { YOLO = 0, COCO, VOC };
 
     Q_ENUM(AnnotationType)

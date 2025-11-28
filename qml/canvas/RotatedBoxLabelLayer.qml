@@ -106,7 +106,6 @@ Item {
                         height: cornerHandlerHeight
                         radius: cornerHandlerWidth / 2
                         color: obj.annotationColor
-                        property int resizeType: index // 0:左 1:上 2:右 3:下
                     }
                 }
                 Connections{
@@ -129,7 +128,7 @@ Item {
             if(mouse.button === Qt.LeftButton) {
                 if(rotationBoxLabelLayer.drawStatus === CanvasEnums.Drawing) {
                     // 绘制模式：开始绘制新矩形
-                    if(rotationBoxLabelLayer.currentLabelID===-1){
+                    if(rotationBoxLabelLayer.currentLabelID === -1){
                         QmlGlobalHelper.message.error("请选择一个标签")
                         return
                     }
@@ -165,8 +164,8 @@ Item {
                 if(points.length===1){
                     let p0 = points[0]
                     let p1 = rotationBoxLabelLayer.mousePosition
-                    let angle = QmlUtilsCpp.calcateAngleToRotation(p0, p1)
-                    let length = QmlUtilsCpp.calcateLength(p0,  p1)
+                    let angle = QmlUtilsCpp.calculateAngleToRotation(p0, p1)
+                    let length = QmlUtilsCpp.calculateLength(p0,  p1)
                     rotationBoxLabelLayer.listModel.setProperty(last,"boxWidth", length)
                     rotationBoxLabelLayer.listModel.setProperty(last,"boxRotation", angle)
                 }else if(points.length===2){
@@ -182,6 +181,7 @@ Item {
             }else if (rotationBoxLabelLayer.drawStatus === CanvasEnums.Select){
                 if(rotationBoxLabelLayer.selectedIndex >= 0){
                     updateEditType(rotationBoxLabelLayer.realRotatedRectPoints, Qt.point(mouse.x,mouse.y))
+                    console.log(rotationBoxLabelLayer.editType)
                     if(rotationBoxLabelLayer.editType !== CanvasEnums.None){
                         drawArea.cursorShape = Qt.PointingHandCursor
                     }else{
@@ -217,7 +217,7 @@ Item {
                             let p2 = rectPoints[2];
                             let p3 = rectPoints[3];
                             let boxWidth = QmlUtilsCpp.distancePointToPoints(p0, p3, p1);
-                            let boxRotation = QmlUtilsCpp.calcateAngleToRotation(p0, p1)
+                            let boxRotation = QmlUtilsCpp.calculateAngleToRotation(p0, p1)
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxRotation", boxRotation)
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxWidth", boxWidth)
                         }
@@ -255,6 +255,7 @@ Item {
         }
     }
 
+    // notice: youbug 设置状态没有恢复
     function updateEditType(points, point){
         if(points.length < 4)  return
         let point0 = points[0]

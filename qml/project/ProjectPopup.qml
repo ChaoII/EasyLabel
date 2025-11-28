@@ -44,6 +44,7 @@ PopupStandardWindow{
                 initModel: [
                     {key:"Detection", label: qsTr('目标检测'), value: AnnotationConfig.Detection },
                     {key:"RotatedBox", label: qsTr('旋转框检测'), value: AnnotationConfig.RotatedBox },
+                    {key:"Segmentation", label: qsTr('实例分割'), value: AnnotationConfig.Segmentation },
                     {key:"Other", label: qsTr('其它'), value: AnnotationConfig.Other }
                 ]
                 onClickMenu: function(deep, key, keyPath, data) {
@@ -51,6 +52,8 @@ PopupStandardWindow{
                         detailLoader.source = "DetectionDetailComponent.qml"
                     }else if(data.value===AnnotationConfig.RotatedBox){
                         detailLoader.source = "RotatedBoxDetailComponent.qml"
+                    }else if(data.value===AnnotationConfig.Segmentation){
+                        detailLoader.source = "SegmentationDetailComponent.qml"
                     }else{
                         detailLoader.source = "OtherDetailComponent.qml"
                     }
@@ -73,6 +76,8 @@ PopupStandardWindow{
                     return "DetectionDetailComponent.qml"
                 case AnnotationConfig.RotatedBox:
                     return "RotatedBoxDetailComponent.qml"
+                case AnnotationConfig.Segmentation:
+                    return "SegmentationDetailComponent.qml"
                 case AnnotationConfig.Other:
                     return "OtherDetailComponent.qml"
                 default:
@@ -83,9 +88,10 @@ PopupStandardWindow{
             function gotoMenuByAnnotationType(){
                 if(annotationType===AnnotationConfig.Detection){
                     _menu.gotoMenu("Detection")
-                }
-                else if(annotationType===AnnotationConfig.RotatedBox){
+                }else if(annotationType===AnnotationConfig.RotatedBox){
                     _menu.gotoMenu("RotatedBox")
+                }else if(annotationType===AnnotationConfig.Segmentation){
+                    _menu.gotoMenu("Segmentation")
                 }else{
                     _menu.gotoMenu("Other")
                 }

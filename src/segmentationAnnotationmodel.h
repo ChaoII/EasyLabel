@@ -1,39 +1,30 @@
 #pragma once
 
-#include "annotationenums.h"
 #include "annotationmodelbase.h"
 #include <QColor>
 #include <QQmlEngine>
 #include <QRect>
 
-class RotatedBoxAnnotationModel : public AnnotationModelBase {
+class SegmentationAnnotationModel : public AnnotationModelBase {
     Q_OBJECT
     QML_ELEMENT
 
 public:
     struct RotatedBoxAnnotationItem {
         int labelID;
-        int x;
-        int y;
-        int width;
-        int height;
+        QVariantList points;
         int zOrder;
-        double rotation;
         bool selected;
     };
 
     enum RotatedBoxAnnotationRoles {
         LabelIDRole = Qt::UserRole + 1,
-        XRole,
-        YRole,
-        WidthRole,
-        HeightRole,
+        PointsRole,
         ZOrderRole,
-        RotationRole,
         SelectedRole
     };
 
-    explicit RotatedBoxAnnotationModel(QObject *parent = nullptr);
+    explicit SegmentationAnnotationModel(QObject *parent = nullptr);
 
     // QAbstractItemModel interface
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -49,12 +40,24 @@ public:
 
     Q_INVOKABLE QVariant getProperty(int index, const QString &property);
 
-    Q_INVOKABLE void addItem(int lableID, int x, int y, int width, int height,
-                             int zOrder, double rotation, bool selected);
+    Q_INVOKABLE void addItem(int lableID, const QVariantList& points,
+                             int zOrder,  bool selected);
 
-    Q_INVOKABLE void updateItem(int index, int lableID, int x, int y, int width,
-                                int height, int zOrder, double rotation,
-                                bool selected);
+    Q_INVOKABLE int getPointSize(int index);
+
+    Q_INVOKABLE QVariantList getPoints(int index);
+
+    Q_INVOKABLE void appendPoint(int index, const QPointF& point);
+
+    Q_INVOKABLE void updatePoint(int index, int pointIndex, const QPointF& point);
+
+    Q_INVOKABLE void updateLastPoint(int index, const QPointF& point);
+
+    Q_INVOKABLE void moveShape(int index, const QPointF& dPoint);
+
+    Q_INVOKABLE void popFrontPoint(int index);
+
+    Q_INVOKABLE void popBackPoint(int index);
 
     Q_INVOKABLE void setSelected(int index, bool selected);
 
@@ -62,15 +65,6 @@ public:
 
     Q_INVOKABLE void clear();
 
-    Q_INVOKABLE QRectF getBoundingBox(int index);
-
-    Q_INVOKABLE QRectF getBoundingBox(const QRectF& rect,double angle);
-
-    Q_INVOKABLE QVector<QPointF> rotatedRectCorners(int index);
-
-    Q_INVOKABLE QRect getRect(int index);
-
-    Q_INVOKABLE double getRotation(int index);
 
     Q_INVOKABLE int getLabelID(int index);
 
@@ -93,7 +87,7 @@ public:
     Q_INVOKABLE bool
     exportAnotation(const QString &exportDir,
                     const QVector<QPair<QString, QString>> &dataSet,
-                    int exportType, double trainSplitRate,const QVector<QString>& labels) override;
+                    int exportType, double trainSplitRate, const QVector<QString>& labels) override;
 
     Q_INVOKABLE bool
     exportYoloAnnotation(const QString &exportDir,

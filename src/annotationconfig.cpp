@@ -2,6 +2,7 @@
 #include "detectionAnnotationmodel.h"
 #include "exportworker.h"
 #include "rotatedBoxAnnotationmodel.h"
+#include "segmentationAnnotationmodel.h"
 #include <QDir>
 #include <QFile>
 #include <QImage>
@@ -54,6 +55,8 @@ AnnotationModelBase *AnnotationConfig::currentAnnotationModel() {
             return new DetectionAnnotationModel();
         }else if(annotationType_ == AnnotationConfig::RotatedBox){
             return new RotatedBoxAnnotationModel();
+        }else if(annotationType_ == AnnotationConfig::Segmentation){
+            return new SegmentationAnnotationModel();
         }else{
             return new DetectionAnnotationModel();
         }
@@ -275,10 +278,13 @@ void AnnotationConfig::loadAnnotationFiles() {
         }
         AnnotationModelBase *annotation = nullptr;
         if(annotationType_ == AnnotationConfig::Detection){
-        // 如果存在那么加载annotation
-            annotation = new DetectionAnnotationModel();
+            annotation = new DetectionAnnotationModel(this);
+        }else if(annotationType_ == AnnotationConfig::RotatedBox){
+            annotation = new RotatedBoxAnnotationModel(this);
+        }else if(annotationType_ == AnnotationConfig::Segmentation){
+             annotation = new SegmentationAnnotationModel(this);
         }else{
-            annotation = new RotatedBoxAnnotationModel();
+            qFatal()<< "unsupported annotationType" << getAnnotationTypeName();
         }
         if (annotation->loadFromFile(annotationFilePath)) {
             fileListModel_->setAnnotated(i, true);

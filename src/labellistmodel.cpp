@@ -150,7 +150,6 @@ QVector<QString> LabelListModel::toLabelList() const
 {
     QVector<QString> labels;
     for (const LabelItem& item: items_) {
-        QJsonObject jsonObj;
         labels.append(item.label);
     }
     return labels;

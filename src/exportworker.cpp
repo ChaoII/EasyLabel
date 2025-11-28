@@ -3,6 +3,7 @@
 #include "filelistmodel.h"
 #include "labellistmodel.h"
 #include "rotatedBoxAnnotationmodel.h"
+#include "segmentationAnnotationmodel.h"
 #include <QDebug>
 #include <QDir>
 
@@ -34,25 +35,25 @@ bool ExportWorker::exportToDirectory(const QString &exportDir,
 
     FileListModel fileListModel(this);
     LabelListModel LabelListModel(this);
-    AnnotationModelBase *annotationModel = nullptr;
+    // todo deal memory
+    std::unique_ptr<AnnotationModelBase> annotationModel = nullptr;
     if (annotationType == 0) {
-        annotationModel = new DetectionAnnotationModel(this);
+        annotationModel = std::make_unique<DetectionAnnotationModel>(this);
     } else if (annotationType == 1) {
-        annotationModel = new RotatedBoxAnnotationModel(this);
+        annotationModel = std::make_unique<RotatedBoxAnnotationModel>(this);
+    } else if (annotationType == 2) {
+        annotationModel = std::make_unique<SegmentationAnnotationModel>(this);
     } else {
         qFatal() << "unsupported annotationType " << annotationType;
         return false;
     }
-
-    connect(annotationModel, &AnnotationModelBase::exportProgress, this,
+    connect(annotationModel.get(), &AnnotationModelBase::exportProgress, this,
             &ExportWorker::exportProgress);
     // 数据集划分
     QVector<QPair<QString, QString>> dataSets;
     fileListModel.setFolderPath(imageDir);
     LabelListModel.loadFromFile(QDir(resultDir).absoluteFilePath("label.json"));
-
     auto labels = LabelListModel.toLabelList();
-
     int totalImages = fileListModel.rowCount();
     for (int index = 0; index < totalImages; index++) {
         const QString annotationFilePath = fileListModel.getResultFilePath(index);

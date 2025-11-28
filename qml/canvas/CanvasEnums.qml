@@ -17,6 +17,7 @@ Item {
         ResizeTopEdge = 6,
         ResizeRightEdge = 7,
         ResizeBottomEdge = 8,
-        None = 9
+        ResizeAnyPoint = 9,
+        None = 10
     }
 }

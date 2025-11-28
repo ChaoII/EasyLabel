@@ -14,7 +14,7 @@ QtObject {
     property var annotationIconTextMap:({
         [AnnotationConfig.Detection]: HusIcon.BorderOutlined,
         [AnnotationConfig.RotatedBox]: HusIcon.AppleOutlined,
+        [AnnotationConfig.Segmentation]: HusIcon.AlertOutlined,
         [AnnotationConfig.Other]: HusIcon.AliwangwangOutlined
     })
-
 }
