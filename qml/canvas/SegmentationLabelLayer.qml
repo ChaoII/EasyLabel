@@ -24,17 +24,22 @@ Item {
     // 无论是移动还是编辑点都会很跟手，当释放鼠标左键后，又重新开启了类型检测是移动还是其它
     // 这一点很关键
     property bool isEditing: false
+    property bool isClosing: false
+    // 在多边形绘制中，判断某个点是否已经绘制完成的标志
+    property bool pointFinished: false
+    // 判断整个多边形是否已经绘制完成的标志（这是比大多数标注工具更加实用的部分，因为大多数标注工具标注玩一个后，又要重新触发一个对象去标注）
+    property bool shapeFinished: true
     property point latestDragPoint: Qt.point(0, 0)
     // 全局的一些样式属性，会根据当前画面的缩放比进行自适应，不然当图片分辨率很高,缩放比变很小后，
     // 线宽如果还保持1的话，缩小后，线宽低于1个像素就无法显示
+    property real closingThreshold: 5 / scaleFactor
     property real fillOpacity: segmentationLabelLayer.annotationConfig.currentFillOpacity
     property int handlerWidth: annotationConfig.currentCornerRadius / scaleFactor
     property int handlerHeight: annotationConfig.currentCornerRadius / scaleFactor
     property int fontPixSize: annotationConfig.fontPointSize / scaleFactor
     property int borderWidth: annotationConfig.currentLineWidth / scaleFactor
-    property bool pointFinished: false
-    property bool shapeFinished: true
     property bool showLabel: annotationConfig.showLabel
+
 
     Component.onCompleted: {
         console.log("segmentationLabelLayer")
@@ -81,7 +86,7 @@ Item {
                     // 使用 PathPolyline 动态绘制
                     PathPolyline {
                         id: pathPolyline
-                        path: createPath(points)
+                        path: points
                     }
                 }
 
@@ -90,11 +95,13 @@ Item {
                     model: obj.showHandlers? points.length:[]
                     delegate: Rectangle {
                         required property int index
+                        // 最后一个对象，并且点属大于3
+                        property bool closingStatus: segmentationLabelLayer.isClosing && index === points.length - 1 && index >= 3
                         x: points[index].x - handlerWidth  / 2
                         y: points[index].y - handlerHeight / 2
-                        width: handlerWidth
-                        height: handlerHeight
-                        radius: handlerWidth  / 2
+                        width:  closingStatus? handlerWidth * 2: handlerWidth
+                        height: closingStatus? handlerHeight * 2: handlerHeight
+                        radius: closingStatus? handlerWidth: handlerWidth  / 2
                         color: obj.annotationColor
                         border.width: borderWidth
                         border.color: "white"
@@ -140,15 +147,6 @@ Item {
         }
     }
 
-    function createPath(points) {
-        var path = points
-        if (points.length >= 3) {
-            path.push(points[0])
-        }
-        return path
-    }
-
-
     MouseArea {
         id: drawArea
         anchors.fill: parent
@@ -185,20 +183,6 @@ Item {
             }
         }
 
-        onClicked:function(mouse) {
-            if(mouse.button === Qt.RightButton){
-                if (segmentationLabelLayer.drawStatus === CanvasEnums.Drawing){
-                    let last = segmentationLabelLayer.listModel.rowCount()-1
-                    let lastPointSize = segmentationLabelLayer.listModel.getPointSize(last)
-                    if (lastPointSize > 3 && !shapeFinished) {
-                        segmentationLabelLayer.listModel.popBackPoint(last)
-                        shapeFinished = true
-                        segmentationLabelLayer.editType = CanvasEnums.None
-                    }
-                }
-            }
-        }
-
         onPositionChanged: function(mouse) {
             if (segmentationLabelLayer.drawStatus === CanvasEnums.Drawing) {
                 if(segmentationLabelLayer.currentLabelID === -1) return
@@ -207,20 +191,25 @@ Item {
                 crosshair.mousePosition = mousePosition
                 let last = segmentationLabelLayer.listModel.rowCount() - 1
                 if(segmentationLabelLayer.listModel.rowCount() >= 1){
-                    if(!shapeFinished){
-                        if(pointFinished ){
+                    if(!segmentationLabelLayer.shapeFinished){
+                        if(segmentationLabelLayer.pointFinished){
                             segmentationLabelLayer.listModel.appendPoint(last, mousePosition)
-                            pointFinished = false
+                            segmentationLabelLayer.pointFinished = false
                         }
+                        let p0 = segmentationLabelLayer.listModel.getPoints(last)[0]
+                        segmentationLabelLayer.isClosing = QmlUtilsCpp.calculateLength(mousePosition, p0) < segmentationLabelLayer.closingThreshold
                         segmentationLabelLayer.listModel.updateLastPoint(last, mousePosition)
                     }
                 }
             }else if (segmentationLabelLayer.drawStatus === CanvasEnums.Select){
                 if(segmentationLabelLayer.selectedIndex >= 0){
                     let points = segmentationLabelLayer.listModel.getPoints(segmentationLabelLayer.selectedIndex)
-                    updateEditType(points, Qt.point(mouse.x, mouse.y))
-                    console.log("onPositionChanged",segmentationLabelLayer.isEditing, segmentationLabelLayer.editPointIndex, segmentationLabelLayer.editType)
-
+                    // 这里很关键，不然对象在修改某个点的时候不流畅，因为在鼠标拖动过程中实时检测EditType，
+                    // 如果鼠标移动过快，编辑状态可能会改变，导致编辑不流畅
+                    if(!segmentationLabelLayer.isEditing){
+                        updateEditType(points, Qt.point(mouse.x, mouse.y))
+                    }
+                    // 修改鼠标的央视
                     if(segmentationLabelLayer.editType !== CanvasEnums.None){
                         drawArea.cursorShape = Qt.PointingHandCursor
                     }else{
@@ -249,21 +238,33 @@ Item {
             if (mouse.button === Qt.LeftButton) {
                 if (segmentationLabelLayer.drawStatus === CanvasEnums.Drawing) {
                     let point = Qt.point(mouse.x, mouse.y)
-                    if(shapeFinished){
-                        segmentationLabelLayer.listModel.addItem(segmentationLabelLayer.currentLabelID, [point], segmentationLabelLayer.zOrder++, false)
-                        shapeFinished = false
+                    if(segmentationLabelLayer.shapeFinished){
+                        segmentationLabelLayer.listModel.addItem(segmentationLabelLayer.currentLabelID, [point], segmentationLabelLayer.zOrder++, true)
+                        segmentationLabelLayer.shapeFinished = false
+                    }
+                    // 该处逻辑表达的是，当最后一个点移动到离第一个点很近的时候，再次点击鼠标后即完成一个shape的绘制，将shapeFinished 设置为 true
+                    let last = segmentationLabelLayer.listModel.rowCount() - 1
+                    let lastPointSize = segmentationLabelLayer.listModel.getPointSize(last)
+                    if (lastPointSize > 3 && !segmentationLabelLayer.shapeFinished){
+                        let p0 = segmentationLabelLayer.listModel.getPoints(last)[0]
+                        if(segmentationLabelLayer.isClosing){
+                            segmentationLabelLayer.listModel.popBackPoint(last)
+                            segmentationLabelLayer.listModel.appendPoint(last, p0)
+                            segmentationLabelLayer.shapeFinished = true
+                            segmentationLabelLayer.isClosing = false
+                            segmentationLabelLayer.editType = CanvasEnums.None
+                            segmentationLabelLayer.listModel.setSelected(last, false)
+                        }
                     }
                     pointFinished = true
                 }
                 segmentationLabelLayer.isEditing = false
                 segmentationLabelLayer.editType = CanvasEnums.None
-                console.log("onReleased",segmentationLabelLayer.isEditing,segmentationLabelLayer.editType)
             }
         }
     }
 
     function updateEditType(points, point){
-        if(segmentationLabelLayer.isEditing) return
         if(points.length < 3)  return
         for(let i = 0; i < points.length; i++){
             let itemRect = Qt.rect(points[i].x-handlerWidth/2, points[i].y-handlerHeight/2, handlerWidth, handlerHeight)
@@ -275,6 +276,5 @@ Item {
         }
         segmentationLabelLayer.editType =  CanvasEnums.None
         segmentationLabelLayer.editPointIndex = -1
-        console.log("updateEditType",segmentationLabelLayer.isEditing,segmentationLabelLayer.editType)
     }
 }
