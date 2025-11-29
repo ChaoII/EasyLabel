@@ -6,6 +6,7 @@ import EasyLabel
 Item {
     id: segmentationLabelLayer
     property AnnotationConfig annotationConfig
+    // 该状态是由用户点击某个案件或者快捷键触犯发的，容易在最外层对操作进行限制
     property int drawStatus: CanvasEnums.OptionStatus.Drawing
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
@@ -14,12 +15,18 @@ Item {
     property int selectedIndex: -1
     property real scaleFactor: 1.0
     property int zOrder: -1
+    // 该状态是由用户根据不同过的操作情况手动进行编辑类型，比如鼠标移动到控制点后，就会变成编辑某个控制点的类型
+    // 鼠标移动到非编辑点并且点击目标后移动类型
     property int editType: CanvasEnums.EditType.None
+    // 确定鼠标移动到哪个编辑点了
     property int editPointIndex: -1
-    property bool allowDetectEditPoint: true
-
+    // 是否正在移动或者编辑点，如果正在编辑点的时候就关闭editType检测，关闭类型检测后，
+    // 无论是移动还是编辑点都会很跟手，当释放鼠标左键后，又重新开启了类型检测是移动还是其它
+    // 这一点很关键
     property bool isEditing: false
-    property point dragStartPoint: Qt.point(0, 0)
+    property point latestDragPoint: Qt.point(0, 0)
+    // 全局的一些样式属性，会根据当前画面的缩放比进行自适应，不然当图片分辨率很高,缩放比变很小后，
+    // 线宽如果还保持1的话，缩小后，线宽低于1个像素就无法显示
     property real fillOpacity: segmentationLabelLayer.annotationConfig.currentFillOpacity
     property int handlerWidth: annotationConfig.currentCornerRadius / scaleFactor
     property int handlerHeight: annotationConfig.currentCornerRadius / scaleFactor
@@ -28,7 +35,6 @@ Item {
     property bool pointFinished: false
     property bool shapeFinished: true
     property bool showLabel: annotationConfig.showLabel
-    property rect startRect: Qt.rect(0, 0, 0, 0)
 
     Component.onCompleted: {
         console.log("segmentationLabelLayer")
@@ -165,8 +171,10 @@ Item {
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
                         if(segmentationLabelLayer.editType === CanvasEnums.None){
                             segmentationLabelLayer.editType = CanvasEnums.Move
+                            segmentationLabelLayer.isEditing = true
+
                         }
-                        segmentationLabelLayer.dragStartPoint = Qt.point(mouse.x, mouse.y)
+                        segmentationLabelLayer.latestDragPoint = Qt.point(mouse.x, mouse.y)
                     } else {
                         // 没有元素被选中
                         segmentationLabelLayer.listModel.removeAllSelected()
@@ -221,10 +229,11 @@ Item {
                     if(mouse.buttons & Qt.LeftButton ){
                         // 根据编辑类型计算新的位置和尺寸
                         if(segmentationLabelLayer.editType===CanvasEnums.Move){
-                            var dx = mouse.x - segmentationLabelLayer.dragStartPoint.x
-                            var dy = mouse.y - segmentationLabelLayer.dragStartPoint.y
-                            segmentationLabelLayer.dragStartPoint.x = mouse.x
-                            segmentationLabelLayer.dragStartPoint.y = mouse.y
+                            segmentationLabelLayer.isEditing = true
+                            var dx = mouse.x - segmentationLabelLayer.latestDragPoint.x
+                            var dy = mouse.y - segmentationLabelLayer.latestDragPoint.y
+                            segmentationLabelLayer.latestDragPoint.x = mouse.x
+                            segmentationLabelLayer.latestDragPoint.y = mouse.y
                             segmentationLabelLayer.listModel.moveShape(segmentationLabelLayer.selectedIndex, Qt.point(dx, dy))
                         }
                         if(segmentationLabelLayer.editType===CanvasEnums.ResizeAnyPoint){
@@ -247,16 +256,13 @@ Item {
                     pointFinished = true
                 }
                 segmentationLabelLayer.isEditing = false
-                segmentationLabelLayer.allowDetectEditPoint = false
                 segmentationLabelLayer.editType = CanvasEnums.None
-                Qt.callLater(() => segmentationLabelLayer.allowDetectEditPoint = true)
                 console.log("onReleased",segmentationLabelLayer.isEditing,segmentationLabelLayer.editType)
             }
         }
     }
 
     function updateEditType(points, point){
-        if (!segmentationLabelLayer.allowDetectEditPoint) return
         if(segmentationLabelLayer.isEditing) return
         if(points.length < 3)  return
         for(let i = 0; i < points.length; i++){
@@ -264,8 +270,11 @@ Item {
             if(QmlUtilsCpp.isPointInRect(itemRect, point)){
                 segmentationLabelLayer.editType =  CanvasEnums.ResizeAnyPoint
                 segmentationLabelLayer.editPointIndex = i
+                return
             }
         }
+        segmentationLabelLayer.editType =  CanvasEnums.None
+        segmentationLabelLayer.editPointIndex = -1
         console.log("updateEditType",segmentationLabelLayer.isEditing,segmentationLabelLayer.editType)
     }
 }
