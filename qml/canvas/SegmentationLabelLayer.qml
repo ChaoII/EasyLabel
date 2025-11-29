@@ -37,13 +37,8 @@ Item {
     property int handlerWidth: annotationConfig.currentCornerRadius / scaleFactor
     property int handlerHeight: annotationConfig.currentCornerRadius / scaleFactor
     property int fontPixSize: annotationConfig.fontPointSize / scaleFactor
-    property int borderWidth: annotationConfig.currentLineWidth / scaleFactor
+    property int borderWidth: Math.max(1.0, annotationConfig.currentLineWidth / scaleFactor)
     property bool showLabel: annotationConfig.showLabel
-
-
-    Component.onCompleted: {
-        console.log("segmentationLabelLayer")
-    }
 
     Crosshair {
         id: crosshair
@@ -76,17 +71,19 @@ Item {
             Shape {
                 anchors.fill: parent
                 visible: points.length > 0
+                preferredRendererType: Shape.CurveRenderer
                 ShapePath {
                     id: shapePath
                     strokeWidth: borderWidth
                     strokeColor: annotationColor
                     fillColor: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, 0.3)
-                    strokeStyle: shapeFinished? ShapePath.SolidLine : ShapePath.DashLine
+                    strokeStyle: (selected || !shapeFinished)? ShapePath.DashLine : ShapePath.SolidLine
+                    joinStyle: ShapePath.MiterJoin
                     dashPattern: shapeFinished ? [] : [1, 2]
                     // 使用 PathPolyline 动态绘制
                     PathPolyline {
                         id: pathPolyline
-                        path: points
+                        path: createPath(points)
                     }
                 }
 
@@ -95,16 +92,25 @@ Item {
                     model: obj.showHandlers? points.length:[]
                     delegate: Rectangle {
                         required property int index
-                        // 最后一个对象，并且点属大于3
-                        property bool closingStatus: segmentationLabelLayer.isClosing && index === points.length - 1 && index >= 3
-                        x: points[index].x - handlerWidth  / 2
-                        y: points[index].y - handlerHeight / 2
-                        width:  closingStatus? handlerWidth * 2: handlerWidth
-                        height: closingStatus? handlerHeight * 2: handlerHeight
-                        radius: closingStatus? handlerWidth: handlerWidth  / 2
+                        // 最后一个对象，并且点属大于3，points.length - 2 是因为createPath添加了一个封闭的点 或者index === 0
+                        property bool closingStatus: segmentationLabelLayer.isClosing && index === 0 && points.length >= 3
+                        property int realHandlerWidth: closingStatus? handlerWidth * 2: handlerWidth
+                        property int realHandlerHeight : closingStatus? handlerHeight * 2: handlerHeight
+                        x: points[index].x - realHandlerWidth  / 2
+                        y: points[index].y - realHandlerHeight / 2
+                        width: realHandlerWidth
+                        height: realHandlerHeight
+                        radius: realHandlerWidth / 2
                         color: obj.annotationColor
                         border.width: borderWidth
                         border.color: "white"
+                    }
+                }
+                Connections{
+                    target: segmentationLabelLayer.annotationConfig.labelListModel
+                    function onDataChanged(){
+                        annotationColor = segmentationLabelLayer.annotationConfig.labelListModel.getLabelColor(obj.labelID)
+                        annotationLabel = segmentationLabelLayer.annotationConfig.labelListModel.getLabel(obj.labelID)
                     }
                 }
             }
@@ -136,15 +142,16 @@ Item {
                         text: obj.annotationLabel
                     }
                 }
-                Connections{
-                    target: segmentationLabelLayer.annotationConfig.labelListModel
-                    function onDataChanged(){
-                        annotationColor = segmentationLabelLayer.annotationConfig.labelListModel.getLabelColor(obj.labelID)
-                        annotationLabel = segmentationLabelLayer.annotationConfig.labelListModel.getLabel(obj.labelID)
-                    }
-                }
             }
         }
+    }
+
+    function createPath(points) {
+        var path = points
+        if (points.length >= 3) {
+            path.push(points[0])
+        }
+        return path
     }
 
     MouseArea {
@@ -248,8 +255,9 @@ Item {
                     if (lastPointSize > 3 && !segmentationLabelLayer.shapeFinished){
                         let p0 = segmentationLabelLayer.listModel.getPoints(last)[0]
                         if(segmentationLabelLayer.isClosing){
+                            // 点击一下应该删除最后一个点（在鼠标移动中一直动态的一个点），因为最后一个点就是第一个点
                             segmentationLabelLayer.listModel.popBackPoint(last)
-                            segmentationLabelLayer.listModel.appendPoint(last, p0)
+                            // segmentationLabelLayer.listModel.appendPoint(last, p0)
                             segmentationLabelLayer.shapeFinished = true
                             segmentationLabelLayer.isClosing = false
                             segmentationLabelLayer.editType = CanvasEnums.None
