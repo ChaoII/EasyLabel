@@ -54,7 +54,7 @@ AnnotationModelBase *AnnotationConfig::currentAnnotationModel() {
         if (annotationType_ == AnnotationConfig::Detection) {
             return new DetectionAnnotationModel();
         }else if(annotationType_ == AnnotationConfig::RotatedBox){
-            return new RotatedBoxAnnotationModel();
+            return new RotationBoxAnnotationModel();
         }else if(annotationType_ == AnnotationConfig::Segmentation){
             return new SegmentationAnnotationModel();
         }else{
@@ -280,7 +280,7 @@ void AnnotationConfig::loadAnnotationFiles() {
         if(annotationType_ == AnnotationConfig::Detection){
             annotation = new DetectionAnnotationModel(this);
         }else if(annotationType_ == AnnotationConfig::RotatedBox){
-            annotation = new RotatedBoxAnnotationModel(this);
+            annotation = new RotationBoxAnnotationModel(this);
         }else if(annotationType_ == AnnotationConfig::Segmentation){
              annotation = new SegmentationAnnotationModel(this);
         }else{

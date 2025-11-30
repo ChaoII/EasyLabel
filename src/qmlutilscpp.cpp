@@ -4,55 +4,51 @@
 #include <QRect>
 #include <QTransform>
 
-QmlUtilsCpp::QmlUtilsCpp(QObject *parent)
-    : QObject{parent}
-{
+QmlUtilsCpp::QmlUtilsCpp(QObject *parent) : QObject{parent} {}
 
+QString QmlUtilsCpp::now() const {
+    return QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz");
 }
 
-QString QmlUtilsCpp::now() const{
-    return  QDateTime::currentDateTime().toString("yyyy-MM-ddTHH:mm:ss.zzz");
-}
-
-double QmlUtilsCpp::calculateAngleToRotation(const QPointF& p0, const QPointF& p1){
-    QLineF line(p0,p1);
+double QmlUtilsCpp::calculateAngleToRotation(const QPointF &p0,
+                                             const QPointF &p1) {
+    QLineF line(p0, p1);
     return 360 - line.angle();
 }
 
-double QmlUtilsCpp::calculateLength(const QPointF& p0, const QPointF& p1){
+double QmlUtilsCpp::calculateLength(const QPointF &p0, const QPointF &p1) {
     QLineF line(p0, p1);
     return line.length();
 }
 
-double QmlUtilsCpp::distancePointToPoints(const QPointF& point0, const QPointF& point1,const QPointF& point2){
+double QmlUtilsCpp::distancePointToPoints(const QPointF &point0,
+                                          const QPointF &point1,
+                                          const QPointF &point2) {
 
-    QLineF line(point0,point1);
-    return distancePointToLine(point2,line);
-
+    QLineF line(point0, point1);
+    return distancePointToLine(point2, line);
 }
 
-QVector<QPointF> QmlUtilsCpp::rotatedRectCorners(const QRectF &rect, double rotation){
+QVector<QPointF> QmlUtilsCpp::rotatedRectCorners(const QRectF &rect,
+                                                 double rotation) {
     QPointF origin = rect.topLeft();
     QTransform transform;
     transform.translate(origin.x(), origin.y());
     transform.rotate(rotation);
     transform.translate(-origin.x(), -origin.y());
-    return {
-        transform.map(rect.topLeft()),
-        transform.map(rect.topRight()),
-        transform.map(rect.bottomRight()),
-        transform.map(rect.bottomLeft())
-    };
+    return {transform.map(rect.topLeft()), transform.map(rect.topRight()),
+            transform.map(rect.bottomRight()), transform.map(rect.bottomLeft())};
 }
 
-QRectF QmlUtilsCpp::getBoundingRect(const QVector<QPointF>& polygon){
-    if (polygon.size() < 3) return {}; // 至少需要3个点构成多边形
+QRectF QmlUtilsCpp::getBoundingRect(const QVector<QPointF> &polygon) {
+    if (polygon.size() < 3)
+        return {}; // 至少需要3个点构成多边形
     QPolygonF qPolygon = QPolygonF(polygon);
     return qPolygon.boundingRect();
 }
 
-
-bool QmlUtilsCpp::pointInRotatedRect(const QPointF& point, const QRectF& rect, double rotation) {
+bool QmlUtilsCpp::pointInRotatedRect(const QPointF &point, const QRectF &rect,
+                                     double rotation) {
     // 将点转换到矩形局部坐标系
     QTransform transform;
     QPointF origin = rect.topLeft();
@@ -66,12 +62,14 @@ bool QmlUtilsCpp::pointInRotatedRect(const QPointF& point, const QRectF& rect, d
     return rect.contains(localPoint);
 }
 
-bool QmlUtilsCpp::isPointInRect(const QRectF& rect, const QPointF &point){
+bool QmlUtilsCpp::isPointInRect(const QRectF &rect, const QPointF &point) {
     return rect.contains(point);
 }
 
-bool QmlUtilsCpp::isPointInPolygon(const QPointF& point, const QVector<QPointF>& polygon) {
-    if (polygon.size() < 3) return false; // 至少需要3个点构成多边形
+bool QmlUtilsCpp::isPointInPolygon(const QPointF &point,
+                                   const QVector<QPointF> &polygon) {
+    if (polygon.size() < 3)
+        return false; // 至少需要3个点构成多边形
 
     QPolygonF qPolygon = QPolygonF(polygon);
     // Qt::FillRule fillRule = Qt::OddEvenFill; // 或 Qt::WindingFill
@@ -80,26 +78,27 @@ bool QmlUtilsCpp::isPointInPolygon(const QPointF& point, const QVector<QPointF>&
     return rect.contains(point);
 }
 
-bool QmlUtilsCpp::isPointLeftOfLine(const QVector<QPointF>& points){
+bool QmlUtilsCpp::isPointLeftOfLine(const QVector<QPointF> &points) {
     Q_ASSERT(points.size() >= 3);
-    QLineF line(points[0],points[1]);
+    QLineF line(points[0], points[1]);
     return isPointLeftOfLine(points[2], line);
 }
 
-bool QmlUtilsCpp::isPointLeftOfLineScreen(const QVector<QPointF>& points){
+bool QmlUtilsCpp::isPointLeftOfLineScreen(const QVector<QPointF> &points) {
     Q_ASSERT(points.size() >= 3);
-    QLineF line(points[0],points[1]);
+    QLineF line(points[0], points[1]);
     return isPointLeftOfLineScreen(points[2], line);
 }
 
-bool QmlUtilsCpp::isPointAboveLine(const QVector<QPointF>& points){
+bool QmlUtilsCpp::isPointAboveLine(const QVector<QPointF> &points) {
     Q_ASSERT(points.size() >= 3);
-    QLineF line(points[0],points[1]);
+    QLineF line(points[0], points[1]);
     return isPointAboveLine(points[2], line);
 }
 
 // 计算点到直线的距离
-double QmlUtilsCpp::distancePointToLine(const QPointF& point, const QLineF& line) {
+double QmlUtilsCpp::distancePointToLine(const QPointF &point,
+                                        const QLineF &line) {
     double x1 = line.p1().x();
     double y1 = line.p1().y();
     double x2 = line.p2().x();
@@ -120,7 +119,8 @@ double QmlUtilsCpp::distancePointToLine(const QPointF& point, const QLineF& line
     return distance;
 }
 // 判断点是否在直线的左侧(屏幕坐标系)
-bool QmlUtilsCpp::isPointLeftOfLineScreen(const QPointF& point, const QLineF& line) {
+bool QmlUtilsCpp::isPointLeftOfLineScreen(const QPointF &point,
+                                          const QLineF &line) {
     double x1 = line.p1().x();
     double y1 = line.p1().y();
     double x2 = line.p2().x();
@@ -128,12 +128,12 @@ bool QmlUtilsCpp::isPointLeftOfLineScreen(const QPointF& point, const QLineF& li
     double x3 = point.x();
     double y3 = point.y();
     // y 取反
-    double cross = (x2 - x1)*((y1 - y3)) - ((y1 - y2)*(x3 - x1));
+    double cross = (x2 - x1) * ((y1 - y3)) - ((y1 - y2) * (x3 - x1));
     return cross > 0;
 }
 
 // 屏幕坐标系
-bool QmlUtilsCpp::isPointAboveLine(const QPointF& point, const QLineF& line) {
+bool QmlUtilsCpp::isPointAboveLine(const QPointF &point, const QLineF &line) {
     double x1 = line.p1().x(), y1 = line.p1().y();
     double x2 = line.p2().x(), y2 = line.p2().y();
     double x = point.x(), y = point.y();
@@ -143,9 +143,8 @@ bool QmlUtilsCpp::isPointAboveLine(const QPointF& point, const QLineF& line) {
     return y < y_line; // 小于直线则在上方
 }
 
-
 // 判断点是否在直线的左侧(数学直角坐标系)
-bool QmlUtilsCpp::isPointLeftOfLine(const QPointF& point, const QLineF& line) {
+bool QmlUtilsCpp::isPointLeftOfLine(const QPointF &point, const QLineF &line) {
     double x1 = line.p1().x();
     double y1 = line.p1().y();
     double x2 = line.p2().x();
@@ -164,3 +163,32 @@ bool QmlUtilsCpp::isPointLeftOfLine(const QPointF& point, const QLineF& line) {
     return crossProduct > 0;
 }
 
+RotationRectangle
+QmlUtilsCpp::pointsToRotationRectangle(const QVector<QPointF> &points) {
+    if (points.size() != 4) {
+        return {};
+    }
+
+    double rotation = calculateAngleToRotation(points[0], points[1]);
+    double width = calculateLength(points[0], points[1]);
+    double height = calculateLength(points[1], points[2]);
+    return {points[0].x(), points[0].y(), width, height, rotation};
+}
+
+QVector<QPointF> QmlUtilsCpp::rotationRectangleToPoints(double x,double y,double width,double height,double rotation){
+    RotationRectangle rotationRectangle{x,y,width,height,rotation};
+    return rotationRectangleToPoints(rotationRectangle);
+}
+
+
+
+QVector<QPointF> QmlUtilsCpp::rotationRectangleToPoints(const RotationRectangle &rotationRectangle){
+    QRectF rect(rotationRectangle.x ,rotationRectangle.y,rotationRectangle.width,rotationRectangle.height);
+    QPointF center = rect.topLeft();
+    QTransform transform;
+    transform.translate(center.x(), center.y());
+    transform.rotate(rotationRectangle.rotation);
+    transform.translate(-center.x(), -center.y());
+    return {transform.map(rect.topLeft()), transform.map(rect.topRight()),
+            transform.map(rect.bottomRight()), transform.map(rect.bottomLeft())};
+}

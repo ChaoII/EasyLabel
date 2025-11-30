@@ -40,7 +40,7 @@ bool ExportWorker::exportToDirectory(const QString &exportDir,
     if (annotationType == 0) {
         annotationModel = std::make_unique<DetectionAnnotationModel>(this);
     } else if (annotationType == 1) {
-        annotationModel = std::make_unique<RotatedBoxAnnotationModel>(this);
+        annotationModel = std::make_unique<RotationBoxAnnotationModel>(this);
     } else if (annotationType == 2) {
         annotationModel = std::make_unique<SegmentationAnnotationModel>(this);
     } else {

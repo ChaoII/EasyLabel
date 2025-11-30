@@ -3,6 +3,16 @@
 #include <QPointF>
 #include <QQmlEngine>
 
+
+struct RotationRectangle{
+    double x;
+    double y;
+    double width;
+    double height;
+    double rotation;
+};
+
+
 class QmlUtilsCpp : public QObject {
     Q_OBJECT
     QML_SINGLETON
@@ -42,6 +52,9 @@ public:
 
     Q_INVOKABLE static bool isPointAboveLine(const QVector<QPointF> &points);
 
+    Q_INVOKABLE static QVector<QPointF> rotationRectangleToPoints(double x,double y,double width,double height,double rotation);
+
+
     // 计算点到直线的距离
     static double distancePointToLine(const QPointF &point, const QLineF &line);
 
@@ -51,5 +64,16 @@ public:
     static bool isPointLeftOfLineScreen(const QPointF &point, const QLineF &line);
 
     static bool isPointAboveLine(const QPointF &point, const QLineF &line);
+
+    static RotationRectangle pointsToRotationRectangle(const QVector<QPointF> &points);
+
+
+
+
+
+    static QVector<QPointF> rotationRectangleToPoints(const RotationRectangle &rotationRectangle);
+
+
+
 signals:
 };
