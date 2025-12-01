@@ -21,7 +21,7 @@ HusWindow {
         width: 16
         height: 16
         anchors.centerIn: parent
-        source: 'qrc:/images/logo.svg'
+        source: 'qrc:/resources/images/logo.svg'
     }
     captionBar.topCallback: function(checked){
         HusApi.setWindowStaysOnTopHint(root, checked);

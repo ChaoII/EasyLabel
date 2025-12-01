@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
-    app.setWindowIcon(QIcon(":/images/logo.svg"));
+    app.setWindowIcon(QIcon(":/resources/images/logo.svg"));
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/EasyLabel/qml/Main.qml"));
     QObject::connect(

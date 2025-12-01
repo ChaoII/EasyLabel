@@ -10,7 +10,6 @@ set(HuskarUI_DIR "D:/HuskarUI")
 set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick Core)
-find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(SqliteOrm CONFIG REQUIRED)
 find_package(HuskarUI REQUIRED)
 
@@ -24,13 +23,34 @@ qt_add_executable(appEasyLabel
     src/db/dbHelper.cpp
     src/projectdto.h
     src/projectdto.cpp
+    src/exportworker.h
+    src/exportworker.cpp
+    src/annotationconfig.h
+    src/annotationconfig.cpp
+    src/labellistmodel.h
+    src/labellistmodel.cpp
+    src/filelistmodel.h
+    src/filelistmodel.cpp
+    src/detectionAnnotationmodel.h
+    src/detectionAnnotationmodel.cpp
+    src/rotatedBoxAnnotationmodel.h
+    src/rotatedBoxAnnotationmodel.cpp
+    src/segmentationAnnotationmodel.h
+    src/segmentationAnnotationmodel.cpp
+    src/annotationmodelbase.h
+    src/annotationmodelbase.cpp
+    src/projectlistmodel.h
+    src/projectlistmodel.cpp
+    src/RemixIcon.h
+    src/RemixIcon.cpp
 )
 
-qt_add_resources(appEasyLabel "images"
+qt_add_resources(appEasyLabel "resources"
     PREFIX "/"
     FILES
-    images/logo.svg
-    images/image.jpg
+    resources/font/remixicon.ttf
+    resources/images/logo.svg
+    resources/images/image.jpg
 )
 
 set_source_files_properties(
@@ -52,36 +72,26 @@ qt_add_qml_module(appEasyLabel
     qml/project/DetectionDetailComponent.qml
     qml/project/RotatedBoxDetailComponent.qml
     qml/project/OtherDetailComponent.qml
+    qml/project/ExportDatasetPopup.qml
+    qml/project/SegmentationDetailComponent.qml
     qml/canvas/MainCanvas.qml
-     qml/canvas/CentralAnnotationView.qml
-     qml/canvas/AnnotationDetailPanel.qml
-     qml/canvas/DetectionLabelLayer.qml
-     qml/canvas/CanvasEnums.qml
-     qml/component/Crosshair.qml
-     qml/component/LineWidthSlider.qml
-     qml/component/Cursor.qml
-     QML_FILES qml/component/Collapse.qml
-     QML_FILES qml/component/ColorSlider.qml
-     QML_FILES qml/component/OpacitySlider.qml
-     QML_FILES qml/component/ColorButton.qml
-     QML_FILES qml/canvas/AnnotationLabelDetail.qml
-     QML_FILES qml/canvas/AnnotationListDetail.qml
-     QML_FILES qml/canvas/AnnotationFileListDetail.qml
-     QML_FILES qml/canvas/AnnotationStyleDetail.qml
-     SOURCES src/annotationconfig.h src/annotationconfig.cpp
-     SOURCES src/labellistmodel.h src/labellistmodel.cpp
-     SOURCES src/filelistmodel.h src/filelistmodel.cpp
-     SOURCES src/detectionAnnotationmodel.h src/detectionAnnotationmodel.cpp
-     SOURCES src/rotatedBoxAnnotationmodel.h src/rotatedBoxAnnotationmodel.cpp
-     SOURCES src/segmentationAnnotationmodel.h src/segmentationAnnotationmodel.cpp
-     SOURCES src/annotationmodelbase.h src/annotationmodelbase.cpp
-     SOURCES src/projectlistmodel.h src/projectlistmodel.cpp
-     QML_FILES qml/project/ExportDatasetPopup.qml
-
-     SOURCES src/exportworker.h src/exportworker.cpp
-     QML_FILES qml/canvas/RotatedBoxLabelLayer.qml
-     QML_FILES qml/project/SegmentationDetailComponent.qml
-     QML_FILES qml/canvas/SegmentationLabelLayer.qml
+    qml/canvas/CentralAnnotationView.qml
+    qml/canvas/AnnotationDetailPanel.qml
+    qml/canvas/DetectionLabelLayer.qml
+    qml/canvas/CanvasEnums.qml
+    qml/component/Crosshair.qml
+    qml/component/LineWidthSlider.qml
+    qml/component/Cursor.qml
+    qml/component/Collapse.qml
+    qml/component/ColorSlider.qml
+    qml/component/OpacitySlider.qml
+    qml/component/ColorButton.qml
+    qml/canvas/AnnotationLabelDetail.qml
+    qml/canvas/AnnotationListDetail.qml
+    qml/canvas/AnnotationFileListDetail.qml
+    qml/canvas/AnnotationStyleDetail.qml
+    qml/canvas/RotatedBoxLabelLayer.qml
+    qml/canvas/SegmentationLabelLayer.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -98,7 +108,6 @@ set_target_properties(appEasyLabel PROPERTIES
 target_link_libraries(appEasyLabel
     PRIVATE Qt6::Quick HuskarUI::Basic Qt6::Core sqlite_orm::sqlite_orm
 )
-target_link_libraries(appEasyLabel PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 install(TARGETS appEasyLabel
