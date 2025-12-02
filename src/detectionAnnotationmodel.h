@@ -73,15 +73,15 @@ public:
 
     Q_INVOKABLE void setLabelID(int index, int labelID) override;
 
-    Q_INVOKABLE bool
-    exportAnotation(const QString &exportDir,
-                    const QVector<QPair<QString, QString>> &dataSet,
-                    int exportType, double trainSplitRate,const QVector<QString>& labels) override;
+    Q_INVOKABLE bool exportAnotation(
+        const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
+        int exportType, double trainSplitRate, const QVector<QString> &labels,
+        const QString &templateFile = "") override;
 
     Q_INVOKABLE bool
     exportYoloAnnotation(const QString &exportDir,
                          const QVector<QPair<QString, QString>> &dataSet,
-                         double trainSplitRate,const QVector<QString>& labels);
+                         double trainSplitRate, const QVector<QString> &labels);
 
 signals:
     void exportProgress(double progress);

@@ -265,7 +265,8 @@ void DetectionAnnotationModel::setLabelID(int index, int labelID) {
 
 bool DetectionAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate, const QVector<QString>& labels) {
+    int exportType, double trainSplitRate, const QVector<QString>& labels,
+    const QString &templateFile) {
 
     // 验证参数
     if (exportDir.isEmpty()) {

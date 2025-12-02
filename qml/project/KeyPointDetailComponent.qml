@@ -7,7 +7,7 @@ import EasyLabel
 
 
 Item{
-    id: segmentationDetail
+    id: keyPointDetail
     property int labelWidth: 120
     property var formData: null
     ScrollView{
@@ -110,7 +110,7 @@ Item{
             resultFolder: dirSelectResultFolder.text,
             outOfTarget: switchOutOfTarget.checked,
             showOrder: switchShowOrder.checked,
-            annotationType: AnnotationConfig.Segmentation
+            annotationType: AnnotationConfig.KeyPoint
         }
     }
 }

@@ -10,14 +10,14 @@ class SegmentationAnnotationModel : public AnnotationModelBase {
     QML_ELEMENT
 
 public:
-    struct RotatedBoxAnnotationItem {
+    struct SegmentationAnnotationItem {
         int labelID;
         QVariantList points;
         int zOrder;
         bool selected;
     };
 
-    enum RotatedBoxAnnotationRoles {
+    enum SegmentationAnnotationRole {
         LabelIDRole = Qt::UserRole + 1,
         PointsRole,
         ZOrderRole,
@@ -37,23 +37,22 @@ public:
     Q_INVOKABLE bool setProperty(int index, const QString &property,
                                  const QVariant &value);
 
-
     Q_INVOKABLE QVariant getProperty(int index, const QString &property);
 
-    Q_INVOKABLE void addItem(int lableID, const QVariantList& points,
-                             int zOrder,  bool selected);
+    Q_INVOKABLE void addItem(int lableID, const QVariantList &points, int zOrder,
+                             bool selected);
 
     Q_INVOKABLE int getPointSize(int index);
 
     Q_INVOKABLE QVariantList getPoints(int index);
 
-    Q_INVOKABLE void appendPoint(int index, const QPointF& point);
+    Q_INVOKABLE void appendPoint(int index, const QPointF &point);
 
-    Q_INVOKABLE void updatePoint(int index, int pointIndex, const QPointF& point);
+    Q_INVOKABLE void updatePoint(int index, int pointIndex, const QPointF &point);
 
-    Q_INVOKABLE void updateLastPoint(int index, const QPointF& point);
+    Q_INVOKABLE void updateLastPoint(int index, const QPointF &point);
 
-    Q_INVOKABLE void moveShape(int index, const QPointF& dPoint);
+    Q_INVOKABLE void moveShape(int index, const QPointF &dPoint);
 
     Q_INVOKABLE void popFrontPoint(int index);
 
@@ -64,7 +63,6 @@ public:
     Q_INVOKABLE void removeItem(int index);
 
     Q_INVOKABLE void clear();
-
 
     Q_INVOKABLE int getLabelID(int index);
 
@@ -84,15 +82,15 @@ public:
 
     Q_INVOKABLE void setLabelID(int index, int labelID) override;
 
-    Q_INVOKABLE bool
-    exportAnotation(const QString &exportDir,
-                    const QVector<QPair<QString, QString>> &dataSet,
-                    int exportType, double trainSplitRate, const QVector<QString>& labels) override;
+    Q_INVOKABLE bool exportAnotation(
+        const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
+        int exportType, double trainSplitRate, const QVector<QString> &labels,
+        const QString &templateFile = "") override;
 
     Q_INVOKABLE bool
     exportYoloAnnotation(const QString &exportDir,
                          const QVector<QPair<QString, QString>> &dataSet,
-                         double trainSplitRate, const QVector<QString>& labels);
+                         double trainSplitRate, const QVector<QString> &labels);
 
 signals:
     void exportProgress(double progress);
@@ -102,5 +100,5 @@ private:
     bool exportImage_ = false;
     int exportType_ = 0;
     double trainSplitRate_ = 0.8;
-    QVector<RotatedBoxAnnotationItem> items_;
+    QVector<SegmentationAnnotationItem> items_;
 };

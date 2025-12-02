@@ -4,6 +4,7 @@
 #include "labellistmodel.h"
 #include "rotatedBoxAnnotationmodel.h"
 #include "segmentationAnnotationmodel.h"
+#include "keyPointAnnotationmodel.h"
 #include <QDebug>
 #include <QDir>
 
@@ -12,11 +13,12 @@ ExportWorker::ExportWorker(QObject *parent) : QObject(parent) {}
 void ExportWorker::startExport(const QString &exportDir,
                                const QString &imageDir,
                                const QString &resultDir, int annotationType,
-                               int exportType, double trainSplitRate) {
+                               int exportType, double trainSplitRate,
+                               const QString& templateFile) {
     try {
         bool success =
             exportToDirectory(exportDir, imageDir, resultDir, annotationType,
-                                         exportType, trainSplitRate);
+                                         exportType, trainSplitRate,templateFile);
         if (success) {
             emit exportFinished();
         } else {
@@ -31,7 +33,8 @@ bool ExportWorker::exportToDirectory(const QString &exportDir,
                                      const QString &imageDir,
                                      const QString &resultDir,
                                      int annotationType, int exportType,
-                                     double trainSplitRate) {
+                                     double trainSplitRate,
+                                     const QString &templateFile) {
 
     FileListModel fileListModel(this);
     LabelListModel LabelListModel(this);
@@ -43,6 +46,8 @@ bool ExportWorker::exportToDirectory(const QString &exportDir,
         annotationModel = std::make_unique<RotatedBoxAnnotationModel>(this);
     } else if (annotationType == 2) {
         annotationModel = std::make_unique<SegmentationAnnotationModel>(this);
+    } else if (annotationType == 3) {
+        annotationModel = std::make_unique<KeyPointAnnotationModel>(this);
     } else {
         qFatal() << "unsupported annotationType " << annotationType;
         return false;

@@ -26,17 +26,16 @@ QVariant SegmentationAnnotationModel::data(const QModelIndex &index,
     if (!index.isValid() || index.row() >= items_.size())
         return QVariant();
 
-    const RotatedBoxAnnotationItem &detectionAnnotationItem =
-        items_.at(index.row());
+    const SegmentationAnnotationItem &item = items_.at(index.row());
     switch (role) {
     case LabelIDRole:
-        return detectionAnnotationItem.labelID;
+        return item.labelID;
     case PointsRole:
-        return detectionAnnotationItem.points;
+        return item.points;
     case ZOrderRole:
-        return detectionAnnotationItem.zOrder;
+        return item.zOrder;
     case SelectedRole:
-        return detectionAnnotationItem.selected;
+        return item.selected;
     default:
         return QVariant();
     }
@@ -46,7 +45,7 @@ bool SegmentationAnnotationModel::setData(const QModelIndex &index,
                                           const QVariant &value, int role) {
     if (!index.isValid() || index.row() < 0 || index.row() >= items_.size())
         return false;
-    RotatedBoxAnnotationItem &item = items_[index.row()];
+    SegmentationAnnotationItem &item = items_[index.row()];
     bool changed = false;
     switch (role) {
     case LabelIDRole:
@@ -145,7 +144,7 @@ int SegmentationAnnotationModel::getPointSize(int index) {
     return items_[index].points.size();
 }
 
-QVariantList SegmentationAnnotationModel::getPoints(int index){
+QVariantList SegmentationAnnotationModel::getPoints(int index) {
     if (index < 0 || index >= items_.size())
         return {};
     return items_[index].points;
@@ -158,14 +157,16 @@ void SegmentationAnnotationModel::appendPoint(int index, const QPointF &point) {
     items_[index].points.push_back(QVariant::fromValue(point));
     emit dataChanged(modelIndex, modelIndex, {PointsRole});
 }
-void SegmentationAnnotationModel::updatePoint(int index, int pointIndex, const QPointF& point){
+void SegmentationAnnotationModel::updatePoint(int index, int pointIndex,
+                                              const QPointF &point) {
     if (index < 0 || index >= items_.size())
         return;
     if (items_.empty())
         return;
 
     int pointSize = items_[index].points.size();
-    if(pointIndex<0 || pointIndex>=pointSize) return;
+    if (pointIndex < 0 || pointIndex >= pointSize)
+        return;
     items_[index].points[pointIndex] = point;
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex, {PointsRole});
@@ -334,7 +335,7 @@ bool SegmentationAnnotationModel::loadFromFile(
     for (const QJsonValue &value : std::as_const(jsonArray)) {
         if (value.isObject()) {
             QJsonObject obj = value.toObject();
-            RotatedBoxAnnotationItem item;
+            SegmentationAnnotationItem item;
             item.labelID = obj["labelID"].toInt();
             QJsonArray pointsArray = obj["points"].toArray();
             for (const QJsonValue &pointValue : std::as_const(pointsArray)) {
@@ -366,7 +367,8 @@ void SegmentationAnnotationModel::setLabelID(int index, int labelID) {
 
 bool SegmentationAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate, const QVector<QString> &labels) {
+    int exportType, double trainSplitRate, const QVector<QString> &labels,
+    const QString &templateFile) {
 
     // 验证参数
     if (exportDir.isEmpty()) {

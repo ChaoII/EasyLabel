@@ -37,6 +37,8 @@ qt_add_executable(appEasyLabel
     src/rotatedBoxAnnotationmodel.cpp
     src/segmentationAnnotationmodel.h
     src/segmentationAnnotationmodel.cpp
+    src/keyPointAnnotationmodel.h
+    src/keyPointAnnotationmodel.cpp
     src/annotationmodelbase.h
     src/annotationmodelbase.cpp
     src/projectlistmodel.h
@@ -48,9 +50,9 @@ qt_add_executable(appEasyLabel
 qt_add_resources(appEasyLabel "resources"
     PREFIX "/"
     FILES
-    resources/font/remixicon.ttf
     resources/images/logo.svg
     resources/images/image.jpg
+    resources/fonts/remixicon.ttf
 )
 
 set_source_files_properties(
@@ -65,6 +67,13 @@ qt_add_qml_module(appEasyLabel
     qml/Main.qml
     qml/component/PopupStandardWindow.qml
     qml/component/DirSelectInput.qml
+    qml/component/Crosshair.qml
+    qml/component/LineWidthSlider.qml
+    qml/component/Cursor.qml
+    qml/component/Collapse.qml
+    qml/component/ColorSlider.qml
+    qml/component/OpacitySlider.qml
+    qml/component/ColorButton.qml
     qml/global/QmlGlobalHelper.qml
     qml/global/GlobalEnum.qml
     qml/project/ProjetcList.qml
@@ -74,24 +83,19 @@ qt_add_qml_module(appEasyLabel
     qml/project/OtherDetailComponent.qml
     qml/project/ExportDatasetPopup.qml
     qml/project/SegmentationDetailComponent.qml
+    qml/project/KeyPointDetailComponent.qml
     qml/canvas/MainCanvas.qml
     qml/canvas/CentralAnnotationView.qml
     qml/canvas/AnnotationDetailPanel.qml
     qml/canvas/DetectionLabelLayer.qml
     qml/canvas/CanvasEnums.qml
-    qml/component/Crosshair.qml
-    qml/component/LineWidthSlider.qml
-    qml/component/Cursor.qml
-    qml/component/Collapse.qml
-    qml/component/ColorSlider.qml
-    qml/component/OpacitySlider.qml
-    qml/component/ColorButton.qml
     qml/canvas/AnnotationLabelDetail.qml
     qml/canvas/AnnotationListDetail.qml
     qml/canvas/AnnotationFileListDetail.qml
     qml/canvas/AnnotationStyleDetail.qml
     qml/canvas/RotatedBoxLabelLayer.qml
     qml/canvas/SegmentationLabelLayer.qml
+    qml/canvas/KeyPointLabelLayer.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

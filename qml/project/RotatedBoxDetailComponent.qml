@@ -7,7 +7,7 @@ import EasyLabel
 
 
 Item{
-    id: detectionDetail
+    id: rotatedBoxDetail
     property int labelWidth: 120
     property var formData: null
     ScrollView{

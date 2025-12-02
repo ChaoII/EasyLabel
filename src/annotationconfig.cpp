@@ -1,6 +1,7 @@
 #include "annotationconfig.h"
 #include "detectionAnnotationmodel.h"
 #include "exportworker.h"
+#include "keyPointAnnotationmodel.h"
 #include "rotatedBoxAnnotationmodel.h"
 #include "segmentationAnnotationmodel.h"
 #include <QDir>
@@ -57,6 +58,8 @@ AnnotationModelBase *AnnotationConfig::currentAnnotationModel() {
             return new RotatedBoxAnnotationModel();
         }else if(annotationType_ == AnnotationConfig::Segmentation){
             return new SegmentationAnnotationModel();
+        }else if(annotationType_ == AnnotationConfig::KeyPoint){
+            return new KeyPointAnnotationModel();
         }else{
             return new DetectionAnnotationModel();
         }
@@ -139,7 +142,6 @@ void AnnotationConfig::setCurrentImageIndex(int index) {
     if (currentImageIndex_ != index) {
         int prewIndex = currentImageIndex_;
         currentImageIndex_ = index;
-        qDebug() << "index:" << index;
         emit currentAnnotationModelChanged();
         emit currentImageIndexChanged(prewIndex, index);
     }
@@ -283,6 +285,8 @@ void AnnotationConfig::loadAnnotationFiles() {
             annotation = new RotatedBoxAnnotationModel(this);
         }else if(annotationType_ == AnnotationConfig::Segmentation){
              annotation = new SegmentationAnnotationModel(this);
+        }else if(annotationType_ == AnnotationConfig::KeyPoint){
+            annotation = new KeyPointAnnotationModel(this);
         }else{
             qFatal()<< "unsupported annotationType" << getAnnotationTypeName();
         }

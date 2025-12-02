@@ -313,15 +313,16 @@ Item{
 
                 ButtonGroup {
                     id: radioGroup
-                    buttons:[btnSelect, btnDrawing]
+                    buttons:[btnSelect, btnRectangle,btnRotatedBox,btnPolygon,btnPoint]
                 }
 
                 HusIconButton{
                     id: btnSelect
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
-                    iconSize: 16
-                    iconSource: HusIcon.IcoMoonPointUp
+                    iconSize: 20
+                    iconFontFamily: "remixicon"
+                    iconSource: RemixIcon.CursorFill
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
@@ -331,11 +332,14 @@ Item{
                 }
 
                 HusIconButton{
-                    id:btnDrawing
+                    id:btnRectangle
+                    visible: annotationConfig.annotationType === AnnotationConfig.Detection||
+                             annotationConfig.annotationType === AnnotationConfig.KeyPoint
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
-                    iconSize: 16
-                    iconSource: HusIcon.IcoMoonPencil
+                    iconSize: 20
+                    iconFontFamily: "remixicon"
+                    iconSource: RemixIcon.CheckboxBlank2Line
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
@@ -343,6 +347,56 @@ Item{
                         flickable.interactive = false
                     }
                 }
+
+                HusIconButton{
+                    id:btnRotatedBox
+                    visible: annotationConfig.annotationType === AnnotationConfig.RotatedBox
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconFontFamily: "remixicon"
+                    iconSource: RemixIcon.PokerDiamondsLine
+                    radiusBg.all: 0
+                    checkable: true
+                    onClicked: {
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        flickable.interactive = false
+                    }
+                }
+                HusIconButton{
+                    id:btnPolygon
+                    visible: annotationConfig.annotationType === AnnotationConfig.Segmentation
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 20
+                    iconFontFamily: "remixicon"
+                    iconSource: RemixIcon.PentagonLine
+                    radiusBg.all: 0
+                    checkable: true
+                    onClicked: {
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        flickable.interactive = false
+                    }
+                }
+
+
+                HusIconButton{
+                    id:btnPoint
+                    visible: annotationConfig.annotationType === AnnotationConfig.KeyPoint
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    iconSize: 8
+                    iconFontFamily: "remixicon"
+                    iconSource: RemixIcon.CheckboxBlankCircle2Fill
+                    radiusBg.all: 0
+                    checkable: true
+                    onClicked: {
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        flickable.interactive = false
+                    }
+                }
+
+
                 HusIconButton{
                     id: btnSave
                     Layout.preferredWidth: 30
@@ -353,6 +407,11 @@ Item{
                     onClicked: {
                         centralAnnotationView.annotationConfig.saveAnnotationFile(centralAnnotationView.annotationConfig.currentImageIndex)
                     }
+                }
+
+                HusDivider{
+                    Layout.preferredHeight: 30
+                    orientation: Qt.Vertical
                 }
                 Item{
                     Layout.fillWidth: true

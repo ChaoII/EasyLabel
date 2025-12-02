@@ -20,7 +20,8 @@ public slots:
                      const QString &resultDir,
                      int annotationType,
                      int exportType,
-                     double trainSplitRate);
+                     double trainSplitRate,
+                     const QString& templateFile="");
 
 signals:
     void exportProgress(double progress);  // 进度信号
@@ -33,7 +34,8 @@ private:
                            const QString &resultDir,
                            int annotationType,
                            int exportType,
-                           double trainSplitRate);
+                           double trainSplitRate,
+                           const QString &templateFile);
 
     template<typename T>
     void shuffleQVector(QVector<T> &vector) {

@@ -53,7 +53,7 @@ class AnnotationConfig : public QObject {
                    setCenterPointerSize NOTIFY centerPointerSizeChanged FINAL)
 
 public:
-    enum AnnotationType { Detection = 0, RotatedBox = 1, Segmentation = 2, Other = 3};
+    enum AnnotationType { Detection = 0, RotatedBox = 1, Segmentation = 2, KeyPoint = 3, Other = 4};
     enum ExportAnnotationType { YOLO = 0, COCO, VOC };
 
     Q_ENUM(AnnotationType)
@@ -61,30 +61,30 @@ public:
     explicit AnnotationConfig(QObject *parent = nullptr);
     ~AnnotationConfig();
 
-    [[nodiscard]] QString imageDir() const;
-    [[nodiscard]] QString resultDir() const;
-    [[nodiscard]] QString projectName() const;
-    [[nodiscard]] AnnotationType annotationType() const;
-    [[nodiscard]] int totalImageNum() const;
-    [[nodiscard]] int annotatedImageNum() const;
+    QString imageDir() const;
+    QString resultDir() const;
+    QString projectName() const;
+    AnnotationType annotationType() const;
+    int totalImageNum() const;
+    int annotatedImageNum() const;
 
     // style
-    [[nodiscard]] int currentLineWidth() const;
-    [[nodiscard]] double currentFillOpacity() const;
-    [[nodiscard]] int currentCornerRadius() const;
-    [[nodiscard]] int currentEdgeWidth() const;
-    [[nodiscard]] int currentEdgeHeight() const;
-    [[nodiscard]] bool showLabel() const;
-    [[nodiscard]] int fontPointSize() const;
-    [[nodiscard]] int centerPointerSize() const;
+    int currentLineWidth() const;
+    double currentFillOpacity() const;
+    int currentCornerRadius() const;
+    int currentEdgeWidth() const;
+    int currentEdgeHeight() const;
+    bool showLabel() const;
+    int fontPointSize() const;
+    int centerPointerSize() const;
 
     // label
-    [[nodiscard]] int currentImageIndex() const;
+    int currentImageIndex() const;
     int currentLabelIndex();
-    [[nodiscard]] QString currentLabelColor();
-    [[nodiscard]] QString currentLabel();
-    [[nodiscard]] LabelListModel *labelListModel() const;
-    [[nodiscard]] FileListModel *fileListModel() const;
+    QString currentLabelColor();
+    QString currentLabel();
+    LabelListModel *labelListModel() const;
+    FileListModel *fileListModel() const;
     AnnotationModelBase *currentAnnotationModel();
 
     //
@@ -183,7 +183,6 @@ private:
     QVector<AnnotationModelBase *> annotationModelList_;
 
     //
-
     ExportWorker *exportWorker_ = nullptr;
     QThread *exportThread_ = nullptr;
 };

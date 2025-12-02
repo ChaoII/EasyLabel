@@ -45,6 +45,7 @@ PopupStandardWindow{
                     {key:"Detection", label: qsTr('目标检测'), value: AnnotationConfig.Detection },
                     {key:"RotatedBox", label: qsTr('旋转框检测'), value: AnnotationConfig.RotatedBox },
                     {key:"Segmentation", label: qsTr('实例分割'), value: AnnotationConfig.Segmentation },
+                    {key:"KeyPoint", label: qsTr('关键单检测'), value: AnnotationConfig.KeyPoint },
                     {key:"Other", label: qsTr('其它'), value: AnnotationConfig.Other }
                 ]
                 onClickMenu: function(deep, key, keyPath, data) {
@@ -54,6 +55,8 @@ PopupStandardWindow{
                         detailLoader.source = "RotatedBoxDetailComponent.qml"
                     }else if(data.value===AnnotationConfig.Segmentation){
                         detailLoader.source = "SegmentationDetailComponent.qml"
+                    }else if(data.value===AnnotationConfig.KeyPoint){
+                        detailLoader.source = "KeyPointDetailComponent.qml"
                     }else{
                         detailLoader.source = "OtherDetailComponent.qml"
                     }
@@ -80,6 +83,8 @@ PopupStandardWindow{
                     return "SegmentationDetailComponent.qml"
                 case AnnotationConfig.Other:
                     return "OtherDetailComponent.qml"
+                case AnnotationConfig.KeyPoint:
+                    return "KeyPointDetailComponent.qml"
                 default:
                     return "DetectionDetailComponent.qml"
                 }
@@ -92,6 +97,8 @@ PopupStandardWindow{
                     _menu.gotoMenu("RotatedBox")
                 }else if(annotationType===AnnotationConfig.Segmentation){
                     _menu.gotoMenu("Segmentation")
+                }else if(annotationType===AnnotationConfig.KeyPoint){
+                    _menu.gotoMenu("KeyPoint")
                 }else{
                     _menu.gotoMenu("Other")
                 }
