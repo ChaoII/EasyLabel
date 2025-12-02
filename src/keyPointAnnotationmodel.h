@@ -63,7 +63,7 @@ public:
 
     Q_INVOKABLE void addItem(int lableID, double x, double y, double width,
                              double height, int type, int visibleStatus,
-                             int zOrder, bool selected);
+                             int groupID, int zOrder, bool selected);
 
     Q_INVOKABLE void setSelected(int index, bool selected);
 

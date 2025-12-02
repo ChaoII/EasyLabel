@@ -4,7 +4,10 @@ Item {
 
     enum OptionStatus{
         Select = 0,
-        Drawing = 1
+        Rectangle = 1,
+        RotationBox = 2,
+        Polygon = 3,
+        Point = 4
     }
 
     enum EditType{

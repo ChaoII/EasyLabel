@@ -7,7 +7,7 @@ Item {
     id: segmentationLabelLayer
     property AnnotationConfig annotationConfig
     // 该状态是由用户点击某个案件或者快捷键触犯发的，容易在最外层对操作进行限制
-    property int drawStatus: CanvasEnums.OptionStatus.Drawing
+    property int drawStatus: CanvasEnums.OptionStatus.Select
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
     property color currentLabelColor: annotationConfig.currentLabelColor
@@ -43,7 +43,7 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: segmentationLabelLayer.drawStatus === CanvasEnums.Drawing
+        visible: segmentationLabelLayer.drawStatus === CanvasEnums.Polygon
         crossColor: segmentationLabelLayer.currentLabelColor
         centerPointerSize: segmentationLabelLayer.annotationConfig.centerPointerSize
         lineWidth: segmentationLabelLayer.annotationConfig.currentLineWidth
@@ -159,11 +159,10 @@ Item {
         anchors.fill: parent
         // anchors.margins: -handlerWidth/2
         property int selectedIndex
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(segmentationLabelLayer.drawStatus === CanvasEnums.Drawing) {
+                if(segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
                     // 绘制模式：开始绘制新矩形
                     if(segmentationLabelLayer.currentLabelID===-1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -191,7 +190,7 @@ Item {
         }
 
         onPositionChanged: function(mouse) {
-            if (segmentationLabelLayer.drawStatus === CanvasEnums.Drawing) {
+            if (segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
                 if(segmentationLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 let mousePosition = Qt.point(mouse.x, mouse.y)
@@ -243,7 +242,7 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (segmentationLabelLayer.drawStatus === CanvasEnums.Drawing) {
+                if (segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
                     let point = Qt.point(mouse.x, mouse.y)
                     if(segmentationLabelLayer.shapeFinished){
                         segmentationLabelLayer.listModel.addItem(segmentationLabelLayer.currentLabelID, [point], segmentationLabelLayer.zOrder++, true)

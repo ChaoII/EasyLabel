@@ -77,6 +77,8 @@ Item{
                         return rotatedBoxLabelLayerComponent
                     case AnnotationConfig.Segmentation:
                         return segmentationLabelLayerComponent
+                    case AnnotationConfig.KeyPoint:
+                        return keyPointLabelLayerComponent
                     default:
                         return detectionLabelLayerComponent
                     }
@@ -343,7 +345,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Rectangle
                         flickable.interactive = false
                     }
                 }
@@ -359,7 +361,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.RotationBox
                         flickable.interactive = false
                     }
                 }
@@ -374,7 +376,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Polygon
                         flickable.interactive = false
                     }
                 }
@@ -391,7 +393,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Drawing
+                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Point
                         flickable.interactive = false
                     }
                 }
@@ -437,6 +439,13 @@ Item{
     Component{
         id:segmentationLabelLayerComponent
         SegmentationLabelLayer{
+        }
+    }
+
+
+    Component{
+        id:keyPointLabelLayerComponent
+        KeyPointLabelLayer{
         }
     }
 

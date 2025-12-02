@@ -39,6 +39,10 @@ QVariant KeyPointAnnotationModel::data(const QModelIndex &index,
         return item.height;
     case TypeRole:
         return item.type;
+    case VisibleStatusRole:
+        return item.visibleStatus;
+    case GroupIDRole:
+        return item.groupID;
     case ZOrderRole:
         return item.zOrder;
     case SelectedRole:
@@ -103,6 +107,13 @@ bool KeyPointAnnotationModel::setData(const QModelIndex &index,
         changed = true;
         break;
     }
+    case GroupIDRole: {
+        if (value.canConvert<int>()) {
+            item.groupID = value.toInt();
+        }
+        changed = true;
+        break;
+    }
     case ZOrderRole:
         if (value.canConvert<int>()) {
             item.zOrder = value.toInt();
@@ -134,9 +145,69 @@ QHash<int, QByteArray> KeyPointAnnotationModel::roleNames() const {
     roles[HeightRole] = "boxHeight";
     roles[TypeRole] = "type";
     roles[VisibleStatusRole] = "visibleStatus";
+    roles[GroupIDRole] = "groupID";
     roles[ZOrderRole] = "zOrder";
     roles[SelectedRole] = "selected";
     return roles;
+}
+
+bool KeyPointAnnotationModel::setProperty(int index, const QString &property,
+                                          const QVariant &value) {
+    if (index < 0 || index >= items_.size())
+        return false;
+
+    QModelIndex modelIndex = createIndex(index, 0);
+
+    if (property == "labelID")
+        return setData(modelIndex, value, LabelIDRole);
+    else if (property == "boxX")
+        return setData(modelIndex, value, XRole);
+    else if (property == "boxY")
+        return setData(modelIndex, value, YRole);
+    else if (property == "boxWidth")
+        return setData(modelIndex, value, WidthRole);
+    else if (property == "boxHeight")
+        return setData(modelIndex, value, HeightRole);
+    else if (property == "type")
+        return setData(modelIndex, value, TypeRole);
+    else if (property == "visibleStatus")
+        return setData(modelIndex, value, VisibleStatusRole);
+    else if (property == "groupID")
+        return setData(modelIndex, value, GroupIDRole);
+    else if (property == "zOrder")
+        return setData(modelIndex, value, ZOrderRole);
+    else if (property == "selected")
+        return setData(modelIndex, value, SelectedRole);
+    else
+        return false;
+}
+
+QVariant KeyPointAnnotationModel::getProperty(int index,
+                                              const QString &property) {
+    if (index < 0 || index >= items_.size())
+        return "";
+    QModelIndex modelIndex = createIndex(index, 0);
+    if (property == "labelID")
+        return data(modelIndex, LabelIDRole);
+    if (property == "boxX")
+        return data(modelIndex, XRole);
+    if (property == "boxY")
+        return data(modelIndex, YRole);
+    if (property == "boxWidth")
+        return data(modelIndex, WidthRole);
+    if (property == "boxHeight")
+        return data(modelIndex, HeightRole);
+    if (property == "type")
+        return data(modelIndex, TypeRole);
+    if (property == "visibleStatus")
+        return data(modelIndex, VisibleStatusRole);
+    if (property == "groupID")
+        return data(modelIndex, GroupIDRole);
+    if (property == "zOrder")
+        return data(modelIndex, ZOrderRole);
+    if (property == "selected")
+        return data(modelIndex, SelectedRole);
+    return "";
 }
 
 QMap<int, QVector<KeyPointAnnotationModel::KeyPointAnnotationItem>>
@@ -218,68 +289,15 @@ QMap<int, QVector<QString>> KeyPointAnnotationModel::parseKeypointNames(const QJ
     return keypointNamesMap;
 }
 
-bool KeyPointAnnotationModel::setProperty(int index, const QString &property,
-                                          const QVariant &value) {
-    if (index < 0 || index >= items_.size())
-        return false;
 
-    QModelIndex modelIndex = createIndex(index, 0);
-
-    if (property == "labelID")
-        return setData(modelIndex, value, LabelIDRole);
-    else if (property == "boxX")
-        return setData(modelIndex, value, XRole);
-    else if (property == "boxY")
-        return setData(modelIndex, value, YRole);
-    else if (property == "boxWidth")
-        return setData(modelIndex, value, WidthRole);
-    else if (property == "boxHeight")
-        return setData(modelIndex, value, HeightRole);
-    else if (property == "type")
-        return setData(modelIndex, value, TypeRole);
-    else if (property == "visibleStatus")
-        return setData(modelIndex, value, VisibleStatusRole);
-    else if (property == "zOrder")
-        return setData(modelIndex, value, ZOrderRole);
-    else if (property == "selected")
-        return setData(modelIndex, value, SelectedRole);
-    else
-        return false;
-}
-
-QVariant KeyPointAnnotationModel::getProperty(int index,
-                                              const QString &property) {
-    if (index < 0 || index >= items_.size())
-        return "";
-    QModelIndex modelIndex = createIndex(index, 0);
-    if (property == "labelID")
-        return data(modelIndex, LabelIDRole);
-    if (property == "boxX")
-        return data(modelIndex, XRole);
-    if (property == "boxY")
-        return data(modelIndex, YRole);
-    if (property == "boxWidth")
-        return data(modelIndex, WidthRole);
-    if (property == "boxHeight")
-        return data(modelIndex, HeightRole);
-    if (property == "type")
-        return data(modelIndex, TypeRole);
-    if (property == "visibleStatus")
-        return data(modelIndex, VisibleStatusRole);
-    if (property == "zOrder")
-        return data(modelIndex, ZOrderRole);
-    if (property == "selected")
-        return data(modelIndex, SelectedRole);
-    return "";
-}
 
 void KeyPointAnnotationModel::addItem(int lableID, double x, double y,
                                       double width, double height, int type,
-                                      int visibleStatus, int zOrder,
+                                      int visibleStatus, int groupID,int zOrder,
                                       bool selected) {
     beginInsertRows(QModelIndex(), items_.size(), items_.size());
     items_.append(
-        {lableID, x, y, width, height, type, visibleStatus, zOrder, selected});
+        {lableID, x, y, width, height, type, visibleStatus, groupID,zOrder, selected});
     endInsertRows();
 }
 

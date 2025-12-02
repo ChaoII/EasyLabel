@@ -12,9 +12,10 @@ QtObject {
 
 
     property var annotationIconTextMap:({
-        [AnnotationConfig.Detection]: HusIcon.BorderOutlined,
-        [AnnotationConfig.RotatedBox]: HusIcon.AppleOutlined,
-        [AnnotationConfig.Segmentation]: HusIcon.AlertOutlined,
+        [AnnotationConfig.Detection]: RemixIcon.CheckboxBlank2Line,
+        [AnnotationConfig.RotatedBox]: RemixIcon.DirectionLine,
+        [AnnotationConfig.Segmentation]: RemixIcon.Artboard2Fill,
+        [AnnotationConfig.KeyPoint]: RemixIcon.Dice4Line,
         [AnnotationConfig.Other]: HusIcon.AliwangwangOutlined
     })
 }

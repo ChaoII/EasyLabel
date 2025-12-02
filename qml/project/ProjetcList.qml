@@ -229,6 +229,7 @@ Item {
                     id: avator
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
+                    font.family: "remixicon"
                     iconSize: 40
                     iconSource: GlobalEnum.annotationIconTextMap[modelData.annotationType]
                     colorIcon: annotationTypeBaseColor

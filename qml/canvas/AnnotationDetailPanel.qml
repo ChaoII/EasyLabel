@@ -23,6 +23,7 @@ Item{
                 anchors.margins: 10
                 HusIconText{
                     id: logo
+                    font.family: "remixicon"
                     font.bold: true
                     colorIcon: splitRight.annotationTypeColor
                     iconSize: 16

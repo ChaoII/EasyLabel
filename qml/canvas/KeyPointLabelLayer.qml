@@ -26,6 +26,7 @@ Item {
     // 这一点很关键
     property bool isEditing: false
     property bool isClosing: false
+    property var points: []
     // 在多边形绘制中，判断某个点是否已经绘制完成的标志
     property bool pointFinished: false
     // 判断整个多边形是否已经绘制完成的标志（这是比大多数标注工具更加实用的部分，因为大多数标注工具标注玩一个后，又要重新触发一个对象去标注）
@@ -44,7 +45,7 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: keyPointLabelLayer.drawStatus === CanvasEnums.Drawing
+        visible: keyPointLabelLayer.drawStatus !== CanvasEnums.Select
         crossColor: keyPointLabelLayer.currentLabelColor
         centerPointerSize: keyPointLabelLayer.annotationConfig.centerPointerSize
         lineWidth: keyPointLabelLayer.annotationConfig.currentLineWidth
@@ -60,74 +61,36 @@ Item {
             id: obj
             required property int index
             required property int labelID
-            required property var points
+            required property double boxX
+            required property double boxY
+            required property double boxWidth
+            required property double boxHeight
+            required property int type // 0: bounxing box   1:point
             required property bool selected
-            property rect boundingRect: points? QmlUtilsCpp.getBoundingRect(points): Qt.rect(0,0,0,0)
             readonly property bool showHandlers: selected
+            property int pointRadius: 4
             property color annotationColor: keyPointLabelLayer.annotationConfig.labelListModel.getLabelColor(labelID)
             property string annotationLabel: keyPointLabelLayer.annotationConfig.labelListModel.getLabel(labelID)
             property color fillColor: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, keyPointLabelLayer.fillOpacity)
-            // 绘制多边形
 
-            Shape {
-                anchors.fill: parent
-                visible: points.length > 0
-                preferredRendererType: Shape.CurveRenderer
-                ShapePath {
-                    id: shapePath
-                    strokeWidth: borderWidth
-                    strokeColor: annotationColor
-                    fillColor: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, 0.3)
-                    strokeStyle: (selected || !shapeFinished)? ShapePath.DashLine : ShapePath.SolidLine
-                    joinStyle: ShapePath.MiterJoin
-                    dashPattern: shapeFinished ? [] : [1, 2]
-                    // 使用 PathPolyline 动态绘制
-                    PathPolyline {
-                        id: pathPolyline
-                        path: createPath(points)
-                    }
-                }
-
-                // 绘制顶点
-                Repeater {
-                    model: obj.showHandlers? points.length:[]
-                    delegate: Rectangle {
-                        required property int index
-                        // 最后一个对象，并且点属大于3，points.length - 2 是因为createPath添加了一个封闭的点 或者index === 0
-                        property bool closingStatus: keyPointLabelLayer.isClosing && index === 0 && points.length >= 3
-                        property int realHandlerWidth: closingStatus? handlerWidth * 2: handlerWidth
-                        property int realHandlerHeight : closingStatus? handlerHeight * 2: handlerHeight
-                        x: points[index].x - realHandlerWidth  / 2
-                        y: points[index].y - realHandlerHeight / 2
-                        width: realHandlerWidth
-                        height: realHandlerHeight
-                        radius: realHandlerWidth / 2
-                        color: obj.annotationColor
-                        border.width: borderWidth
-                        border.color: "white"
-                    }
-                }
-                Connections{
-                    target: keyPointLabelLayer.annotationConfig.labelListModel
-                    function onDataChanged(){
-                        annotationColor = keyPointLabelLayer.annotationConfig.labelListModel.getLabelColor(obj.labelID)
-                        annotationLabel = keyPointLabelLayer.annotationConfig.labelListModel.getLabel(obj.labelID)
-                    }
+            Connections{
+                target: keyPointLabelLayer.annotationConfig.labelListModel
+                function onDataChanged(){
+                    annotationColor = keyPointLabelLayer.annotationConfig.labelListModel.getLabelColor(obj.labelID)
+                    annotationLabel = keyPointLabelLayer.annotationConfig.labelListModel.getLabel(obj.labelID)
                 }
             }
-
-            HusRectangle{
-                visible: points.length >= 3
-                x: boundingRect.x
-                y: boundingRect.y
-                width: boundingRect.width
-                height: boundingRect.height
+            // 绘制bounding box 和 point type 0: bounxing box   1:point
+            Rectangle{
+                x: type === 0 ? boxX: boxX - pointRadius
+                y: type === 0 ? boxY: boxY - pointRadius
+                width: type === 0 ? boxWidth: 2* pointRadius
+                height: type === 0 ? boxHeight: 2* pointRadius
+                radius: pointRadius
                 border.color: annotationColor
-                antialiasing: true
-                smooth: true
                 border.width: borderWidth
-                border.style: selected ? Qt.DashDotLine: Qt.SolidLine
-                color: fillColor
+                // border.style: selected ? Qt.DashDotLine: Qt.SolidLine
+                color: type === 0? fillColor: annotationColor
                 // 标签
                 Rectangle{
                     x: 0
@@ -147,24 +110,15 @@ Item {
         }
     }
 
-    function createPath(points) {
-        var path = points
-        if (points.length >= 3) {
-            path.push(points[0])
-        }
-        return path
-    }
-
     MouseArea {
         id: drawArea
         anchors.fill: parent
         // anchors.margins: -handlerWidth/2
         property int selectedIndex
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(keyPointLabelLayer.drawStatus === CanvasEnums.Drawing) {
+                if(keyPointLabelLayer.drawStatus !== CanvasEnums.Select) {
                     // 绘制模式：开始绘制新矩形
                     if(keyPointLabelLayer.currentLabelID===-1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -192,23 +146,23 @@ Item {
         }
 
         onPositionChanged: function(mouse) {
-            if (keyPointLabelLayer.drawStatus === CanvasEnums.Drawing) {
+            if (keyPointLabelLayer.drawStatus !== CanvasEnums.Select) {
                 if(keyPointLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 let mousePosition = Qt.point(mouse.x, mouse.y)
                 crosshair.mousePosition = mousePosition
                 let last = keyPointLabelLayer.listModel.rowCount() - 1
-                if(keyPointLabelLayer.listModel.rowCount() >= 1){
-                    if(!keyPointLabelLayer.shapeFinished){
-                        if(keyPointLabelLayer.pointFinished){
-                            keyPointLabelLayer.listModel.appendPoint(last, mousePosition)
-                            keyPointLabelLayer.pointFinished = false
-                        }
-                        let p0 = keyPointLabelLayer.listModel.getPoints(last)[0]
-                        keyPointLabelLayer.isClosing = QmlUtilsCpp.calculateLength(mousePosition, p0) < keyPointLabelLayer.closingThreshold
-                        keyPointLabelLayer.listModel.updateLastPoint(last, mousePosition)
-                    }
-                }
+                // if(keyPointLabelLayer.listModel.rowCount() >= 1){
+                //     if(!keyPointLabelLayer.shapeFinished){
+                //         if(keyPointLabelLayer.pointFinished){
+                //             // keyPointLabelLayer.listModel.appendPoint(last, mousePosition)
+                //             keyPointLabelLayer.pointFinished = false
+                //         }
+                //         let p0 = keyPointLabelLayer.listModel.getPoints(last)[0]
+                //         keyPointLabelLayer.isClosing = QmlUtilsCpp.calculateLength(mousePosition, p0) < keyPointLabelLayer.closingThreshold
+                //         keyPointLabelLayer.listModel.updateLastPoint(last, mousePosition)
+                //     }
+                // }
             }else if (keyPointLabelLayer.drawStatus === CanvasEnums.Select){
                 if(keyPointLabelLayer.selectedIndex >= 0){
                     let points = keyPointLabelLayer.listModel.getPoints(keyPointLabelLayer.selectedIndex)
@@ -244,23 +198,36 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (keyPointLabelLayer.drawStatus === CanvasEnums.Drawing) {
-                    let point = Qt.point(mouse.x, mouse.y)
+                let point = Qt.point(mouse.x, mouse.y)
+                if(keyPointLabelLayer.drawStatus === CanvasEnums.Point){
+                    // x,y,width,height,type,visible,groupID,zorder,selected
+                    keyPointLabelLayer.listModel.addItem(
+                                keyPointLabelLayer.currentLabelID, point.x, point.y,
+                                0,0,1,2,0,keyPointLabelLayer.zOrder++, false)
+                }
+
+                if (keyPointLabelLayer.drawStatus === CanvasEnums.Rectangle) {
                     if(keyPointLabelLayer.shapeFinished){
-                        keyPointLabelLayer.listModel.addItem(keyPointLabelLayer.currentLabelID, [point], keyPointLabelLayer.zOrder++, true)
+                        // x,y,width,height,type,visible,groupID,zorder,selected
+                        keyPointLabelLayer.listModel.addItem(
+                                    keyPointLabelLayer.currentLabelID, point.x, point.y,
+                                    0,0,0,2,0,keyPointLabelLayer.zOrder++, false)
+                        keyPointLabelLayer.points.push(point)
                         keyPointLabelLayer.shapeFinished = false
                     }
                     // 该处逻辑表达的是，当最后一个点移动到离第一个点很近的时候，再次点击鼠标后即完成一个shape的绘制，将shapeFinished 设置为 true
                     let last = keyPointLabelLayer.listModel.rowCount() - 1
-                    let lastPointSize = keyPointLabelLayer.listModel.getPointSize(last)
-                    if (lastPointSize > 3 && !keyPointLabelLayer.shapeFinished){
-                        let p0 = keyPointLabelLayer.listModel.getPoints(last)[0]
-                        if(keyPointLabelLayer.isClosing){
+                    keyPointLabelLayer.points.push(point)
+                    if (!keyPointLabelLayer.shapeFinished){
+                        if(keyPointLabelLayer.points.length === 2){
                             // 点击一下应该删除最后一个点（在鼠标移动中一直动态的一个点），因为最后一个点就是第一个点
-                            keyPointLabelLayer.listModel.popBackPoint(last)
-                            // keyPointLabelLayer.listModel.appendPoint(last, p0)
+                            let p0 = keyPointLabelLayer.points[0]
+                            let p1 = keyPointLabelLayer.points[1]
+                            let width = p1.x - p0.x
+                            let height = p1.y - p0.y
+                            keyPointLabelLayer.listModel.setProperty(last,"boxWidth",width)
+                            keyPointLabelLayer.listModel.setProperty(last,"boxHeight",height)
                             keyPointLabelLayer.shapeFinished = true
-                            keyPointLabelLayer.isClosing = false
                             keyPointLabelLayer.editType = CanvasEnums.None
                             keyPointLabelLayer.listModel.setSelected(last, false)
                         }

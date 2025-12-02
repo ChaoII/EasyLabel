@@ -5,7 +5,7 @@ import EasyLabel
 Item {
     id: rotationBoxLabelLayer
     property AnnotationConfig annotationConfig
-    property int drawStatus: CanvasEnums.OptionStatus.Drawing
+    property int drawStatus: CanvasEnums.OptionStatus.Select
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
     property color currentLabelColor: annotationConfig.currentLabelColor
@@ -34,7 +34,7 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: rotationBoxLabelLayer.drawStatus === CanvasEnums.Drawing
+        visible: rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox
         crossColor: rotationBoxLabelLayer.currentLabelColor
         centerPointerSize: rotationBoxLabelLayer.annotationConfig.centerPointerSize
         lineWidth: rotationBoxLabelLayer.annotationConfig.currentLineWidth
@@ -126,7 +126,7 @@ Item {
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(rotationBoxLabelLayer.drawStatus === CanvasEnums.Drawing) {
+                if(rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
                     // 绘制模式：开始绘制新矩形
                     if(rotationBoxLabelLayer.currentLabelID === -1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -154,7 +154,7 @@ Item {
         }
 
         onPositionChanged: function(mouse) {
-            if (rotationBoxLabelLayer.drawStatus === CanvasEnums.Drawing) {
+            if (rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
                 if(rotationBoxLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 rotationBoxLabelLayer.mousePosition = Qt.point(mouse.x, mouse.y)
@@ -238,7 +238,7 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (rotationBoxLabelLayer.drawStatus === CanvasEnums.Drawing) {
+                if (rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
                     rotationBoxLabelLayer.drawFinished()
                     let point = Qt.point(mouse.x, mouse.y)
                     points.push(point)
