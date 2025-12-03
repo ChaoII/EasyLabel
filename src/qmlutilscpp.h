@@ -24,6 +24,8 @@ public:
     Q_INVOKABLE static QVector<QPointF> rotatedRectCorners(const QRectF &rect,
                                                            double rotation);
 
+    Q_INVOKABLE static QVector<QPointF> rectCorners(const QRectF &rect);
+
     Q_INVOKABLE static QRectF getBoundingRect(const QVector<QPointF>& polygon);
 
     Q_INVOKABLE static bool

@@ -254,8 +254,8 @@ KeyPointAnnotationModel::reorderKeypoints(
     return orderedKeypoints;
 }
 
-QMap<int, QVector<QString>> KeyPointAnnotationModel::parseKeypointNames(const QJsonArray &kptNamesArray)
-{
+QMap<int, QVector<QString>>
+KeyPointAnnotationModel::parseKeypointNames(const QJsonArray &kptNamesArray) {
     QMap<int, QVector<QString>> keypointNamesMap;
 
     for (const QJsonValue &itemValue : kptNamesArray) {
@@ -289,16 +289,37 @@ QMap<int, QVector<QString>> KeyPointAnnotationModel::parseKeypointNames(const QJ
     return keypointNamesMap;
 }
 
-
-
 void KeyPointAnnotationModel::addItem(int lableID, double x, double y,
                                       double width, double height, int type,
-                                      int visibleStatus, int groupID,int zOrder,
-                                      bool selected) {
+                                      int visibleStatus, int groupID,
+                                      int zOrder, bool selected) {
     beginInsertRows(QModelIndex(), items_.size(), items_.size());
-    items_.append(
-        {lableID, x, y, width, height, type, visibleStatus, groupID,zOrder, selected});
+    items_.append({lableID, x, y, width, height, type, visibleStatus, groupID,
+                   zOrder, selected});
     endInsertRows();
+}
+
+void KeyPointAnnotationModel::setRect(int index, const QRectF &rect) {
+    if (index < 0 || index >= items_.size())
+        return;
+    auto &item = items_[index];
+    item.x = rect.x();
+    item.y = rect.y();
+    item.width = rect.width();
+    item.height = rect.height();
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex,
+                     {XRole, YRole, WidthRole, HeightRole});
+}
+
+void KeyPointAnnotationModel::moveShape(int index, const QPointF &dPoint) {
+    if (index < 0 || index >= items_.size())
+        return;
+    auto &item = items_[index];
+    item.x += dPoint.x();
+    item.y += dPoint.y();
+    QModelIndex modelIndex = createIndex(index, 0);
+    emit dataChanged(modelIndex, modelIndex, {XRole, YRole});
 }
 
 void KeyPointAnnotationModel::setSelected(int index, bool selected) {
@@ -344,11 +365,16 @@ void KeyPointAnnotationModel::setSingleSelected(int index) {
     setSelected(index, true);
 }
 
-int KeyPointAnnotationModel::getSelectedIndex(int x, int y) {
+int KeyPointAnnotationModel::getSelectedIndex(int x, int y, int radius) {
     for (int i = 0; i < items_.size(); i++) {
         auto &item = items_[i];
-        QRectF rect(item.x, item.y, item.width, item.height);
-        if (rect.contains(x, y)) {
+        QRectF rect;
+        if (item.type == 0) {
+            rect = QRectF(item.x, item.y, item.width, item.height);
+        } else {
+            rect = QRectF(item.x - radius, item.y - radius, 2 * radius, 2 * radius);
+        }
+        if (rect.marginsAdded(QMarginsF(10,10,10,10)).contains(x, y)) {
             return i;
         }
     }
@@ -499,7 +525,8 @@ bool KeyPointAnnotationModel::exportYoloAnnotation(
     }
     QFile file(templateFile);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "无法打开模板文件，关键单检测模型必须指定一个导出模板文件:" << templateFile;
+        qWarning() << "无法打开模板文件，关键单检测模型必须指定一个导出模板文件:"
+                   << templateFile;
         return false;
     }
     QByteArray jsonData = file.readAll();
@@ -512,7 +539,6 @@ bool KeyPointAnnotationModel::exportYoloAnnotation(
     QJsonObject obj = doc.object();
     auto jsonArray = obj["kpt_names"].toArray();
     auto keypointNamesMap = parseKeypointNames(jsonArray);
-
 
     const int dataSetCount = dataSet.size();
     const int trainCount = dataSetCount * trainSplitRate;
@@ -562,7 +588,7 @@ bool KeyPointAnnotationModel::exportYoloAnnotation(
             auto bbox = bboxes.first(); // 假设每个实例一个边界框
             // 按标准顺序重新排列关键点
             QVector<KeyPointAnnotationItem> orderedKeypoints =
-                reorderKeypoints(keypoints,bbox.labelID,labels,keypointNamesMap);
+                reorderKeypoints(keypoints, bbox.labelID, labels, keypointNamesMap);
 
             QString yoloAnnotationContent;
 

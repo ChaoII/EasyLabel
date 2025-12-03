@@ -65,6 +65,10 @@ public:
                              double height, int type, int visibleStatus,
                              int groupID, int zOrder, bool selected);
 
+    Q_INVOKABLE void setRect(int index, const QRectF& rect);
+
+    Q_INVOKABLE void moveShape(int index, const QPointF &dPoint);
+
     Q_INVOKABLE void setSelected(int index, bool selected);
 
     Q_INVOKABLE void removeItem(int index);
@@ -77,7 +81,7 @@ public:
 
     Q_INVOKABLE void setSingleSelected(int index);
 
-    Q_INVOKABLE int getSelectedIndex(int x, int y);
+    Q_INVOKABLE int getSelectedIndex(int x, int y, int radius = 0);
 
     Q_INVOKABLE QJsonArray toJsonArray() const;
 

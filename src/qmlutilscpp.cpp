@@ -45,6 +45,16 @@ QVector<QPointF> QmlUtilsCpp::rotatedRectCorners(const QRectF &rect, double rota
     };
 }
 
+QVector<QPointF> QmlUtilsCpp::rectCorners(const QRectF &rect){
+    QVector<QPointF> points;
+    points.append(rect.topLeft());
+    points.append(rect.topRight());
+    points.append(rect.bottomRight());
+    points.append(rect.bottomLeft());
+    return points;
+}
+
+
 QRectF QmlUtilsCpp::getBoundingRect(const QVector<QPointF>& polygon){
     if (polygon.size() < 3) return {}; // 至少需要3个点构成多边形
     QPolygonF qPolygon = QPolygonF(polygon);

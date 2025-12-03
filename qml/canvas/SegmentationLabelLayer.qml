@@ -40,6 +40,10 @@ Item {
     property int borderWidth: Math.max(1.0, annotationConfig.currentLineWidth / scaleFactor)
     property bool showLabel: annotationConfig.showLabel
 
+    onDrawStatusChanged:{
+        segmentationLabelLayer.listModel.removeAllSelected()
+    }
+
     Crosshair {
         id: crosshair
         anchors.fill: parent
@@ -79,7 +83,7 @@ Item {
                     fillColor: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, 0.3)
                     strokeStyle: selected? ShapePath.DashLine : ShapePath.SolidLine
                     joinStyle: ShapePath.MiterJoin
-                    dashPattern: shapeFinished ? [] : [1, 2]
+                    // dashPattern: shapeFinished ? [] : [1, 2]
                     // 使用 PathPolyline 动态绘制
                     PathPolyline {
                         id: pathPolyline
@@ -114,7 +118,7 @@ Item {
                     }
                 }
             }
-
+            // 绘制外接矩形
             HusRectangle{
                 visible: points.length >= 3
                 x: boundingRect.x
