@@ -11,6 +11,7 @@ Item{
     width: parent.width
     property int currentEditingIndex: -1
 
+
     Component{
         id: popoverComponent
         HusPopover {
@@ -18,21 +19,23 @@ Item{
             id: popover
             y: target.height + 6
             width: 500
-            height: 1000
-            // height: ccc.height
-            title: 'Click details'
             contentDelegate:Item{
-                anchors.fill:parent
+                height:300
                 Rectangle{
                     x:0
                     y:0
-                    width:200
                     height:100
                     color:"red"
                 }
-            }}
+            }
+            Component.onCompleted: {
+            console.log("onCompleted")
+            }
+            Component.onDestruction: {
+            console.log("onDestruction")
+            }
+        }
     }
-
 
     ListView{
         id:listView
@@ -74,10 +77,8 @@ Item{
                 hoverEnabled: true
                 onClicked: annotationListDetail.annotationConfig.currentAnnotationModel.setSingleSelected(listDelegate.index)
                 onDoubleClicked: {
-                    listDelegate.isEditing = true
-                    let item = popoverComponent.createObject(parent,{target :listDelegate})
+                    var item = popoverComponent.createObject(listDelegate,{target :listDelegate})
                     item.open()
-
                 }
             }
             RowLayout{
