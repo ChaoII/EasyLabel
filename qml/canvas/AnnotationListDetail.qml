@@ -10,6 +10,30 @@ Item{
     implicitHeight: 200
     width: parent.width
     property int currentEditingIndex: -1
+
+    Component{
+        id: popoverComponent
+        HusPopover {
+            property Item target: null
+            id: popover
+            y: target.height + 6
+            width: 500
+            height: 1000
+            // height: ccc.height
+            title: 'Click details'
+            contentDelegate:Item{
+                anchors.fill:parent
+                Rectangle{
+                    x:0
+                    y:0
+                    width:200
+                    height:100
+                    color:"red"
+                }
+            }}
+    }
+
+
     ListView{
         id:listView
         anchors.fill: parent
@@ -49,7 +73,12 @@ Item{
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: annotationListDetail.annotationConfig.currentAnnotationModel.setSingleSelected(listDelegate.index)
-                onDoubleClicked: listDelegate.isEditing = true
+                onDoubleClicked: {
+                    listDelegate.isEditing = true
+                    let item = popoverComponent.createObject(parent,{target :listDelegate})
+                    item.open()
+
+                }
             }
             RowLayout{
                 anchors.fill: parent
