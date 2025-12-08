@@ -1,16 +1,16 @@
-#include <QtGlobal>
+#include "rotatedBoxAnnotationmodel.h"
+#include "QmlUtilsCpp.h"
+#include "annotationenums.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QMarginsF>
 #include <QThread>
 #include <QTransform>
-#include <QMarginsF>
-#include "annotationenums.h"
-#include "rotatedBoxAnnotationmodel.h"
-#include "QmlUtilsCpp.h"
+#include <QtGlobal>
 
 RotatedBoxAnnotationModel::RotatedBoxAnnotationModel(QObject *parent)
     : AnnotationModelBase{parent} {}
@@ -24,8 +24,7 @@ QVariant RotatedBoxAnnotationModel::data(const QModelIndex &index,
     if (!index.isValid() || index.row() >= items_.size())
         return QVariant();
 
-    const RotatedBoxAnnotationItem &item =
-        items_.at(index.row());
+    const RotatedBoxAnnotationItem &item = items_.at(index.row());
     switch (role) {
     case LabelIDRole:
         return item.labelID;
@@ -43,6 +42,10 @@ QVariant RotatedBoxAnnotationModel::data(const QModelIndex &index,
         return item.rotation;
     case SelectedRole:
         return item.selected;
+    case GroupIDRole:
+        return item.groupID;
+    case DescriptionRole:
+        return item.description;
     default:
         return QVariant();
     }
@@ -104,6 +107,18 @@ bool RotatedBoxAnnotationModel::setData(const QModelIndex &index,
             changed = true;
         }
         break;
+    case GroupIDRole:
+        if (value.canConvert<int>()) {
+            item.groupID = value.toInt();
+            changed = true;
+        }
+        break;
+    case DescriptionRole:
+        if (value.canConvert<QString>()) {
+            item.description = value.toString();
+            changed = true;
+        }
+        break;
     default:
         return false;
     }
@@ -124,6 +139,8 @@ QHash<int, QByteArray> RotatedBoxAnnotationModel::roleNames() const {
     roles[ZOrderRole] = "zOrder";
     roles[RotationRole] = "boxRotation";
     roles[SelectedRole] = "selected";
+    roles[GroupIDRole] = "groupID";
+    roles[DescriptionRole] = "description";
     return roles;
 }
 
@@ -150,11 +167,16 @@ bool RotatedBoxAnnotationModel::setProperty(int index, const QString &property,
         return setData(modelIndex, value, RotationRole);
     else if (property == "selected")
         return setData(modelIndex, value, SelectedRole);
+    else if (property == "groupID")
+        return setData(modelIndex, value, GroupIDRole);
+    else if (property == "description")
+        return setData(modelIndex, value, DescriptionRole);
     else
         return false;
 }
 
-QVariant RotatedBoxAnnotationModel::getProperty(int index, const QString &property) {
+QVariant RotatedBoxAnnotationModel::getProperty(int index,
+                                                const QString &property) {
     if (index < 0 || index >= items_.size())
         return "";
     QModelIndex modelIndex = createIndex(index, 0);
@@ -174,7 +196,11 @@ QVariant RotatedBoxAnnotationModel::getProperty(int index, const QString &proper
         return data(modelIndex, RotationRole);
     if (property == "selected")
         return data(modelIndex, SelectedRole);
-    return "";
+    if (property == "groupID")
+        return data(modelIndex, GroupIDRole);
+    if (property == "description")
+        return data(modelIndex, DescriptionRole);
+    return QVariant();
 }
 
 void RotatedBoxAnnotationModel::addItem(int lableID, int x, int y, int width,
@@ -190,11 +216,12 @@ void RotatedBoxAnnotationModel::updateItem(int index, int lableID, int x, int y,
                                            double rotation, bool selected) {
     if (index < 0 || index >= items_.size())
         return;
-    items_[index] = {lableID, x, y, width, height, zOrder, rotation, selected};
+    items_[index] = {lableID, x,        y,        width, height,
+                     zOrder,  rotation, selected, 0,     ""};
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex,
                      {LabelIDRole, XRole, YRole, WidthRole, HeightRole,
-                       ZOrderRole, RotationRole, SelectedRole});
+                                              ZOrderRole, RotationRole, SelectedRole});
 }
 
 void RotatedBoxAnnotationModel::setSelected(int index, bool selected) {
@@ -221,8 +248,8 @@ void RotatedBoxAnnotationModel::clear() {
     endRemoveRows();
 }
 
-
-QRectF RotatedBoxAnnotationModel::getBoundingBox(const QRectF& rect, double angle){
+QRectF RotatedBoxAnnotationModel::getBoundingBox(const QRectF &rect,
+                                                 double angle) {
     QPointF origin = rect.topLeft();
 
     QTransform transform;
@@ -244,17 +271,16 @@ QRectF RotatedBoxAnnotationModel::getBoundingBox(const QRectF& rect, double angl
     return QRectF(QPointF(minX, minY), QPointF(maxX, maxY));
 }
 
-
 QRectF RotatedBoxAnnotationModel::getBoundingBox(int index) {
     if (index < 0 || index >= items_.size())
         return {};
     auto item = items_[index];
     QRectF rect(item.x, item.y, item.width, item.height);
     double angle = item.rotation;
-    return getBoundingBox(rect,angle);
+    return getBoundingBox(rect, angle);
 }
 
-QVector<QPointF> RotatedBoxAnnotationModel::rotatedRectCorners(int index){
+QVector<QPointF> RotatedBoxAnnotationModel::rotatedRectCorners(int index) {
     if (index < 0 || index >= items_.size())
         return {};
     auto item = items_[index];
@@ -267,30 +293,23 @@ QVector<QPointF> RotatedBoxAnnotationModel::rotatedRectCorners(int index){
     transform.rotate(angle);
     transform.translate(-origin.x(), -origin.y());
 
-    return {
-        transform.map(rect.topLeft()),
-        transform.map(rect.topRight()),
-        transform.map(rect.bottomRight()),
-        transform.map(rect.bottomLeft())
-    };
+    return {transform.map(rect.topLeft()), transform.map(rect.topRight()),
+            transform.map(rect.bottomRight()), transform.map(rect.bottomLeft())};
 }
 
-
-QRect RotatedBoxAnnotationModel::getRect(int index){
+QRect RotatedBoxAnnotationModel::getRect(int index) {
     if (index < 0 || index >= items_.size())
         return {};
     auto item = items_[index];
     return {item.x, item.y, item.width, item.height};
 }
 
-double RotatedBoxAnnotationModel::getRotation(int index){
+double RotatedBoxAnnotationModel::getRotation(int index) {
     if (index < 0 || index >= items_.size())
         return 0.0;
     auto item = items_[index];
     return item.rotation;
-
 }
-
 
 int RotatedBoxAnnotationModel::getLabelID(int index) {
     if (index < 0 || index >= items_.size())
@@ -313,10 +332,12 @@ void RotatedBoxAnnotationModel::setSingleSelected(int index) {
 
 int RotatedBoxAnnotationModel::getSelectedIndex(int x, int y) {
     for (int i = 0; i < items_.size(); i++) {
-        auto & item = items_[i];
+        auto &item = items_[i];
         QRectF rect(item.x, item.y, item.width, item.height);
         double rotation = item.rotation;
-        if (QmlUtilsCpp::pointInRotatedRect(QPointF(x,y), rect.marginsAdded(QMarginsF(10,10,10,10)), rotation))
+        if (QmlUtilsCpp::pointInRotatedRect(
+                QPointF(x, y), rect.marginsAdded(QMarginsF(10, 10, 10, 10)),
+                rotation))
             return i;
     }
     return -1;
@@ -333,6 +354,8 @@ QJsonArray RotatedBoxAnnotationModel::toJsonArray() const {
         jsonObj["height"] = item.height;
         jsonObj["zOrder"] = item.zOrder;
         jsonObj["rotation"] = item.rotation;
+        jsonObj["groupID"] = item.groupID;
+        jsonObj["description"] = item.description;
         jsonArray.append(jsonObj);
     }
     return jsonArray;
@@ -392,6 +415,8 @@ bool RotatedBoxAnnotationModel::loadFromFile(
             item.height = obj["height"].toInt();
             item.zOrder = obj["zOrder"].toInt();
             item.rotation = obj["rotation"].toDouble();
+            item.groupID = obj["groupID"].toInt();
+            item.description = obj["description"].toString();
             item.selected = false;
             items_.append(item);
         }
@@ -410,7 +435,7 @@ void RotatedBoxAnnotationModel::setLabelID(int index, int labelID) {
 
 bool RotatedBoxAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate,const QVector<QString>& labels,
+    int exportType, double trainSplitRate, const QVector<QString> &labels,
     const QString &templateFile) {
 
     // 验证参数
@@ -428,19 +453,18 @@ bool RotatedBoxAnnotationModel::exportAnotation(
         }
         qDebug() << "目录已删除:" << exportDir;
     }
-
     // 创建新目录
     if (!dir.mkpath(".")) {
         qWarning() << "无法创建目录:" << exportDir;
         return false;
     }
     qDebug() << "目录创建成功:" << exportDir;
-    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate,labels);
+    return exportYoloAnnotation(exportDir, dataSet, trainSplitRate, labels);
 }
 
 bool RotatedBoxAnnotationModel::exportYoloAnnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    double trainSplitRate,const QVector<QString>& labels) {
+    double trainSplitRate, const QVector<QString> &labels) {
     QDir dir(exportDir);
     QString trainImageDir = dir.filePath("images/train");
     QString valImageDir = dir.filePath("images/val");
@@ -463,10 +487,8 @@ bool RotatedBoxAnnotationModel::exportYoloAnnotation(
         qWarning() << "无法创建目录:" << valLabelDir;
         return false;
     }
-
     const int dataSetCount = dataSet.size();
     const int trainCount = dataSetCount * trainSplitRate;
-
     for (int i = 0; i < dataSetCount; i++) {
         auto [imagePath, annotationPath] = dataSet[i];
         loadFromFile(annotationPath);
@@ -479,7 +501,6 @@ bool RotatedBoxAnnotationModel::exportYoloAnnotation(
         QString yoloAnnotationFilePath =
             QDir(labelDir).filePath(yoloAnnotationFileName);
         QString newImageFilePath = QDir(imageDir).filePath(imageFileName);
-
         QFile file(yoloAnnotationFilePath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qWarning() << "无法创建输出文件:" << yoloAnnotationFilePath;
@@ -529,16 +550,13 @@ bool RotatedBoxAnnotationModel::exportYoloAnnotation(
     config.trainPath = "images/train";
     config.valPath = "images/val";
 
-    for(int i=0;i<labels.size();i++){
-        config.classes.insert(i,labels[i]);
+    for (int i = 0; i < labels.size(); i++) {
+        config.classes.insert(i, labels[i]);
     }
+    if (!generateYamlConfig(yamlConfigFilePath, config)) {
 
-    if(!generateYamlConfig(yamlConfigFilePath,config)){
-
-        qDebug() << "YOLO 配置文件导出失败"<<yamlConfigFilePath;
-
+        qDebug() << "YOLO 配置文件导出失败" << yamlConfigFilePath;
     }
-
     qDebug() << "YOLO格式导出完成，总计处理" << dataSetCount << "个文件";
     return true;
 }

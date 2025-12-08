@@ -19,6 +19,8 @@ public:
         int zOrder;
         double rotation;
         bool selected;
+        int groupID;
+        QString description;
     };
 
     enum RotatedBoxAnnotationRoles {
@@ -29,7 +31,9 @@ public:
         HeightRole,
         ZOrderRole,
         RotationRole,
-        SelectedRole
+        SelectedRole,
+        GroupIDRole,
+        DescriptionRole
     };
 
     explicit RotatedBoxAnnotationModel(QObject *parent = nullptr);

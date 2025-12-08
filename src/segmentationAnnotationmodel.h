@@ -15,13 +15,17 @@ public:
         QVariantList points;
         int zOrder;
         bool selected;
+        int groupID;
+        QString description;
     };
 
     enum SegmentationAnnotationRole {
         LabelIDRole = Qt::UserRole + 1,
         PointsRole,
         ZOrderRole,
-        SelectedRole
+        SelectedRole,
+        GroupIDRole,
+        DescriptionRole
     };
 
     explicit SegmentationAnnotationModel(QObject *parent = nullptr);

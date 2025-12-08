@@ -7,11 +7,7 @@ import EasyLabel
 Item{
     id: annotationListDetail
     required property AnnotationConfig annotationConfig
-    implicitHeight: 200
     width: parent.width
-    property int currentEditingIndex: -1
-
-
     Component{
         id: popoverComponent
         HusPopover {
@@ -51,22 +47,13 @@ Item{
                         }
                         HusSelect {
                             id: select
+                            Layout.preferredHeight: 30
                             Layout.fillWidth: true
                             editable: false
                             clearEnabled: false
                             model: annotationListDetail.annotationConfig.labelListModel
                             textRole: "label"
-                            currentIndex: target.labelID
-                            property bool initialized: false
-                            Component.onCompleted: {
-                                initialized = true
-                            }
-                            onCurrentIndexChanged: {
-                                if(initialized){
-                                    annotationListDetail.annotationConfig.currentAnnotationModel.setLabelID(target.index, currentIndex)
-                                    // listDelegate.isEditing = false
-                                }
-                            }
+                            currentIndex: target.labelID         
                         }
                     }
 
@@ -75,21 +62,32 @@ Item{
                             Layout.preferredWidth: 80
                             text:"组ID: "
                         }
-                        HusInput {
+                        HusInputNumber {
                             id: inputGroupID
-                            height: 30
+                            Layout.preferredHeight: 30
                             Layout.fillWidth: true
                             clearEnabled: false
-                            text:""
+                            value: target.groupID
                         }
                     }
+
+                    RowLayout{
+                        HusText{
+                            Layout.preferredWidth: 80
+                            text:"标注文本: "
+                        }
+                        HusTextArea {
+                            id: inputText
+                            Layout.preferredHeight: 120
+                            Layout.fillWidth: true
+                            text: target.description
+                        }
+                    }
+
                     Item{
                         Layout.fillHeight: true
                     }
                 }
-
-
-
 
                 HusDivider {
                     id: dividerBottom
@@ -113,7 +111,7 @@ Item{
                         text: "取消"
                         type: HusButton.Type_Outlined
                         onClicked:{
-                            popup.rejected()
+                            popover.close()
                         }
                     }
                     HusButton {
@@ -122,11 +120,16 @@ Item{
                         type: HusButton.Type_Primary
                         focus: true
                         onClicked:{
-                            popup.accepted()
+                            // 修改labelID
+                            annotationListDetail.annotationConfig.currentAnnotationModel.setLabelID(target.index, select.currentIndex)
+                            // 修改组ID在keyPoint中
+                            annotationListDetail.annotationConfig.currentAnnotationModel.setProperty(target.index,"groupID",inputGroupID.value)
+                            // 修改文本在OCR中
+                            annotationListDetail.annotationConfig.currentAnnotationModel.setProperty(target.index,"text",inputText.text)
+                            popover.close()
                         }
                     }
                 }
-
             }
         }
     }
@@ -144,6 +147,8 @@ Item{
             width: ListView.view.width
             height: 30
             required property int labelID
+            required property int groupID
+            required property string description
             required property int index
             required property bool selected
             property color labelColor : annotationListDetail.annotationConfig.labelListModel.getLabelColor(labelID)
@@ -158,7 +163,6 @@ Item{
                     listDelegate.label = annotationListDetail.annotationConfig.labelListModel.getLabel(listDelegate.labelID)
                 }
             }
-
             color: {
                 if (isCurrent) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.45)
                 else if (isHovered) return HusThemeFunctions.alpha(HusTheme.Primary.colorPrimaryBgActive, 0.25)
@@ -171,7 +175,7 @@ Item{
                 hoverEnabled: true
                 onClicked: annotationListDetail.annotationConfig.currentAnnotationModel.setSingleSelected(listDelegate.index)
                 onDoubleClicked: {
-                    var item = popoverComponent.createObject(listDelegate,{target :listDelegate})
+                    var item = popoverComponent.createObject(listDelegate,{target: listDelegate})
                     item.open()
                 }
             }
@@ -191,38 +195,6 @@ Item{
                     Layout.fillHeight: true
                     text: listDelegate.label
                     verticalAlignment: HusText.AlignVCenter
-                }
-                //              Loader {
-                //                  Layout.fillWidth: true
-                //                  Layout.fillHeight: true
-                //                  sourceComponent: listDelegate.isEditing ? editComponent : displayComponent
-                //              }
-
-                //              Component{
-                //                  id:displayComponent
-
-                //              }
-
-                Component{
-                    id: editComponent
-                    HusSelect {
-                        editable: false
-                        clearEnabled: false
-                        model: annotationListDetail.annotationConfig.labelListModel
-                        textRole: "label"
-                        currentIndex: listDelegate.labelID
-                        property bool initialized: false
-
-                        Component.onCompleted: {
-                            initialized = true
-                        }
-                        onCurrentIndexChanged: {
-                            if(initialized){
-                                annotationListDetail.annotationConfig.currentAnnotationModel.setLabelID(listDelegate.index, currentIndex)
-                                listDelegate.isEditing = false
-                            }
-                        }
-                    }
                 }
 
                 Item{

@@ -1,12 +1,12 @@
 #include "detectionAnnotationmodel.h"
 
-#include <QThread>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QThread>
 
 DetectionAnnotationModel::DetectionAnnotationModel(QObject *parent)
     : AnnotationModelBase{parent} {}
@@ -20,23 +20,26 @@ QVariant DetectionAnnotationModel::data(const QModelIndex &index,
     if (!index.isValid() || index.row() >= items_.size())
         return QVariant();
 
-    const DetectionAnnotationItem &detectionAnnotationItem =
-        items_.at(index.row());
+    const DetectionAnnotationItem &item = items_.at(index.row());
     switch (role) {
     case LabelIDRole:
-        return detectionAnnotationItem.labelID;
+        return item.labelID;
     case XRole:
-        return detectionAnnotationItem.x;
+        return item.x;
     case YRole:
-        return detectionAnnotationItem.y;
+        return item.y;
     case WidthRole:
-        return detectionAnnotationItem.width;
+        return item.width;
     case HeightRole:
-        return detectionAnnotationItem.height;
+        return item.height;
+    case GroupIDRole:
+        return item.groupID;
+    case DescriptionRole:
+        return item.description;
     case ZOrderRole:
-        return detectionAnnotationItem.zOrder;
+        return item.zOrder;
     case SelectedRole:
-        return detectionAnnotationItem.selected;
+        return item.selected;
     default:
         return QVariant();
     }
@@ -81,6 +84,31 @@ bool DetectionAnnotationModel::setData(const QModelIndex &index,
             changed = true;
         }
         break;
+    case GroupIDRole:
+        if (value.canConvert<int>()) {
+            item.groupID = value.toInt();
+            changed = true;
+        }
+        break;
+    case DescriptionRole:
+        if (value.canConvert<QString>()) {
+            item.description = value.toString();
+            changed = true;
+        }
+        break;
+    case ZOrderRole:
+        if (value.canConvert<int>()) {
+            item.zOrder = value.toInt();
+            changed = true;
+        }
+        break;
+    case SelectedRole:
+        if (value.canConvert<bool>()) {
+            item.selected = value.toBool();
+            changed = true;
+        }
+        break;
+
     default:
         return false;
     }
@@ -100,13 +128,15 @@ QHash<int, QByteArray> DetectionAnnotationModel::roleNames() const {
     roles[HeightRole] = "boxHeight";
     roles[ZOrderRole] = "zOrder";
     roles[SelectedRole] = "selected";
+    roles[GroupIDRole] = "groupID";
+    roles[DescriptionRole] = "description";
     return roles;
 }
 
 void DetectionAnnotationModel::addItem(int lableID, int x, int y, int width,
                                        int height, int zOrder, bool selected) {
     beginInsertRows(QModelIndex(), items_.size(), items_.size());
-    items_.append({lableID, x, y, width, height, zOrder, selected});
+    items_.append({lableID, x, y, width, height, zOrder, selected, 0, ""});
     endInsertRows();
 }
 
@@ -119,7 +149,7 @@ void DetectionAnnotationModel::updateItem(int index, int lableID, int x, int y,
     QModelIndex modelIndex = createIndex(index, 0);
     emit dataChanged(modelIndex, modelIndex,
                      {LabelIDRole, XRole, YRole, WidthRole, HeightRole,
-                      ZOrderRole, SelectedRole});
+                                              ZOrderRole, SelectedRole});
 }
 
 void DetectionAnnotationModel::setSelected(int index, bool selected) {
@@ -190,6 +220,8 @@ QJsonArray DetectionAnnotationModel::toJsonArray() const {
         jsonObj["width"] = item.width;
         jsonObj["height"] = item.height;
         jsonObj["zOrder"] = item.zOrder;
+        jsonObj["groupID"] = item.groupID;
+        jsonObj["description"] = item.description;
         jsonArray.append(jsonObj);
     }
     return jsonArray;
@@ -247,6 +279,8 @@ bool DetectionAnnotationModel::loadFromFile(const QString &annotationFilePath) {
             item.width = obj["width"].toInt();
             item.height = obj["height"].toInt();
             item.zOrder = obj["zOrder"].toInt();
+            item.groupID = obj["groupID"].toInt();
+            item.description = obj["description"].toString();
             item.selected = false;
             items_.append(item);
         }
@@ -265,7 +299,7 @@ void DetectionAnnotationModel::setLabelID(int index, int labelID) {
 
 bool DetectionAnnotationModel::exportAnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    int exportType, double trainSplitRate, const QVector<QString>& labels,
+    int exportType, double trainSplitRate, const QVector<QString> &labels,
     const QString &templateFile) {
 
     // 验证参数
@@ -296,7 +330,7 @@ bool DetectionAnnotationModel::exportAnotation(
 
 bool DetectionAnnotationModel::exportYoloAnnotation(
     const QString &exportDir, const QVector<QPair<QString, QString>> &dataSet,
-    double trainSplitRate,const QVector<QString>& labels) {
+    double trainSplitRate, const QVector<QString> &labels) {
     QDir dir(exportDir);
     QString trainImageDir = dir.filePath("images/train");
     QString valImageDir = dir.filePath("images/val");
@@ -332,7 +366,8 @@ bool DetectionAnnotationModel::exportYoloAnnotation(
         bool isTrainSet = i < trainCount;
         QString labelDir = isTrainSet ? trainLabelDir : valLabelDir;
         QString imageDir = isTrainSet ? trainImageDir : valImageDir;
-        QString yoloAnnotationFilePath = QDir(labelDir).filePath(yoloAnnotationFileName);
+        QString yoloAnnotationFilePath =
+            QDir(labelDir).filePath(yoloAnnotationFileName);
         QString newImageFilePath = QDir(imageDir).filePath(imageFileName);
 
         QFile file(yoloAnnotationFilePath);
@@ -353,13 +388,14 @@ bool DetectionAnnotationModel::exportYoloAnnotation(
                                                 .arg(centerY, 0, 'f', 6)
                                                 .arg(normWidth, 0, 'f', 6)
                                                 .arg(normHeight, 0, 'f', 6);
-            out << yoloAnnotationContent<<"\n";
+            out << yoloAnnotationContent << "\n";
         }
         file.close();
         qDebug() << "YOLO格式文件已保存:" << yoloAnnotationFilePath;
         // 复制图像文件
         if (!QFile::copy(imagePath, newImageFilePath)) {
-            qWarning() << "复制图像文件失败:" << imagePath << "->" << newImageFilePath;
+            qWarning() << "复制图像文件失败:" << imagePath << "->"
+                       << newImageFilePath;
         }
         double progress = static_cast<double>(i + 1) / dataSetCount * 100.0;
         emit exportProgress(progress);

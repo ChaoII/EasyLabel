@@ -345,7 +345,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Rectangle
+                        centralAnnotationView.drawStatus = CanvasEnums.Rectangle
                         flickable.interactive = false
                     }
                 }
@@ -361,7 +361,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.RotationBox
+                        centralAnnotationView.drawStatus = CanvasEnums.RotationBox
                         flickable.interactive = false
                     }
                 }
@@ -376,7 +376,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Polygon
+                        centralAnnotationView.drawStatus = CanvasEnums.Polygon
                         flickable.interactive = false
                     }
                 }
@@ -393,7 +393,7 @@ Item{
                     radiusBg.all: 0
                     checkable: true
                     onClicked: {
-                        centralAnnotationView.drawStatus = CanvasEnums.OptionStatus.Point
+                        centralAnnotationView.drawStatus = CanvasEnums.Point
                         flickable.interactive = false
                     }
                 }

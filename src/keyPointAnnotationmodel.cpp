@@ -47,6 +47,8 @@ QVariant KeyPointAnnotationModel::data(const QModelIndex &index,
         return item.zOrder;
     case SelectedRole:
         return item.selected;
+    case DescriptionRole:
+        return item.description;
     default:
         return QVariant();
     }
@@ -126,6 +128,12 @@ bool KeyPointAnnotationModel::setData(const QModelIndex &index,
             changed = true;
         }
         break;
+    case DescriptionRole:
+        if (value.canConvert<QString>()) {
+            item.description = value.toString();
+            changed = true;
+        }
+        break;
     default:
         return false;
     }
@@ -148,6 +156,7 @@ QHash<int, QByteArray> KeyPointAnnotationModel::roleNames() const {
     roles[GroupIDRole] = "groupID";
     roles[ZOrderRole] = "zOrder";
     roles[SelectedRole] = "selected";
+    roles[DescriptionRole] = "description";
     return roles;
 }
 
@@ -178,6 +187,8 @@ bool KeyPointAnnotationModel::setProperty(int index, const QString &property,
         return setData(modelIndex, value, ZOrderRole);
     else if (property == "selected")
         return setData(modelIndex, value, SelectedRole);
+    else if (property == "description")
+        return setData(modelIndex, value, DescriptionRole);
     else
         return false;
 }
@@ -207,7 +218,9 @@ QVariant KeyPointAnnotationModel::getProperty(int index,
         return data(modelIndex, ZOrderRole);
     if (property == "selected")
         return data(modelIndex, SelectedRole);
-    return "";
+    if (property == "description")
+        return data(modelIndex, DescriptionRole);
+    return QVariant();
 }
 
 QMap<int, QVector<KeyPointAnnotationModel::KeyPointAnnotationItem>>
@@ -237,7 +250,7 @@ KeyPointAnnotationModel::reorderKeypoints(
     // 初始化默认值（不可见的关键点）
     for (int i = 0; i < keypointNames.size(); i++) {
         orderedKeypoints[i] =
-            KeyPointAnnotationItem{-1, 0, 0, 0, 0, 1, 0, -1, -1, false};
+            KeyPointAnnotationItem{-1, 0, 0, 0, 0, 1, 0, -1, -1, false, ""};
     }
 
     // 根据标签名称匹配关键点
@@ -391,6 +404,8 @@ QJsonArray KeyPointAnnotationModel::toJsonArray() const {
         jsonObj["width"] = item.width;
         jsonObj["height"] = item.height;
         jsonObj["type"] = item.type;
+        jsonObj["visibleStatus"] = item.visibleStatus;
+        jsonObj["groupID"] = item.groupID;
         jsonObj["zOrder"] = item.zOrder;
         jsonArray.append(jsonObj);
     }
@@ -427,7 +442,6 @@ bool KeyPointAnnotationModel::loadFromFile(const QString &annotationFilePath) {
     file.close();
     QJsonDocument doc = QJsonDocument::fromJson(jsonData);
     if (doc.isNull() || !doc.isObject()) {
-        // qWarning() << "无效的JSON文件或格式错误: " << annotationFilePath;
         return false;
     }
     QJsonObject obj = doc.object();
@@ -444,11 +458,13 @@ bool KeyPointAnnotationModel::loadFromFile(const QString &annotationFilePath) {
             QJsonObject obj = value.toObject();
             KeyPointAnnotationItem item;
             item.labelID = obj["labelID"].toInt();
-            item.x = obj["x"].toInt();
-            item.y = obj["y"].toInt();
-            item.width = obj["width"].toInt();
-            item.height = obj["height"].toInt();
+            item.x = obj["x"].toDouble();
+            item.y = obj["y"].toDouble();
+            item.width = obj["width"].toDouble();
+            item.height = obj["height"].toDouble();
             item.type = obj["type"].toInt();
+            item.visibleStatus = obj["visibleStatus"].toBool();
+            item.groupID = obj["groupID"].toInt();
             item.zOrder = obj["zOrder"].toInt();
             item.selected = false;
             items_.append(item);

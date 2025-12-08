@@ -7,7 +7,7 @@ Item {
     id: keyPointLabelLayer
     property AnnotationConfig annotationConfig
     // 该状态是由用户点击某个案件或者快捷键触犯发的，容易在最外层对操作进行限制
-    property int drawStatus: CanvasEnums.OptionStatus.Drawing
+    property int drawStatus: CanvasEnums.Select
     property int drawType: -1
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
@@ -44,6 +44,10 @@ Item {
     property int borderWidth: Math.max(1.0, annotationConfig.currentLineWidth / scaleFactor)
     property bool showLabel: annotationConfig.showLabel
 
+    onDrawStatusChanged: {
+        console.log("onDrawStatusChanged", drawStatus)
+    }
+
     Crosshair {
         id: crosshair
         anchors.fill: parent
@@ -68,6 +72,8 @@ Item {
             required property double boxWidth
             required property double boxHeight
             required property int type // 0: bounxing box   1:point
+            required property int groupID
+            required property int visibleStatus
             required property bool selected
             readonly property bool isRect: type === 0
             readonly property bool showHandlers: selected && isRect
@@ -163,22 +169,14 @@ Item {
                     keyPointLabelLayer.selectedIndex =
                             keyPointLabelLayer.listModel.getSelectedIndex(
                                 mouse.x, mouse.y, keyPointLabelLayer.handlerWidth / 2)
-
                     console.log(keyPointLabelLayer.selectedIndex)
-
                     if(keyPointLabelLayer.selectedIndex >= 0){
                         keyPointLabelLayer.listModel.setSingleSelected(keyPointLabelLayer.selectedIndex)
-                        let x = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxX")
-                        let y = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxY")
-                        let width = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxWidth")
-                        let height = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxHeight")
-                        keyPointLabelLayer.selectedRect = Qt.rect(x, y, width, height)
-                        keyPointLabelLayer.selectedRectCorners = QmlUtilsCpp.rectCorners(keyPointLabelLayer.selectedRect)
+                        keyPointLabelLayer.updateSelectedRect()
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
                         if(keyPointLabelLayer.editType === CanvasEnums.None){
                             keyPointLabelLayer.editType = CanvasEnums.Move
                             keyPointLabelLayer.isEditing = true
-
                         }
                         keyPointLabelLayer.latestDragPoint = Qt.point(mouse.x, mouse.y)
                     } else {
@@ -226,6 +224,9 @@ Item {
                         keyPointLabelLayer.isEditing = true
                         var dx = mouse.x - keyPointLabelLayer.latestDragPoint.x
                         var dy = mouse.y - keyPointLabelLayer.latestDragPoint.y
+                        // 不断更新latestDragPoint
+                        keyPointLabelLayer.latestDragPoint.x = mouse.x
+                        keyPointLabelLayer.latestDragPoint.y = mouse.y
                         if(keyPointLabelLayer.editType===CanvasEnums.Move){
                             keyPointLabelLayer.latestDragPoint.x = mouse.x
                             keyPointLabelLayer.latestDragPoint.y = mouse.y
@@ -268,6 +269,7 @@ Item {
                                         keyPointLabelLayer.selectedIndex,
                                         Qt.rect(newX, newY, newW, newH))
                         }
+                        keyPointLabelLayer.updateSelectedRect()
                     }
                 }
             }
@@ -276,10 +278,10 @@ Item {
             if (mouse.button === Qt.LeftButton) {
                 let point = Qt.point(mouse.x, mouse.y)
                 if(keyPointLabelLayer.drawStatus === CanvasEnums.Point){
-                    // x,y,width,height,type,visible,groupID,zorder,selected
+                    // x, y, width, height, type, visible, groupID, zorder, selected
                     keyPointLabelLayer.listModel.addItem(
                                 keyPointLabelLayer.currentLabelID, point.x, point.y,
-                                0,0,1,2,0,keyPointLabelLayer.zOrder++, false)
+                                0, 0, 1, 2, 0, keyPointLabelLayer.zOrder++, false)
                 }
 
                 if (keyPointLabelLayer.drawStatus === CanvasEnums.Rectangle) {
@@ -287,7 +289,7 @@ Item {
                         // x,y,width,height,type,visible,groupID,zorder,selected
                         keyPointLabelLayer.listModel.addItem(
                                     keyPointLabelLayer.currentLabelID, point.x, point.y,
-                                    0,0,0,2,0,keyPointLabelLayer.zOrder++, false)
+                                    0, 0, 0, 2, 0,keyPointLabelLayer.zOrder++, false)
                         keyPointLabelLayer.points.push(point)
                         keyPointLabelLayer.shapeFinished = false
                     }
@@ -316,6 +318,16 @@ Item {
             }
         }
     }
+
+    function updateSelectedRect(){
+        let x = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxX")
+        let y = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxY")
+        let width = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxWidth")
+        let height = keyPointLabelLayer.listModel.getProperty(keyPointLabelLayer.selectedIndex, "boxHeight")
+        keyPointLabelLayer.selectedRect = Qt.rect(x, y, width, height)
+        keyPointLabelLayer.selectedRectCorners = QmlUtilsCpp.rectCorners(keyPointLabelLayer.selectedRect)
+    }
+
 
     function updateEditType(points, point){
         for(let i = 0; i < points.length; i++){

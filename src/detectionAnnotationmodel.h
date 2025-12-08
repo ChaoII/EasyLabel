@@ -19,6 +19,8 @@ public:
         int height;
         int zOrder;
         bool selected;
+        int groupID;
+        QString description;
     };
 
     enum DetectionAnnotationRoles {
@@ -28,7 +30,9 @@ public:
         WidthRole,
         HeightRole,
         ZOrderRole,
-        SelectedRole
+        SelectedRole,
+        GroupIDRole,
+        DescriptionRole
     };
 
     explicit DetectionAnnotationModel(QObject *parent = nullptr);

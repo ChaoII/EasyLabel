@@ -21,6 +21,7 @@ public:
         int groupID;
         int zOrder;
         bool selected;
+        QString description;
     };
 
     enum KeyPointAnnotationRole {
@@ -33,7 +34,8 @@ public:
         VisibleStatusRole,
         GroupIDRole,
         ZOrderRole,
-        SelectedRole
+        SelectedRole,
+        DescriptionRole
     };
 
     explicit KeyPointAnnotationModel(QObject *parent = nullptr);

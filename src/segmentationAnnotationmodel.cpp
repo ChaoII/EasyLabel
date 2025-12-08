@@ -36,6 +36,10 @@ QVariant SegmentationAnnotationModel::data(const QModelIndex &index,
         return item.zOrder;
     case SelectedRole:
         return item.selected;
+    case GroupIDRole:
+        return item.groupID;
+    case DescriptionRole:
+        return item.description;
     default:
         return QVariant();
     }
@@ -75,6 +79,18 @@ bool SegmentationAnnotationModel::setData(const QModelIndex &index,
             changed = true;
         }
         break;
+    case GroupIDRole:
+        if (value.canConvert<int>()) {
+            item.groupID = value.toInt();
+            changed = true;
+        }
+        break;
+    case DescriptionRole:
+        if (value.canConvert<QString>()) {
+            item.description = value.toString();
+            changed = true;
+        }
+        break;
     default:
         return false;
     }
@@ -91,6 +107,8 @@ QHash<int, QByteArray> SegmentationAnnotationModel::roleNames() const {
     roles[PointsRole] = "points";
     roles[ZOrderRole] = "zOrder";
     roles[SelectedRole] = "selected";
+    roles[GroupIDRole] = "groupID";
+    roles[DescriptionRole] = "description";
     return roles;
 }
 
@@ -110,6 +128,10 @@ bool SegmentationAnnotationModel::setProperty(int index,
         return setData(modelIndex, value, ZOrderRole);
     else if (property == "selected")
         return setData(modelIndex, value, SelectedRole);
+    else if (property == "groupID")
+        return setData(modelIndex, value, GroupIDRole);
+    else if (property == "description")
+        return setData(modelIndex, value, DescriptionRole);
     else
         return false;
 }
@@ -127,14 +149,18 @@ QVariant SegmentationAnnotationModel::getProperty(int index,
         return data(modelIndex, ZOrderRole);
     if (property == "selected")
         return data(modelIndex, SelectedRole);
-    return "";
+    if (property == "groupID")
+        return data(modelIndex, GroupIDRole);
+    if (property == "description")
+        return data(modelIndex, DescriptionRole);
+    return QVariant();
 }
 
 void SegmentationAnnotationModel::addItem(int lableID,
                                           const QVariantList &points,
                                           int zOrder, bool selected) {
     beginInsertRows(QModelIndex(), items_.size(), items_.size());
-    items_.append({lableID, points, zOrder, selected});
+    items_.append({lableID, points, zOrder, selected, 0, ""});
     endInsertRows();
 }
 
@@ -284,6 +310,8 @@ QJsonArray SegmentationAnnotationModel::toJsonArray() const {
         }
         jsonObj["points"] = pointsArray;
         jsonObj["zOrder"] = item.zOrder;
+        jsonObj["groupID"] = item.groupID;
+        jsonObj["description"] = item.description;
         jsonArray.append(jsonObj);
     }
     return jsonArray;
@@ -349,6 +377,8 @@ bool SegmentationAnnotationModel::loadFromFile(
                 }
             }
             item.zOrder = obj["zOrder"].toInt();
+            item.groupID = obj["groupID"].toInt();
+            item.description = obj["description"].toString();
             item.selected = false;
             items_.append(item);
         }
