@@ -323,7 +323,7 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
-                    iconFontFamily: "remixicon"
+                    iconFont.family: "remixicon"
                     iconSource: RemixIcon.CursorFill
                     radiusBg.all: 0
                     checkable: true
@@ -340,7 +340,7 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
-                    iconFontFamily: "remixicon"
+                    iconFont.family: "remixicon"
                     iconSource: RemixIcon.CheckboxBlank2Line
                     radiusBg.all: 0
                     checkable: true
@@ -356,7 +356,7 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
-                    iconFontFamily: "remixicon"
+                    iconFont.family: "remixicon"
                     iconSource: RemixIcon.PokerDiamondsLine
                     radiusBg.all: 0
                     checkable: true
@@ -371,7 +371,7 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 20
-                    iconFontFamily: "remixicon"
+                    iconFont.family: "remixicon"
                     iconSource: RemixIcon.PentagonLine
                     radiusBg.all: 0
                     checkable: true
@@ -388,7 +388,9 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 8
-                    iconFontFamily: "remixicon"
+                    iconFont: Qt.font({
+                                          family:"remixicon"
+                                      })
                     iconSource: RemixIcon.CheckboxBlankCircle2Fill
                     radiusBg.all: 0
                     checkable: true

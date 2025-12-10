@@ -335,8 +335,10 @@ Item {
                             if(modelData.total <=0 || modelData.current !== modelData.total){
                                 popconfirm.open()
                             }else{
-                                let annotationType = annotationConfig.getExportAnnotationTypeName(0)
-                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ annotationType
+                                let exportAnnotationTypeName = annotationConfig.getExportAnnotationTypeName(0)
+                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ exportAnnotationTypeName
+                                exportDatasetPopup.exportTemplate = modelData.resultFolder + "/template.json"
+                                exportDatasetPopup.annotationType = modelData.annotationType
                                 exportDatasetPopup.updateExportProgress(0)
                                 exportDatasetPopup.open()
                             }
@@ -351,8 +353,10 @@ Item {
                             confirmText: '是'
                             cancelText: '否'
                             onConfirm: {
-                                let annotationType = annotationConfig.getExportAnnotationTypeName(0)
-                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ annotationType
+                                let exportAnnotationTypeName = annotationConfig.getExportAnnotationTypeName(0)
+                                exportDatasetPopup.exportDir = modelData.resultFolder + "/"+ exportAnnotationTypeName
+                                exportDatasetPopup.exportTemplate = modelData.resultFolder + "/template.json"
+                                exportDatasetPopup.annotationType = modelData.annotationType
                                 exportDatasetPopup.updateExportProgress(0)
                                 exportDatasetPopup.open()
                                 close();
@@ -366,7 +370,7 @@ Item {
                     ExportDatasetPopup{
                         id: exportDatasetPopup
                         width: 480
-                        height: 320
+                        height: 370
                         title: "导出标签"
                         exportTypeModel:annotationConfig.getExportAnnotationTypes()
                         Connections{

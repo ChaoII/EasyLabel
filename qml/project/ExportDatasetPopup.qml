@@ -11,10 +11,12 @@ HusPopup {
     id: exportDatasetPopup
     property alias title: txtTitle.text
     property alias exportDir: dirSelectExport.text
+    property alias exportTemplate: dirExportTemplate.text
     property alias trainSplitRate: trainNum.value
     property alias exportImage: switchExportImage.checked
     property alias exportTypeModel: selectExportType.model
     property alias exportType: selectExportType.currentValue
+    property int annotationType: -1
 
     signal accepted()
     signal rejected()
@@ -73,17 +75,8 @@ HusPopup {
             ColumnLayout{
                 anchors.fill: parent
                 spacing: 20
-                RowLayout{
-                    HusText{
-                        Layout.preferredWidth: content.labelWidth
-                        text: "导出目录"
-                    }
-                    DirSelectInput{
-                        id: dirSelectExport
-                        Layout.fillWidth:true
-                        text: popup.exportDir
-                    }
-                }
+
+
                 RowLayout{
                     HusText{
                         Layout.preferredWidth: content.labelWidth
@@ -93,11 +86,33 @@ HusPopup {
                         id: selectExportType
                         Layout.fillWidth: true
                         Layout.preferredHeight: 30
-                        model: popup.exportTypeList
                         onCurrentValueChanged: {
                             let newPath = changeExportPath(dirSelectExport.text, currentText)
                             dirSelectExport.text = newPath
                         }
+                    }
+                }
+
+                RowLayout{
+                    HusText{
+                        Layout.preferredWidth: content.labelWidth
+                        text: "导出目录"
+                    }
+                    DirSelectInput{
+                        id: dirSelectExport
+                        Layout.fillWidth:true
+                    }
+                }
+
+                RowLayout{
+                    visible: exportDatasetPopup.annotationType === AnnotationConfig.KeyPoint
+                    HusText{
+                        Layout.preferredWidth: content.labelWidth
+                        text: "导出模板"
+                    }
+                    DirSelectInput{
+                        id: dirExportTemplate
+                        Layout.fillWidth:true
                     }
                 }
 
@@ -118,6 +133,7 @@ HusPopup {
                             radius: 2
                             color: switchExportImage.colorHandle
                         }
+                        checked: true
                         checkedText: "是"
                         uncheckedText: "否"
                         onCheckedChanged: {

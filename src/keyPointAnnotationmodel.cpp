@@ -284,7 +284,7 @@ KeyPointAnnotationModel::parseKeypointNames(const QJsonArray &kptNamesArray) {
                     QJsonArray keypointArray = it.value().toArray();
                     QVector<QString> keypointNames;
 
-                    for (const QJsonValue &kpValue : keypointArray) {
+                    for (const QJsonValue &kpValue : std::as_const(keypointArray)) {
                         if (kpValue.isString()) {
                             keypointNames.append(kpValue.toString());
                         }
@@ -387,7 +387,7 @@ int KeyPointAnnotationModel::getSelectedIndex(int x, int y, int radius) {
         } else {
             rect = QRectF(item.x - radius, item.y - radius, 2 * radius, 2 * radius);
         }
-        if (rect.marginsAdded(QMarginsF(10,10,10,10)).contains(x, y)) {
+        if (rect.marginsAdded(QMarginsF(10, 10, 10, 10)).contains(x, y)) {
             return i;
         }
     }
