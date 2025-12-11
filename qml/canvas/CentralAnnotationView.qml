@@ -388,9 +388,7 @@ Item{
                     Layout.preferredWidth: 30
                     Layout.preferredHeight: 30
                     iconSize: 8
-                    iconFont: Qt.font({
-                                          family:"remixicon"
-                                      })
+                    iconFont.family:"remixicon"
                     iconSource: RemixIcon.CheckboxBlankCircle2Fill
                     radiusBg.all: 0
                     checkable: true

@@ -43,7 +43,12 @@ Item {
         currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         onAccepted: {
             // 获取文件夹路径（去掉 file:// 前缀）
-            var folderPath = currentFolder.toString().replace("file:///", "")
+            let folderPath = ""
+            if (Qt.platform.os === "windows"){
+                folderPath = currentFolder.toString().replace("file:///", "")
+            }else{
+                folderPath = currentFolder.toString().replace("file://", "")
+            }
             textInput.text = folderPath
         }
     }
