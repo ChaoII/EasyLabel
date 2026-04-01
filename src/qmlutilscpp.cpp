@@ -36,7 +36,7 @@ QVector<QPointF> QmlUtilsCpp::rotatedRectCorners(const QRectF &rect, double rota
     QTransform transform;
     transform.translate(origin.x(), origin.y());
     transform.rotate(rotation);
-    transform.translate(-origin.x(), -origin.y());
+    transform.translate(-origin.x(), origin.y());
     return {
         transform.map(rect.topLeft()),
         transform.map(rect.topRight()),
@@ -69,7 +69,7 @@ bool QmlUtilsCpp::pointInRotatedRect(const QPointF& point, const QRectF& rect, d
 
     transform.translate(origin.x(), origin.y());
     transform.rotate(-rotation);
-    transform.translate(-origin.x(), -origin.y());
+    transform.translate(-origin.x(), origin.y());
     QPointF localPoint = transform.map(point);
 
     // 在局部坐标系中判断点是否在未旋转矩形内

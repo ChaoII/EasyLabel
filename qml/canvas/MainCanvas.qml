@@ -17,7 +17,7 @@ Item {
             anchors.fill: parent
             bodyDelegate: null
             titleDelegate: null
-            border.color: "transparent"
+            colorBorder: "transparent"
             Component.onCompleted: {
             }
         }

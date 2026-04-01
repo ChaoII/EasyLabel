@@ -7,7 +7,7 @@ Item {
     id: keyPointLabelLayer
     property AnnotationConfig annotationConfig
     // 该状态是由用户点击某个案件或者快捷键触犯发的，容易在最外层对操作进行限制
-    property int drawStatus: CanvasEnums.Select
+    property int drawStatus: CanvasEnums.OptionStatus.Select
     property int drawType: -1
     property var listModel: annotationConfig.currentAnnotationModel
     property int currentLabelID: annotationConfig.currentLabelIndex
@@ -51,13 +51,32 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: keyPointLabelLayer.drawStatus !== CanvasEnums.Select
+        visible: keyPointLabelLayer.drawStatus !== CanvasEnums.OptionStatus.Select
         crossColor: keyPointLabelLayer.currentLabelColor
         centerPointerSize: keyPointLabelLayer.annotationConfig.centerPointerSize
         lineWidth: keyPointLabelLayer.annotationConfig.currentLineWidth
         scaleFactor: keyPointLabelLayer.scaleFactor
         showCoordinates: true
         showCenterPoint: true
+        // 用 hoverPos 作为桥接：HoverHandler 更新它，再用 onChanged 同步到 Crosshair 的 mousePosition
+        property point hoverPos: Qt.point(-1, -1)
+        onHoverPosChanged: {
+            mousePosition = hoverPos
+            // hoverPos 变化时同步到主视图状态栏
+            var mainView = keyPointLabelLayer.parent && keyPointLabelLayer.parent.parent &&
+                            keyPointLabelLayer.parent.parent.parent && keyPointLabelLayer.parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = hoverPos
+            }
+        }
+    }
+
+    HoverHandler{
+        id: hoverHandler
+        target:keyPointLabelLayer
+        onPointChanged: function () {
+            crosshair.hoverPos = Qt.point(point.position.x, point.position.y)
+        }
     }
 
     // 显示所有标注框
@@ -159,7 +178,7 @@ Item {
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(keyPointLabelLayer.drawStatus !== CanvasEnums.Select) {
+                if(keyPointLabelLayer.drawStatus !== CanvasEnums.OptionStatus.Select) {
                     // 绘制模式：开始绘制新矩形
                     if(keyPointLabelLayer.currentLabelID===-1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -174,8 +193,8 @@ Item {
                         keyPointLabelLayer.listModel.setSingleSelected(keyPointLabelLayer.selectedIndex)
                         keyPointLabelLayer.updateSelectedRect()
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
-                        if(keyPointLabelLayer.editType === CanvasEnums.None){
-                            keyPointLabelLayer.editType = CanvasEnums.Move
+                        if(keyPointLabelLayer.editType === CanvasEnums.EditType.None){
+                            keyPointLabelLayer.editType = CanvasEnums.EditType.Move
                             keyPointLabelLayer.isEditing = true
                         }
                         keyPointLabelLayer.latestDragPoint = Qt.point(mouse.x, mouse.y)
@@ -183,19 +202,25 @@ Item {
                         // 没有元素被选中
                         keyPointLabelLayer.listModel.removeAllSelected()
                         keyPointLabelLayer.selectedIndex = -1
-                        keyPointLabelLayer.editType=CanvasEnums.None
+                        keyPointLabelLayer.editType=CanvasEnums.EditType.None
                     }
                 }
             }
         }
 
         onPositionChanged: function(mouse) {
+            // 更新鼠标坐标到主视图：MouseArea → layer → Loader → imageContainer → Flickable → centralAnnotationView
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(mouse.x, mouse.y)
+            }
+
             // 处于编辑模式，比如矩形编辑，点编辑
-            if (keyPointLabelLayer.drawStatus !== CanvasEnums.Select) {
+            if (keyPointLabelLayer.drawStatus !== CanvasEnums.OptionStatus.Select) {
                 if(keyPointLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 let mousePosition = Qt.point(mouse.x, mouse.y)
-                crosshair.mousePosition = mousePosition
+                crosshair.hoverPos = mousePosition
                 let last = keyPointLabelLayer.listModel.rowCount() - 1
                 if(!keyPointLabelLayer.shapeFinished){
                     let p0 = keyPointLabelLayer.points[0]
@@ -206,7 +231,7 @@ Item {
                     keyPointLabelLayer.listModel.setProperty(last, "boxWidth", width)
                     keyPointLabelLayer.listModel.setProperty(last, "boxHeight", height)
                 }
-            }else if (keyPointLabelLayer.drawStatus === CanvasEnums.Select){
+            }else if (keyPointLabelLayer.drawStatus === CanvasEnums.OptionStatus.Select){
                 if(keyPointLabelLayer.selectedIndex >= 0){
                     // 这里很关键，不然对象在修改某个点的时候不流畅，因为在鼠标拖动过程中实时检测EditType，
                     // 如果鼠标移动过快，编辑状态可能会改变，导致编辑不流畅
@@ -214,7 +239,7 @@ Item {
                         updateEditType(keyPointLabelLayer.selectedRectCorners, Qt.point(mouse.x, mouse.y))
                     }
                     // 修改鼠标的样式
-                    if(keyPointLabelLayer.editType !== CanvasEnums.None){
+                    if(keyPointLabelLayer.editType !== CanvasEnums.EditType.None){
                         drawArea.cursorShape = Qt.PointingHandCursor
                     }else{
                         drawArea.cursorShape = Qt.ArrowCursor
@@ -227,13 +252,13 @@ Item {
                         // 不断更新latestDragPoint
                         keyPointLabelLayer.latestDragPoint.x = mouse.x
                         keyPointLabelLayer.latestDragPoint.y = mouse.y
-                        if(keyPointLabelLayer.editType===CanvasEnums.Move){
+                        if(keyPointLabelLayer.editType===CanvasEnums.EditType.Move){
                             keyPointLabelLayer.latestDragPoint.x = mouse.x
                             keyPointLabelLayer.latestDragPoint.y = mouse.y
                             keyPointLabelLayer.listModel.moveShape(
                                         keyPointLabelLayer.selectedIndex, Qt.point(dx, dy))
                         }
-                        else if(keyPointLabelLayer.editType === CanvasEnums.ResizeLeftTopCorner){
+                        else if(keyPointLabelLayer.editType === CanvasEnums.EditType.ResizeLeftTopCorner){
                             let newX = mouse.x
                             let newY = mouse.y
                             let newW = keyPointLabelLayer.selectedRect.width - dx
@@ -242,7 +267,7 @@ Item {
                                         keyPointLabelLayer.selectedIndex,
                                         Qt.rect(newX, newY, newW, newH))
                         }
-                        else if(keyPointLabelLayer.editType === CanvasEnums.ResizeRightTopCorner){
+                        else if(keyPointLabelLayer.editType === CanvasEnums.EditType.ResizeRightTopCorner){
                             let newX = keyPointLabelLayer.selectedRect.x
                             let newY = keyPointLabelLayer.selectedRect.y + dy
                             let newW = keyPointLabelLayer.selectedRect.width + dx
@@ -251,7 +276,7 @@ Item {
                                         keyPointLabelLayer.selectedIndex,
                                         Qt.rect(newX, newY, newW, newH))
                         }
-                        else if(keyPointLabelLayer.editType === CanvasEnums.ResizeRightBottomCorner){
+                        else if(keyPointLabelLayer.editType === CanvasEnums.EditType.ResizeRightBottomCorner){
                             let newX = keyPointLabelLayer.selectedRect.x
                             let newY = keyPointLabelLayer.selectedRect.y
                             let newW = keyPointLabelLayer.selectedRect.width + dx
@@ -260,7 +285,7 @@ Item {
                                         keyPointLabelLayer.selectedIndex,
                                         Qt.rect(newX, newY, newW, newH))
                         }
-                        else if(keyPointLabelLayer.editType === CanvasEnums.ResizeLeftBottomCorner){
+                        else if(keyPointLabelLayer.editType === CanvasEnums.EditType.ResizeLeftBottomCorner){
                             let newX = keyPointLabelLayer.selectedRect.x + dx
                             let newY = keyPointLabelLayer.selectedRect.y
                             let newW = keyPointLabelLayer.selectedRect.width - dx
@@ -277,14 +302,14 @@ Item {
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
                 let point = Qt.point(mouse.x, mouse.y)
-                if(keyPointLabelLayer.drawStatus === CanvasEnums.Point){
+                if(keyPointLabelLayer.drawStatus === CanvasEnums.OptionStatus.Point){
                     // x, y, width, height, type, visible, groupID, zorder, selected
                     keyPointLabelLayer.listModel.addItem(
                                 keyPointLabelLayer.currentLabelID, point.x, point.y,
                                 0, 0, 1, 2, 0, keyPointLabelLayer.zOrder++, false)
                 }
 
-                if (keyPointLabelLayer.drawStatus === CanvasEnums.Rectangle) {
+                if (keyPointLabelLayer.drawStatus === CanvasEnums.OptionStatus.Rectangle) {
                     if(keyPointLabelLayer.shapeFinished){
                         // x,y,width,height,type,visible,groupID,zorder,selected
                         keyPointLabelLayer.listModel.addItem(
@@ -306,7 +331,7 @@ Item {
                             keyPointLabelLayer.listModel.setProperty(last,"boxWidth",width)
                             keyPointLabelLayer.listModel.setProperty(last,"boxHeight",height)
                             keyPointLabelLayer.shapeFinished = true
-                            keyPointLabelLayer.editType = CanvasEnums.None
+                            keyPointLabelLayer.editType = CanvasEnums.EditType.None
                             keyPointLabelLayer.listModel.setSelected(last, false)
                             keyPointLabelLayer.points = []
                         }
@@ -314,7 +339,13 @@ Item {
                     keyPointLabelLayer.pointFinished = true
                 }
                 keyPointLabelLayer.isEditing = false
-                keyPointLabelLayer.editType = CanvasEnums.None
+                keyPointLabelLayer.editType = CanvasEnums.EditType.None
+            }
+        }
+        onExited: {
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(-1, -1)
             }
         }
     }
@@ -334,21 +365,21 @@ Item {
             let itemRect = Qt.rect(points[i].x-handlerWidth/2, points[i].y-handlerHeight/2, handlerWidth, handlerHeight)
             if(QmlUtilsCpp.isPointInRect(itemRect, point)){
                 if(i===0){
-                    keyPointLabelLayer.editType =  CanvasEnums.ResizeLeftTopCorner
+                    keyPointLabelLayer.editType =  CanvasEnums.EditType.ResizeLeftTopCorner
                 }else if(i===1){
-                    keyPointLabelLayer.editType =  CanvasEnums.ResizeRightTopCorner
+                    keyPointLabelLayer.editType =  CanvasEnums.EditType.ResizeRightTopCorner
                 }
                 else if(i===2){
-                    keyPointLabelLayer.editType =  CanvasEnums.ResizeRightBottomCorner
+                    keyPointLabelLayer.editType =  CanvasEnums.EditType.ResizeRightBottomCorner
                 }
                 else if(i===3){
-                    keyPointLabelLayer.editType =  CanvasEnums.ResizeLeftBottomCorner
+                    keyPointLabelLayer.editType =  CanvasEnums.EditType.ResizeLeftBottomCorner
                 }
                 keyPointLabelLayer.editPointIndex = i
                 return
             }
         }
-        keyPointLabelLayer.editType =  CanvasEnums.None
+        keyPointLabelLayer.editType =  CanvasEnums.EditType.None
         keyPointLabelLayer.editPointIndex = -1
     }
 }

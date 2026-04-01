@@ -3,39 +3,35 @@ import QtCore
 import QtQuick.Dialogs
 import HuskarUI.Basic
 
-Item {
+
+HusSpace {
     id: dirSelect
     property alias text: textInput.text
     property alias placeholderText: textInput.placeholderText
     property string dialogTitle: "选择文件夹"
-    property bool shouldBind: true
+    layout: 'Row'
     height: 30
     width: 320
     HusInput {
         id: textInput
-        anchors.left: parent.left
-        anchors.right: iconBtn.left
-        radiusBg.topRight: 0
-        radiusBg.bottomRight: 0
+        height: dirSelect.height
+        width: dirSelect.width - iconBtn.width
         placeholderText: "请选择文件夹"
         text: dirSelect.text
     }
-
     HusIconButton {
         id: iconBtn
-        width: 30
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
+        height: dirSelect.height
+        width: dirSelect.height
         type: HusButton.Type_Primary
-        radiusBg.topLeft: 0
-        radiusBg.bottomLeft: 0
         iconSource: HusIcon.FolderOpenOutlined
         onClicked: {
             folderDialog.currentFolder = textInput.text.startsWith("file:///") ? textInput.text : "file:///"+textInput.text
             folderDialog.open()
         }
     }
+
+
 
     FolderDialog {
         id: folderDialog

@@ -14,7 +14,7 @@ Item{
     HusCard{
         id: card
         anchors.fill: parent
-        border.color:"transparent"
+        colorBorder:"transparent"
         titleDelegate: Item{
             width: parent.width
             height: 40
@@ -55,14 +55,15 @@ Item{
                 {key:"C", title: qsTr('标注列表'), value: 3 , contentDelegate: annotationListDetailComponent },
                 {key:"D", title: qsTr('文件列表'), value: 4 , contentDelegate: annotationFileListDetailComponent }
             ]
-            contentDelegate:Item{
-                height: splitRight.height - 40 * annotaionDetail.count - 37
-                Loader{
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    sourceComponent: model.contentDelegate
-                }
-            }
+            // contentDelegate:Item{
+            //     height: splitRight.height - 40 * annotaionDetail.count - 37
+            //     Loader{
+            //         anchors.fill: parent
+            //         anchors.margins: 10
+            //         sourceComponent: model.contentDelegate
+            //     }
+            // }
+            // contentDelegate: model.contentDelegate
             Component.onCompleted: {
 
             }
@@ -73,6 +74,9 @@ Item{
     Component{
         id: annotationStyleDetailComponent
         AnnotationStyleDetail{
+            // height: 200
+            width: 100
+            margins: 10
             annotationConfig: splitRight.annotationConfig
         }
     }

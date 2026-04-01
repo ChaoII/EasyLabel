@@ -5,12 +5,15 @@ import EasyLabel
 
 Item{
     id: annotationStyleDetail
-
+    property int margins: 10
     required property AnnotationConfig annotationConfig
-    height: parent.height
-    width: parent.width
+    height: column.height - 2 * margins
+    // width: parent.width
     ColumnLayout{
-        anchors.fill: parent
+        id: column
+        x: margins
+        y: margins
+        width: parent.width - 2 * margins
         RowLayout{
             HusIconText{
                 iconSource: HusIcon.BorderOuterOutlined
@@ -230,9 +233,8 @@ Item{
 
 
 
-        Item{
-            Layout.fillHeight: true
-        }
+        // Item{
+        //     Layout.fillHeight: true
+        // }
     }
 }
-

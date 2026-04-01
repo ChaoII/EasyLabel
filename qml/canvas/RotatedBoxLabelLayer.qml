@@ -4,6 +4,8 @@ import HuskarUI.Basic
 import EasyLabel
 Item {
     id: rotationBoxLabelLayer
+    antialiasing: true
+    smooth: true
     property AnnotationConfig annotationConfig
     property int drawStatus: CanvasEnums.OptionStatus.Select
     property var listModel: annotationConfig.currentAnnotationModel
@@ -34,13 +36,30 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox
+        visible: rotationBoxLabelLayer.drawStatus === CanvasEnums.OptionStatus.RotationBox
         crossColor: rotationBoxLabelLayer.currentLabelColor
         centerPointerSize: rotationBoxLabelLayer.annotationConfig.centerPointerSize
         lineWidth: rotationBoxLabelLayer.annotationConfig.currentLineWidth
         scaleFactor: rotationBoxLabelLayer.scaleFactor
         showCoordinates: true
         showCenterPoint: true
+        property point hoverPos: Qt.point(-1, -1)
+        onHoverPosChanged: {
+            mousePosition = hoverPos
+            var mainView = rotationBoxLabelLayer.parent && rotationBoxLabelLayer.parent.parent &&
+                            rotationBoxLabelLayer.parent.parent.parent && rotationBoxLabelLayer.parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = hoverPos
+            }
+        }
+    }
+
+    HoverHandler{
+        id: hoverHandler
+        target:rotationBoxLabelLayer
+        onPointChanged: function () {
+            crosshair.hoverPos = Qt.point(point.position.x, point.position.y)
+        }
     }
 
     // 显示所有标注框
@@ -65,10 +84,10 @@ Item {
                 width: boxWidth
                 height: boxHeight
                 rotation: boxRotation
-                border.color: annotationColor
                 transformOrigin: Item.TopLeft
                 antialiasing: true
                 smooth: true
+                border.color: annotationColor
                 border.width: rotationBoxLabelLayer.annotationConfig.currentLineWidth/rotationBoxLabelLayer.scaleFactor
                 border.style: selected ? Qt.DashDotLine: Qt.SolidLine
                 color: Qt.rgba(annotationColor.r, annotationColor.g, annotationColor.b, rotationBoxLabelLayer.annotationConfig.currentFillOpacity)
@@ -126,7 +145,7 @@ Item {
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
+                if(rotationBoxLabelLayer.drawStatus === CanvasEnums.OptionStatus.RotationBox) {
                     // 绘制模式：开始绘制新矩形
                     if(rotationBoxLabelLayer.currentLabelID === -1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -137,8 +156,8 @@ Item {
                     if(rotationBoxLabelLayer.selectedIndex >= 0){
                         rotationBoxLabelLayer.listModel.setSingleSelected(rotationBoxLabelLayer.selectedIndex)
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
-                        if(rotationBoxLabelLayer.editType === CanvasEnums.None){
-                            rotationBoxLabelLayer.editType = CanvasEnums.Move
+                        if(rotationBoxLabelLayer.editType === CanvasEnums.EditType.None){
+                            rotationBoxLabelLayer.editType = CanvasEnums.EditType.Move
                         }
                         rotationBoxLabelLayer.dragStartPoint = Qt.point(mouse.x, mouse.y)
                         rotationBoxLabelLayer.startRect = rotationBoxLabelLayer.listModel.getRect(rotationBoxLabelLayer.selectedIndex)
@@ -147,18 +166,24 @@ Item {
                         // 没有元素被选中
                         rotationBoxLabelLayer.listModel.removeAllSelected()
                         rotationBoxLabelLayer.selectedIndex = -1
-                        rotationBoxLabelLayer.editType=CanvasEnums.None
+                        rotationBoxLabelLayer.editType=CanvasEnums.EditType.None
                     }
                 }
             }
         }
 
         onPositionChanged: function(mouse) {
-            if (rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
+            // 更新鼠标坐标到主视图：MouseArea → layer → Loader → imageContainer → Flickable → centralAnnotationView
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(mouse.x, mouse.y)
+            }
+
+            if (rotationBoxLabelLayer.drawStatus === CanvasEnums.OptionStatus.RotationBox) {
                 if(rotationBoxLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 rotationBoxLabelLayer.mousePosition = Qt.point(mouse.x, mouse.y)
-                crosshair.mousePosition = rotationBoxLabelLayer.mousePosition
+                crosshair.hoverPos = rotationBoxLabelLayer.mousePosition
                 // 绘制模式：更新矩形大小（保持不变）
                 let last = rotationBoxLabelLayer.listModel.rowCount() - 1
                 if(points.length===1){
@@ -178,18 +203,18 @@ Item {
                     }
                     rotationBoxLabelLayer.listModel.setProperty(last,"boxHeight", boxHeight)
                 }
-            }else if (rotationBoxLabelLayer.drawStatus === CanvasEnums.Select){
+            }else if (rotationBoxLabelLayer.drawStatus === CanvasEnums.OptionStatus.Select){
                 if(rotationBoxLabelLayer.selectedIndex >= 0){
                     updateEditType(rotationBoxLabelLayer.realRotatedRectPoints, Qt.point(mouse.x,mouse.y))
                     console.log(rotationBoxLabelLayer.editType)
-                    if(rotationBoxLabelLayer.editType !== CanvasEnums.None){
+                    if(rotationBoxLabelLayer.editType !== CanvasEnums.EditType.None){
                         drawArea.cursorShape = Qt.PointingHandCursor
                     }else{
                         drawArea.cursorShape = Qt.ArrowCursor
                     }
                     if(mouse.buttons & Qt.LeftButton ){
                         // 根据编辑类型计算新的位置和尺寸
-                        if(rotationBoxLabelLayer.editType===CanvasEnums.Move){
+                        if(rotationBoxLabelLayer.editType===CanvasEnums.EditType.Move){
                             var dx = mouse.x - rotationBoxLabelLayer.dragStartPoint.x
                             var dy = mouse.y - rotationBoxLabelLayer.dragStartPoint.y
                             var newX = rotationBoxLabelLayer.startRect.x + dx
@@ -197,7 +222,7 @@ Item {
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxX", newX)
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxY", newY)
                         }
-                        if(rotationBoxLabelLayer.editType===CanvasEnums.ResizeLeftTopCorner){
+                        if(rotationBoxLabelLayer.editType===CanvasEnums.EditType.ResizeLeftTopCorner){
                             let rectPoints = QmlUtilsCpp.rotatedRectCorners(startRect, startRotation)
                             let p0 = Qt.point(mouse.x,mouse.y);
                             let p1 = rectPoints[1];
@@ -210,7 +235,7 @@ Item {
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxWidth", boxWidth)
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxHeight", boxHeight)
                         }
-                        if(rotationBoxLabelLayer.editType===CanvasEnums.ResizeRightTopCorner){
+                        if(rotationBoxLabelLayer.editType===CanvasEnums.EditType.ResizeRightTopCorner){
                             let rectPoints = QmlUtilsCpp.rotatedRectCorners(startRect, startRotation)
                             let p0 = rectPoints[0];
                             let p1 = Qt.point(mouse.x,mouse.y);
@@ -221,7 +246,7 @@ Item {
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxRotation", boxRotation)
                             rotationBoxLabelLayer.listModel.setProperty(rotationBoxLabelLayer.selectedIndex, "boxWidth", boxWidth)
                         }
-                        if(rotationBoxLabelLayer.editType===CanvasEnums.ResizeBottomEdge){
+                        if(rotationBoxLabelLayer.editType===CanvasEnums.EditType.ResizeBottomEdge){
                             let rectPoints = QmlUtilsCpp.rotatedRectCorners(startRect, startRotation)
                             let p0 = rectPoints[0];
                             let p1 = rectPoints[1];
@@ -238,7 +263,7 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (rotationBoxLabelLayer.drawStatus === CanvasEnums.RotationBox) {
+                if (rotationBoxLabelLayer.drawStatus === CanvasEnums.OptionStatus.RotationBox) {
                     rotationBoxLabelLayer.drawFinished()
                     let point = Qt.point(mouse.x, mouse.y)
                     points.push(point)
@@ -246,11 +271,17 @@ Item {
                         rotationBoxLabelLayer.listModel.addItem(rotationBoxLabelLayer.currentLabelID, point.x, point.y, 0, 1, rotationBoxLabelLayer.zOrder++, 0 , false)
                     }
                     if(points.length === 3){
-                        rotationBoxLabelLayer.editType = CanvasEnums.None
+                        rotationBoxLabelLayer.editType = CanvasEnums.EditType.None
                         points = []
                     }
                 }
-                rotationBoxLabelLayer.editType = CanvasEnums.None
+                rotationBoxLabelLayer.editType = CanvasEnums.EditType.None
+            }
+        }
+        onExited: {
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(-1, -1)
             }
         }
     }
@@ -265,13 +296,13 @@ Item {
         let itemRect2 = Qt.rect(point1.x-handlerWidth/2, point1.y-handlerHeight/2, handlerWidth, handlerHeight)
         let itemRect3 = Qt.rect(point2.x-handlerWidth/2, point2.y-handlerHeight/2, handlerWidth, handlerHeight)
         if(QmlUtilsCpp.isPointInRect(itemRect1,point)){
-            rotationBoxLabelLayer.editType = CanvasEnums.ResizeLeftTopCorner
+            rotationBoxLabelLayer.editType = CanvasEnums.EditType.ResizeLeftTopCorner
         }
         if(QmlUtilsCpp.isPointInRect(itemRect2,point)){
-            rotationBoxLabelLayer.editType =  CanvasEnums.ResizeRightTopCorner
+            rotationBoxLabelLayer.editType =  CanvasEnums.EditType.ResizeRightTopCorner
         }
         if(QmlUtilsCpp.isPointInRect(itemRect3,point)){
-            rotationBoxLabelLayer.editType =  CanvasEnums.ResizeBottomEdge
+            rotationBoxLabelLayer.editType =  CanvasEnums.EditType.ResizeBottomEdge
         }
     }
 

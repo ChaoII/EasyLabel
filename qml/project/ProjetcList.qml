@@ -149,6 +149,7 @@ Item {
             }
             property color annotationTypeBaseColor
             property string annotationTypeName
+            hoverable: true
             width: 310
             height: 200
             titleDelegate: null
@@ -252,7 +253,6 @@ Item {
                             font.pixelSize: fontSize
                             text:"图片路径："+ modelData.imageFolder
                             elide: Text.ElideRight
-                            color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
                         HusIconButton{
                             Layout.preferredHeight: parent.height
@@ -272,7 +272,6 @@ Item {
                             font.pixelSize: fontSize
                             text:"结果路径："+ modelData.resultFolder
                             elide: Text.ElideRight
-                            color: HusTheme.Primary.colorPrimaryTextDisabled
                         }
                         HusIconButton{
                             Layout.preferredHeight: parent.height
@@ -290,7 +289,6 @@ Item {
                         font.pixelSize: fontSize
                         text:"创建时间："+ modelData.createTime
                         verticalAlignment: Text.AlignVCenter
-                        color: HusTheme.Primary.colorPrimaryTextDisabled
                     }
                 }
             }

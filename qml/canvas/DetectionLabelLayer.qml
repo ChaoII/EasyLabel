@@ -22,7 +22,7 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: detectionLabelLayer.drawStatus === CanvasEnums.Rectangle
+        visible: detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Rectangle
         crossColor: detectionLabelLayer.currentLabelColor
         centerPointerSize: detectionLabelLayer.annotationConfig.centerPointerSize
         lineWidth: detectionLabelLayer.annotationConfig.currentLineWidth
@@ -33,15 +33,18 @@ Item {
 
     onMousePositionChanged: {
         crosshair.mousePosition = mousePosition
+        // 同步更新到主视图：MouseArea → layer → Loader → imageContainer → Flickable → centralAnnotationView
+        var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+        if (mainView && mainView.mousePos !== undefined) {
+            mainView.mousePos = mousePosition
+        }
     }
 
     HoverHandler{
         id: hoverHandler
         target:detectionLabelLayer
         onPointChanged: function () {
-            if(detectionLabelLayer.drawStatus === CanvasEnums.Rectangle){
-                detectionLabelLayer.mousePosition = point.position
-            }
+            detectionLabelLayer.mousePosition = Qt.point(point.position.x, point.position.y)
         }
     }
 
@@ -54,7 +57,12 @@ Item {
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(detectionLabelLayer.drawStatus === CanvasEnums.Rectangle) {
+                // 平移模式下不做任何处理，让 Flickable 处理拖动画布
+                if (detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Pan) {
+                    return
+                }
+
+                if(detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Rectangle) {
                     // 绘制模式：开始绘制新矩形
                     if(detectionLabelLayer.currentLabelID===-1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -69,8 +77,8 @@ Item {
                     if(detectionLabelLayer.selectedIndex >= 0){
                         detectionLabelLayer.listModel.setSingleSelected(detectionLabelLayer.selectedIndex)
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
-                        if(detectionLabelLayer.editType === CanvasEnums.None){
-                            detectionLabelLayer.editType = CanvasEnums.Move
+                        if(detectionLabelLayer.editType === CanvasEnums.EditType.None){
+                            detectionLabelLayer.editType = CanvasEnums.EditType.Move
                         }
                         detectionLabelLayer.dragStartPoint = Qt.point(mouse.x, mouse.y)
                         let selectedRect = detectionLabelLayer.listModel.getRect(detectionLabelLayer.selectedIndex)
@@ -79,14 +87,21 @@ Item {
                         // 没有元素被选中
                         detectionLabelLayer.listModel.removeAllSelected()
                         detectionLabelLayer.selectedIndex = -1
-                        detectionLabelLayer.editType=CanvasEnums.None
+                        detectionLabelLayer.editType=CanvasEnums.EditType.None
                     }
                 }
             }
         }
         onPositionChanged: function(mouse) {
+            // HoverHandler 会通过 onMousePositionChanged 更新 crosshair 和 mainView
+            // 这里只在鼠标按下拖动时处理绘制和编辑逻辑
             if (mouse.buttons & Qt.LeftButton) {
-                if (detectionLabelLayer.drawStatus === CanvasEnums.Rectangle) {
+                // 平移模式下不做任何处理
+                if (detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Pan) {
+                    return
+                }
+
+                if (detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Rectangle) {
                     if(detectionLabelLayer.currentLabelID===-1) return
                     // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                     detectionLabelLayer.mousePosition = Qt.point(mouse.x, mouse.y)
@@ -114,7 +129,7 @@ Item {
                     var newHeight = detectionLabelLayer.startRect.height
 
                     // 根据编辑类型计算新的位置和尺寸
-                    if(detectionLabelLayer.editType===CanvasEnums.Move){
+                    if(detectionLabelLayer.editType===CanvasEnums.EditType.Move){
                         newX = detectionLabelLayer.startRect.x + dx
                         newY = detectionLabelLayer.startRect.y + dy
 
@@ -127,45 +142,45 @@ Item {
                         var minWidth = 5
                         var minHeight = 5
 
-                        if(detectionLabelLayer.editType===CanvasEnums.ResizeLeftTopCorner){
+                        if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeLeftTopCorner){
                             // 保持右下角固定
                             newX = Math.min(detectionLabelLayer.startRect.x + dx, detectionLabelLayer.startRect.x + detectionLabelLayer.startRect.width - minWidth)
                             newY = Math.min(detectionLabelLayer.startRect.y + dy, detectionLabelLayer.startRect.y + detectionLabelLayer.startRect.height - minHeight)
                             newWidth = detectionLabelLayer.startRect.width - (newX - detectionLabelLayer.startRect.x)
                             newHeight = detectionLabelLayer.startRect.height - (newY - detectionLabelLayer.startRect.y)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeRightTopCorner){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeRightTopCorner){
                             // 保持左下角固定
                             newY = Math.min(detectionLabelLayer.startRect.y + dy, detectionLabelLayer.startRect.y + detectionLabelLayer.startRect.height - minHeight)
                             newWidth = Math.max(minWidth, detectionLabelLayer.startRect.width + dx)
                             newHeight = detectionLabelLayer.startRect.height - (newY - detectionLabelLayer.startRect.y)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeRightBottomCorner){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeRightBottomCorner){
                             // 保持左上角固定
                             newWidth = Math.max(minWidth, detectionLabelLayer.startRect.width + dx)
                             newHeight = Math.max(minHeight, detectionLabelLayer.startRect.height + dy)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeLeftBottomCorner){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeLeftBottomCorner){
                             // 保持右上角固定
                             newX = Math.min(detectionLabelLayer.startRect.x + dx, detectionLabelLayer.startRect.x + detectionLabelLayer.startRect.width - minWidth)
                             newWidth = detectionLabelLayer.startRect.width - (newX - detectionLabelLayer.startRect.x)
                             newHeight = Math.max(minHeight, detectionLabelLayer.startRect.height + dy)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeLeftEdge){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeLeftEdge){
                             // 保持右边固定
                             newX = Math.min(detectionLabelLayer.startRect.x + dx, detectionLabelLayer.startRect.x + detectionLabelLayer.startRect.width - minWidth)
                             newWidth = detectionLabelLayer.startRect.width - (newX - detectionLabelLayer.startRect.x)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeTopEdge){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeTopEdge){
                             // 保持底边固定
                             newY = Math.min(detectionLabelLayer.startRect.y + dy, detectionLabelLayer.startRect.y + detectionLabelLayer.startRect.height - minHeight)
                             newHeight = detectionLabelLayer.startRect.height - (newY - detectionLabelLayer.startRect.y)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeRightEdge){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeRightEdge){
                             // 保持左边固定
                             newWidth = Math.max(minWidth, detectionLabelLayer.startRect.width + dx)
                         }
-                        else if(detectionLabelLayer.editType===CanvasEnums.ResizeBottomEdge){
+                        else if(detectionLabelLayer.editType===CanvasEnums.EditType.ResizeBottomEdge){
                             // 保持顶边固定
                             newHeight = Math.max(minHeight, detectionLabelLayer.startRect.height + dy)
                         }
@@ -199,10 +214,26 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (detectionLabelLayer.drawStatus === CanvasEnums.Rectangle) {
-                    detectionLabelLayer.drawFinished()
+                if (detectionLabelLayer.drawStatus === CanvasEnums.OptionStatus.Rectangle) {
+                    // 检查矩形框是否有效（宽度和高度都大于最小阈值）
+                    let last = detectionLabelLayer.listModel.rowCount() - 1
+                    if (last >= 0) {
+                        let rect = detectionLabelLayer.listModel.getRect(last)
+                        // 如果矩形太小（点击而非拖动），则删除它
+                        if (rect.width < 5 || rect.height < 5) {
+                            detectionLabelLayer.listModel.removeItem(last)
+                        } else {
+                            detectionLabelLayer.drawFinished()
+                        }
+                    }
                 }
-                detectionLabelLayer.editType = CanvasEnums.None
+                detectionLabelLayer.editType = CanvasEnums.EditType.None
+            }
+        }
+        onExited: {
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(-1, -1)
             }
         }
     }
@@ -276,8 +307,8 @@ Item {
 
             // 角控制点
             Repeater {
-                property int handlerWidth: detectionLabelLayer.annotationConfig.currentCornerRadius/detectionLabelLayer.scaleFactor
-                property int handlerHeight: detectionLabelLayer.annotationConfig.currentCornerRadius/detectionLabelLayer.scaleFactor
+                property int handlerWidth: (detectionLabelLayer.annotationConfig.currentCornerRadius + 2) / detectionLabelLayer.scaleFactor
+                property int handlerHeight: handlerWidth
                 model: obj.showHandlers ? detectionLabelLayer.getCornerHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: cornerHandler
@@ -293,7 +324,9 @@ Item {
                     width: cornerHandlerWidth
                     height: cornerHandlerHeight
                     radius: cornerHandlerWidth/2
-                    color: obj.annotationColor
+                    color: "white"
+                    border.color: obj.annotationColor
+                    border.width: 2 / detectionLabelLayer.scaleFactor
                     // 根据角点索引确定调整方向 0:左上 1:右上 2:右下 3:左下
                     property int resizeType: index
                     MouseArea {
@@ -347,8 +380,8 @@ Item {
 
             // 边控制点
             Repeater {
-                property int handlerWidth: detectionLabelLayer.annotationConfig.currentEdgeWidth/detectionLabelLayer.scaleFactor
-                property int handlerHeight: detectionLabelLayer.annotationConfig.currentEdgeHeight/detectionLabelLayer.scaleFactor
+                property int handlerWidth: (detectionLabelLayer.annotationConfig.currentEdgeWidth + 2) / detectionLabelLayer.scaleFactor
+                property int handlerHeight: (detectionLabelLayer.annotationConfig.currentEdgeHeight + 2) / detectionLabelLayer.scaleFactor
                 model: obj.showHandlers ? detectionLabelLayer.getEdgeHandlerModel(obj.width, obj.height, handlerWidth, handlerHeight) : []
                 delegate: Rectangle {
                     id: edgeHandler
@@ -361,8 +394,10 @@ Item {
                     y: edgeHandlerY
                     width: edgeHandlerWidth
                     height: edgeHandlerHeight
-                    radius: 2
-                    color: obj.annotationColor
+                    radius: 2 / detectionLabelLayer.scaleFactor
+                    color: "white"
+                    border.color: obj.annotationColor
+                    border.width: 2 / detectionLabelLayer.scaleFactor
                     property int resizeType: index // 0:左 1:上 2:右 3:下
                     MouseArea {
                         anchors.fill: parent

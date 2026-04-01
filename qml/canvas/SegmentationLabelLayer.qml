@@ -47,13 +47,30 @@ Item {
     Crosshair {
         id: crosshair
         anchors.fill: parent
-        visible: segmentationLabelLayer.drawStatus === CanvasEnums.Polygon
+        visible: segmentationLabelLayer.drawStatus === CanvasEnums.OptionStatus.Polygon
         crossColor: segmentationLabelLayer.currentLabelColor
         centerPointerSize: segmentationLabelLayer.annotationConfig.centerPointerSize
         lineWidth: segmentationLabelLayer.annotationConfig.currentLineWidth
         scaleFactor: segmentationLabelLayer.scaleFactor
         showCoordinates: true
         showCenterPoint: true
+        property point hoverPos: Qt.point(-1, -1)
+        onHoverPosChanged: {
+            mousePosition = hoverPos
+            var mainView = segmentationLabelLayer.parent && segmentationLabelLayer.parent.parent &&
+                            segmentationLabelLayer.parent.parent.parent && segmentationLabelLayer.parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = hoverPos
+            }
+        }
+    }
+
+    HoverHandler{
+        id: hoverHandler
+        target:segmentationLabelLayer
+        onPointChanged: function () {
+            crosshair.hoverPos = Qt.point(point.position.x, point.position.y)
+        }
     }
 
     // 显示所有标注框
@@ -166,7 +183,7 @@ Item {
         hoverEnabled: true
         onPressed: function(mouse) {
             if(mouse.button === Qt.LeftButton) {
-                if(segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
+                if(segmentationLabelLayer.drawStatus === CanvasEnums.OptionStatus.Polygon) {
                     // 绘制模式：开始绘制新矩形
                     if(segmentationLabelLayer.currentLabelID===-1){
                         QmlGlobalHelper.message.error("请选择一个标签")
@@ -177,8 +194,8 @@ Item {
                     if(segmentationLabelLayer.selectedIndex >= 0){
                         segmentationLabelLayer.listModel.setSingleSelected(segmentationLabelLayer.selectedIndex)
                         // 如果不处于编辑状态 判断非常重要，因为子组件的鼠标事件会传递，不判断的话，就只会走Move
-                        if(segmentationLabelLayer.editType === CanvasEnums.None){
-                            segmentationLabelLayer.editType = CanvasEnums.Move
+                        if(segmentationLabelLayer.editType === CanvasEnums.EditType.None){
+                            segmentationLabelLayer.editType = CanvasEnums.EditType.Move
                             segmentationLabelLayer.isEditing = true
 
                         }
@@ -187,18 +204,24 @@ Item {
                         // 没有元素被选中
                         segmentationLabelLayer.listModel.removeAllSelected()
                         segmentationLabelLayer.selectedIndex = -1
-                        segmentationLabelLayer.editType=CanvasEnums.None
+                        segmentationLabelLayer.editType=CanvasEnums.EditType.None
                     }
                 }
             }
         }
 
         onPositionChanged: function(mouse) {
-            if (segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
+            // 更新鼠标坐标到主视图：MouseArea → layer → Loader → imageContainer → Flickable → centralAnnotationView
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(mouse.x, mouse.y)
+            }
+
+            if (segmentationLabelLayer.drawStatus === CanvasEnums.OptionStatus.Polygon) {
                 if(segmentationLabelLayer.currentLabelID === -1) return
                 // 鼠标按下会拦截HoverHandler,所以在绘制状态持续更新十字线的坐标
                 let mousePosition = Qt.point(mouse.x, mouse.y)
-                crosshair.mousePosition = mousePosition
+                crosshair.hoverPos = mousePosition
                 let last = segmentationLabelLayer.listModel.rowCount() - 1
                 if(segmentationLabelLayer.listModel.rowCount() >= 1){
                     if(!segmentationLabelLayer.shapeFinished){
@@ -211,7 +234,7 @@ Item {
                         segmentationLabelLayer.listModel.updateLastPoint(last, mousePosition)
                     }
                 }
-            }else if (segmentationLabelLayer.drawStatus === CanvasEnums.Select){
+            }else if (segmentationLabelLayer.drawStatus === CanvasEnums.OptionStatus.Select){
                 if(segmentationLabelLayer.selectedIndex >= 0){
                     let points = segmentationLabelLayer.listModel.getPoints(segmentationLabelLayer.selectedIndex)
                     // 这里很关键，不然对象在修改某个点的时候不流畅，因为在鼠标拖动过程中实时检测EditType，
@@ -220,14 +243,14 @@ Item {
                         updateEditType(points, Qt.point(mouse.x, mouse.y))
                     }
                     // 修改鼠标的央视
-                    if(segmentationLabelLayer.editType !== CanvasEnums.None){
+                    if(segmentationLabelLayer.editType !== CanvasEnums.EditType.None){
                         drawArea.cursorShape = Qt.PointingHandCursor
                     }else{
                         drawArea.cursorShape = Qt.ArrowCursor
                     }
                     if(mouse.buttons & Qt.LeftButton ){
                         // 根据编辑类型计算新的位置和尺寸
-                        if(segmentationLabelLayer.editType===CanvasEnums.Move){
+                        if(segmentationLabelLayer.editType===CanvasEnums.EditType.Move){
                             segmentationLabelLayer.isEditing = true
                             var dx = mouse.x - segmentationLabelLayer.latestDragPoint.x
                             var dy = mouse.y - segmentationLabelLayer.latestDragPoint.y
@@ -235,7 +258,7 @@ Item {
                             segmentationLabelLayer.latestDragPoint.y = mouse.y
                             segmentationLabelLayer.listModel.moveShape(segmentationLabelLayer.selectedIndex, Qt.point(dx, dy))
                         }
-                        if(segmentationLabelLayer.editType===CanvasEnums.ResizeAnyPoint){
+                        if(segmentationLabelLayer.editType===CanvasEnums.EditType.ResizeAnyPoint){
                             segmentationLabelLayer.isEditing = true
                             let mousePoint = Qt.point(mouse.x,mouse.y);
                             segmentationLabelLayer.listModel.updatePoint(segmentationLabelLayer.selectedIndex, segmentationLabelLayer.editPointIndex, mousePoint)
@@ -246,7 +269,7 @@ Item {
         }
         onReleased: function(mouse) {
             if (mouse.button === Qt.LeftButton) {
-                if (segmentationLabelLayer.drawStatus === CanvasEnums.Polygon) {
+                if (segmentationLabelLayer.drawStatus === CanvasEnums.OptionStatus.Polygon) {
                     let point = Qt.point(mouse.x, mouse.y)
                     if(segmentationLabelLayer.shapeFinished){
                         segmentationLabelLayer.listModel.addItem(segmentationLabelLayer.currentLabelID, [point], segmentationLabelLayer.zOrder++, true)
@@ -263,14 +286,20 @@ Item {
                             // segmentationLabelLayer.listModel.appendPoint(last, p0)
                             segmentationLabelLayer.shapeFinished = true
                             segmentationLabelLayer.isClosing = false
-                            segmentationLabelLayer.editType = CanvasEnums.None
+                            segmentationLabelLayer.editType = CanvasEnums.EditType.None
                             segmentationLabelLayer.listModel.setSelected(last, false)
                         }
                     }
                     pointFinished = true
                 }
                 segmentationLabelLayer.isEditing = false
-                segmentationLabelLayer.editType = CanvasEnums.None
+                segmentationLabelLayer.editType = CanvasEnums.EditType.None
+            }
+        }
+        onExited: {
+            var mainView = parent && parent.parent && parent.parent.parent && parent.parent.parent.parent
+            if (mainView && mainView.mousePos !== undefined) {
+                mainView.mousePos = Qt.point(-1, -1)
             }
         }
     }
@@ -280,12 +309,12 @@ Item {
         for(let i = 0; i < points.length; i++){
             let itemRect = Qt.rect(points[i].x-handlerWidth/2, points[i].y-handlerHeight/2, handlerWidth, handlerHeight)
             if(QmlUtilsCpp.isPointInRect(itemRect, point)){
-                segmentationLabelLayer.editType =  CanvasEnums.ResizeAnyPoint
+                segmentationLabelLayer.editType =  CanvasEnums.EditType.ResizeAnyPoint
                 segmentationLabelLayer.editPointIndex = i
                 return
             }
         }
-        segmentationLabelLayer.editType =  CanvasEnums.None
+        segmentationLabelLayer.editType =  CanvasEnums.EditType.None
         segmentationLabelLayer.editPointIndex = -1
     }
 }

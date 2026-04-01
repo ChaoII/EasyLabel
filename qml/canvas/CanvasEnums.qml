@@ -7,7 +7,8 @@ Item {
         Rectangle = 1,
         RotationBox = 2,
         Polygon = 3,
-        Point = 4
+        Point = 4,
+        Pan = 5
     }
 
     enum EditType{

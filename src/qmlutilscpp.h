@@ -42,16 +42,16 @@ public:
     Q_INVOKABLE static bool
     isPointLeftOfLineScreen(const QVector<QPointF> &points);
 
-    Q_INVOKABLE static bool isPointAboveLine(const QVector<QPointF> &points);
+    Q_INVOKABLE     static bool isPointAboveLine(const QVector<QPointF> &points);
 
     // 计算点到直线的距离
     static double distancePointToLine(const QPointF &point, const QLineF &line);
 
     // 判断点是否在直线的左侧
-    static bool isPointLeftOfLine(const QPointF &point, const QLineF &line);
+    static bool isPointLeftOfLine(const QPointF& point, const QLineF& line);
 
-    static bool isPointLeftOfLineScreen(const QPointF &point, const QLineF &line);
+    static bool isPointLeftOfLineScreen(const QPointF& point, const QLineF& line);
 
-    static bool isPointAboveLine(const QPointF &point, const QLineF &line);
+    static bool isPointAboveLine(const QPointF& point, const QLineF& line);
 signals:
 };
